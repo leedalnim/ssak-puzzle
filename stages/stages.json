@@ -36,7 +36,11 @@
       }
     ],
     "wall": "#efe0ea",
-    "floor": "#e9c99a"
+    "floor": "#e9c99a",
+    "props": [
+      "bed",
+      "cat"
+    ]
   },
   {
     "id": 2,
@@ -88,7 +92,11 @@
       }
     ],
     "wall": "#ece3f1",
-    "floor": "#e9c99a"
+    "floor": "#e9c99a",
+    "props": [
+      "bed",
+      "plant"
+    ]
   },
   {
     "id": 3,
@@ -120,7 +128,11 @@
     "clear": "두 번, 세 번 문지르니 결국 깨끗해진다.\n포기 안 하면 되는 거였네.",
     "unlock": "노란 고무장갑",
     "wall": "#eee1ec",
-    "floor": "#e7c89a"
+    "floor": "#e7c89a",
+    "props": [
+      "plant",
+      "cat"
+    ]
   },
   {
     "id": 4,
@@ -160,7 +172,11 @@
     "clear": "기름때 가득하던 싱크대가 반짝인다.\n오랜만에 밥을 해 먹었다.",
     "unlock": "앞치마",
     "wall": "#e3efe6",
-    "floor": "#edcda0"
+    "floor": "#edcda0",
+    "props": [
+      "fridge",
+      "cat"
+    ]
   },
   {
     "id": 5,
@@ -209,7 +225,11 @@
     "clear": "운동화를 신었다.\n구인 공고를 캡처해 둔 게 있었지.",
     "unlock": "운동화",
     "wall": "#efe6da",
-    "floor": "#e4c392"
+    "floor": "#e4c392",
+    "props": [
+      "plant",
+      "cat"
+    ]
   },
   {
     "id": 6,
@@ -266,7 +286,11 @@
     "clear": "사장님이 엄지를 척.\n시급보다 그 한마디가 더 좋았다.",
     "unlock": "편의점 유니폼",
     "wall": "#dde9f1",
-    "floor": "#ebdab1"
+    "floor": "#ebdab1",
+    "props": [
+      "fridge",
+      "shelf"
+    ]
   },
   {
     "id": 7,
@@ -314,7 +338,11 @@
     "clear": "원두 향이 밴 마룻바닥.\n사람들 사이에 있는 게 나쁘지 않다.",
     "unlock": "바리스타 앞치마",
     "wall": "#ece0d2",
-    "floor": "#dab584"
+    "floor": "#dab584",
+    "props": [
+      "coffee",
+      "table"
+    ]
   },
   {
     "id": 8,
@@ -363,6 +391,10 @@
     "clear": "갓 구운 빵 냄새, 반짝이는 매장.\n\n그러고 보니… 나, 꽤 멀리 왔구나.",
     "unlock": "제빵사 모자",
     "wall": "#f1e6d4",
-    "floor": "#ead0a0"
+    "floor": "#ead0a0",
+    "props": [
+      "breadcase",
+      "shelf"
+    ]
   }
 ]

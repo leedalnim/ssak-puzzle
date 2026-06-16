@@ -12,9 +12,9 @@ def load(n): return Image.open(os.path.join(A, n)).convert("RGBA")
 IMG = {f"tile{d}": load(f"tile_{d}.png") for d in range(4)}
 IMG["hero_idle"] = load("hero_idle.png")
 IMG["trashbag"] = load("trashbag.png")
-IMG["plant"] = load("plant.png")
 IMG["window"] = load("window.png")
-IMG["cat"] = load("cat.png")
+for _n in ("plant", "cat", "fridge", "shelf", "coffee", "breadcase", "table", "bed"):
+    IMG[_n] = load(f"{_n}.png")
 
 def shade(h, amt):
     c = [max(0, min(255, v + amt)) for v in hexrgb(h)]
@@ -73,21 +73,29 @@ def render(stage, progress, hero_cell, scale_view=3):
     gd.ellipse((VW / 2 - 150, WALL_H - 60, VW / 2 + 150, VH + 60),
                fill=(255, 238, 198, int((0.05 + 0.18 * progress) * 255)))
     img.alpha_composite(glow)
-    # 소품
-    ps = 2.3
-    plant = IMG["plant"].resize((int(16 * ps), int(20 * ps)), Image.NEAREST)
-    img.alpha_composite(plant, (4, int(VH - 20 * ps - 2)))
-    cs = 2.1
-    cat = IMG["cat"].resize((int(16 * cs), int(16 * cs)), Image.NEAREST)
-    img.alpha_composite(cat, (int(VW - 16 * cs - 4), int(VH - 16 * cs - 6)))
+    # 스테이지별 소품(왼/오)
+    sps = 2.3
+    def place(name, left):
+        im = IMG[name]
+        w, h = int(im.width * sps), int(im.height * sps)
+        x = 4 if left else VW - w - 4
+        y = VH - h - 4
+        gd2 = ImageDraw.Draw(img)
+        gd2.ellipse((x + w / 2 - w * 0.42, y + h - 8, x + w / 2 + w * 0.42, y + h + 2), fill=(70, 50, 30, 40))
+        img.alpha_composite(im.resize((w, h), Image.NEAREST), (x, y))
+    pr = stage.get("props", ["plant", "cat"])
+    if len(pr) > 0:
+        place(pr[0], True)
+    if len(pr) > 1:
+        place(pr[1], False)
 
-    # 보드 러그
+    # 보드 매트(크림 + 파스텔 테두리)
     pad = round(S * 3)
     bx, by = boardX - pad, boardY - pad
     bw, bh = cols * tilePx + pad * 2, rows * tilePx + pad * 2
-    rrect(d, (bx + 1, by + 5, bx + 1 + bw, by + 5 + bh), 8, (70, 50, 30, 46))
-    rrect(d, (bx, by, bx + bw, by + bh), 8, shade(stage["floor"], -34) + (255,))
-    rrect(d, (bx + 2, by + 2, bx + bw - 2, by + bh - 2), 6, shade(stage["floor"], -14) + (255,))
+    rrect(d, (bx, by + 5, bx + bw, by + 5 + bh), 10, (80, 60, 40, 36))
+    rrect(d, (bx, by, bx + bw, by + bh), 10, shade(stage["wall"], -8) + (255,))
+    rrect(d, (bx + 2, by + 2, bx + bw - 2, by + bh - 2), 8, (255, 250, 242, 255))
 
     # 현재 내구도(진행 반영: progress 비율만큼 무작위로 닦였다고 가정 — 데모용으로 일부만)
     dur = [r[:] for r in stage["grid"]]
@@ -135,20 +143,26 @@ def render(stage, progress, hero_cell, scale_view=3):
 if __name__ == "__main__":
     with open(os.path.join(ROOT, "stages", "stages.json"), encoding="utf-8") as f:
         stages = json.load(f)
-    by_id = {s["id"]: s for s in stages}
-    shots = [
-        (by_id[1], 0.25, (1, 1)),
-        (by_id[6], 0.55, (0, 2)),
-        (by_id[8], 0.8, (3, 1)),
-    ]
-    imgs = [render(st, p, h) for st, p, h in shots]
-    gap = 16
-    W = sum(i.width for i in imgs) + gap * (len(imgs) + 1)
-    H = max(i.height for i in imgs) + gap * 2
-    m = Image.new("RGBA", (W, H), (24, 22, 30, 255))
-    x = gap
-    for i in imgs:
-        m.alpha_composite(i, (x, gap)); x += i.width + gap
+    # 8개 스테이지 전부 합성(4x2)
+    sv = 2
+    imgs = []
+    for st in stages:
+        hx, hy = st["start"]["x"], st["start"]["y"]
+        imgs.append((st["theme"], render(st, 0.45, (hx, hy), scale_view=sv)))
+    cols_n = 4
+    gap = 14
+    cellw = imgs[0][1].width
+    cellh = imgs[0][1].height + 22
+    rows_n = (len(imgs) + cols_n - 1) // cols_n
+    W = gap + cols_n * (cellw + gap)
+    H = gap + rows_n * (cellh + gap)
+    m = Image.new("RGBA", (W, H), (236, 230, 238, 255))
+    dd = ImageDraw.Draw(m)
+    for idx, (name, im) in enumerate(imgs):
+        cx = gap + (idx % cols_n) * (cellw + gap)
+        cy = gap + (idx // cols_n) * (cellh + gap)
+        m.alpha_composite(im, (cx, cy))
+        dd.text((cx + 4, cy + im.height + 4), f"{idx+1}. {name}", fill=(60, 50, 60))
     out = os.path.join(os.path.dirname(__file__), "_scene.png")
     m.save(out)
     print("scene preview:", out)

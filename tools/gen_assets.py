@@ -56,10 +56,10 @@ PAL = {
     "C": (84, 76, 100, 255),   # 고양이 하이라이트
     "y": (240, 214, 110, 255), # 고양이 눈/마법 노랑
     "f": (250, 246, 238, 255), # 흰 포인트
-    # 쓰레기봉투
-    "g": (70, 74, 86, 255),
-    "G": (92, 98, 112, 255),   # 비닐 하이라이트
-    "t": (120, 110, 80, 255),  # 봉투 묶음끈
+    # 쓰레기봉투 — 부드러운 슬레이트(무겁지 않게)
+    "g": (132, 138, 156, 255),
+    "G": (164, 170, 186, 255),  # 비닐 하이라이트
+    "t": (150, 140, 110, 255),  # 봉투 묶음끈
     # 소품 — 화분
     "a": (118, 176, 96, 255),  # 잎 진한
     "A": (156, 206, 122, 255), # 잎 밝은
@@ -70,6 +70,24 @@ PAL = {
     "F": (242, 244, 250, 255), # 창틀
     "v": (178, 214, 236, 255), # 유리
     "V": (212, 234, 250, 255), # 하늘
+    # 가게/가구 공용 색
+    "1": (232, 110, 110, 255), # 빨강
+    "2": (126, 200, 130, 255), # 초록
+    "3": (244, 188, 98, 255),  # 주황/노랑
+    "4": (124, 178, 232, 255), # 하늘파랑
+    "5": (246, 176, 200, 255), # 핑크
+    "6": (210, 156, 100, 255), # 빵 밝은
+    "7": (164, 108, 60, 255),  # 빵 진한
+    "8": (210, 216, 224, 255), # 크롬/연회색
+    "9": (96, 100, 114, 255),  # 진회색
+    "i": (250, 250, 252, 255), # 밝은 흰
+    "j": (248, 236, 214, 255), # 고양이 크림
+    "J": (228, 210, 182, 255), # 고양이 그늘
+    "l": (200, 160, 110, 255), # 밝은 우드
+    "D": (150, 108, 66, 255),  # 진한 우드
+    "N": (122, 82, 54, 255),   # 테이블 브라운
+    "E": (238, 242, 248, 255), # 김/하양
+    "B": (96, 60, 42, 255),    # 커피
 }
 
 def grid_to_img(rows, pal=PAL):
@@ -304,15 +322,143 @@ WINDOW = [
 ]
 
 
+# ---------------------------------------------------------------------------
+# 귀여운 고양이 친구(크림색, 앉은 자세) — 방 친구 NPC
+# ---------------------------------------------------------------------------
+CATCUTE = [
+    "................",
+    "...X......X.....",
+    "..XjX....XjX....",
+    "..X5jX..Xj5X....",
+    "..XjjjjjjjjX....",
+    ".XjjjjjjjjjjX...",
+    ".XjejjjjjjejX...",  # 눈
+    ".Xjjjjjjjjjj X..",
+    ".Xjj5jEEj5jjX...",  # 코+볼
+    ".XjjjjjjjjjjX...",
+    ".XjjjjjjjjjjJ7..",  # 꼬리 시작
+    "XjjjjjjjjjjjJ77.",
+    "XjjjjjjjjjjjjJ7.",
+    "XJjjjjjjjjjjjJ..",
+    "XJJJ..JJ..JJJX..",  # 앞발
+    ".XXX..XX..XXX...",
+]
+
+# ---------------------------------------------------------------------------
+# 가게/집 가구 소품
+# ---------------------------------------------------------------------------
+FRIDGE = [  # 음료 냉장고 (편의점)
+    "..XXXXXXXXXXX...",
+    "..XiiiiiiiiiX...",
+    "..Xi8888888iX...",
+    "..XivvvvvvviX...",
+    "..Xi11223344iX..",
+    "..Xi11223344iX..",
+    "..XivvvvvvviX...",
+    "..Xi33441122iX..",
+    "..Xi33441122iX..",
+    "..XivvvvvvviX...",
+    "..Xi22114433iX..",
+    "..Xi22114433iX..",
+    "..XiiiiiiiiiX...",
+    "..X999999999X...",
+    "..X9.......9X...",
+    "..XXXXXXXXXXX...",
+]
+
+SHELF = [  # 진열대 (편의점/마트)
+    "..XllllllllllX..",
+    "..Xl11l22l33lX..",
+    "..Xl11l22l33lX..",
+    "..XDDDDDDDDDDX..",
+    "..Xl44l55l11lX..",
+    "..Xl44l55l11lX..",
+    "..XDDDDDDDDDDX..",
+    "..Xl22l33l44lX..",
+    "..Xl22l33l44lX..",
+    "..XDDDDDDDDDDX..",
+    "..XD........DX..",
+    "..XXXXXXXXXXXX..",
+]
+
+COFFEE = [  # 커피머신 (카페)
+    "....EE..EE......",
+    "...E..EE..E.....",
+    "..XXXXXXXXXX....",
+    "..X88888888X....",
+    "..X8iiiiii8X....",
+    "..X8i1111i8X....",
+    "..X88888888X....",
+    "..X8.XXXX.8X....",
+    "..X8..BB..8X....",
+    "..X8.iEEi.8X....",
+    "..X8.iBBi.8X....",
+    "..X88888888X....",
+    "..XXXXXXXXXX....",
+    "................",
+]
+
+BREADCASE = [  # 빵 진열장 (베이커리)
+    "..XXXXXXXXXXX...",
+    "..XiiiiiiiiiX...",
+    "..XvvvvvvvvvX...",
+    "..Xv66X77X6vX...",
+    "..Xv667.76.vX...",
+    "..XvvvvvvvvvX...",
+    "..Xv7X66X77vX...",
+    "..Xv.6677.6vX...",
+    "..XiiiiiiiiiX...",
+    "..XlllllllllX...",
+    "..XDDDDDDDDDX...",
+    "..XXXXXXXXXXX...",
+]
+
+TABLE = [  # 카페 테이블 + 컵
+    "................",
+    ".....EE.E.......",
+    "....XiiiiX......",  # 컵
+    "....XiBBiX......",
+    "...XNNNNNNNNX...",  # 테이블 상판
+    "..XNNNNNNNNNNX..",
+    "..XlNNNNNNNNlX..",
+    "...XXNN..NNXX...",
+    ".....DD..DD.....",  # 다리
+    ".....DD..DD.....",
+    "................",
+    "................",
+]
+
+BED = [  # 침대/쿠션 (집)
+    "................",
+    "..XXXXXXXXXXXX..",
+    ".X5iiiii5iiii5X.",  # 베개
+    ".X5iiiii5iiii5X.",
+    ".XEEEEEEEEEEEEX.",
+    ".X44444444444X..",  # 이불
+    ".X44224422442X..",
+    ".X44444444444X..",
+    ".X42244224422X..",
+    ".X44444444444X..",
+    ".XDDDDDDDDDDDDX.",
+    "..XXXXXXXXXXXX..",
+]
+
+PROPS = {
+    "cat": CATCUTE, "fridge": FRIDGE, "shelf": SHELF, "coffee": COFFEE,
+    "breadcase": BREADCASE, "table": TABLE, "bed": BED,
+}
+
+
 def export():
     os.makedirs(OUT, exist_ok=True)
     hero = build_hero()
     for k, v in hero.items():
         v.save(os.path.join(OUT, f"hero_{k}.png"))
-    grid_to_img(CAT).save(os.path.join(OUT, "cat.png"))
     grid_to_img(TRASHBAG).save(os.path.join(OUT, "trashbag.png"))
     grid_to_img(PLANT).save(os.path.join(OUT, "plant.png"))
     grid_to_img(WINDOW).save(os.path.join(OUT, "window.png"))
+    for name, grid in PROPS.items():
+        grid_to_img(grid).save(os.path.join(OUT, f"{name}.png"))
     for dur in (0, 1, 2, 3):
         make_tile(dur, seed=dur + 1).save(os.path.join(OUT, f"tile_{dur}.png"))
     print("assets written to", os.path.abspath(OUT))

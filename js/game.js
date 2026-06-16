@@ -312,25 +312,42 @@ export class Game {
     glow.addColorStop(1, 'rgba(255,238,198,0)');
     ctx.fillStyle = glow;
     ctx.fillRect(0, 0, VW, VH);
-    // 소품: 화분(왼쪽 아래) · 고양이 친구(오른쪽 아래)
-    if (IMG.plant) { const s = 2.3; ctx.drawImage(IMG.plant, 4, VH - 20 * s - 2, 16 * s, 20 * s); }
-    if (IMG.cat) { const s = 2.1; ctx.drawImage(IMG.cat, VW - 16 * s - 4, VH - 16 * s - 6, 16 * s, 16 * s); }
+    // 스테이지별 소품(왼/오 슬롯, 바닥 아래쪽에 안착)
+    const props = st.props || ['plant', 'cat'];
+    const s = 2.3;
+    const place = (name, leftSide) => {
+      const img = IMG[name];
+      if (!img) return;
+      const w = img.width * s, h = img.height * s;
+      const x = leftSide ? 4 : VW - w - 4;
+      const y = VH - h - 4;
+      // 소품 그림자
+      ctx.fillStyle = 'rgba(70,50,30,.16)';
+      ctx.beginPath();
+      ctx.ellipse(x + w / 2, y + h - 3, w * 0.42, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.drawImage(img, x, y, w, h);
+    };
+    if (props[0]) place(props[0], true);
+    if (props[1]) place(props[1], false);
   }
 
   _drawBoardBase(ctx) {
-    // 보드 밑 러그(매트) — 청소 구역을 방 안에 자연스럽게 안착
+    // 보드 밑 매트 — 부드러운 크림색 + 파스텔 테두리로 청소 구역을 귀엽게 안착
     const pad = Math.round(this.scale * 3);
     const x = this.boardX - pad, y = this.boardY - pad;
     const w = this.cols * this.tilePx + pad * 2, h = this.rows * this.tilePx + pad * 2;
-    ctx.fillStyle = 'rgba(70,50,30,.18)';
-    this._roundRect(ctx, x + 1, y + 5, w, h, 8); ctx.fill();
-    ctx.fillStyle = shade(this.stage.floor, -34);   // 러그 테두리(짙은 우드)
-    this._roundRect(ctx, x, y, w, h, 8); ctx.fill();
-    ctx.fillStyle = shade(this.stage.floor, -14);
-    this._roundRect(ctx, x + 2, y + 2, w - 4, h - 4, 6); ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,.12)';
+    ctx.fillStyle = 'rgba(80,60,40,.14)';
+    this._roundRect(ctx, x, y + 5, w, h, 10); ctx.fill();
+    // 파스텔 테두리(벽 색에서 따옴)
+    ctx.fillStyle = shade(this.stage.wall, -8);
+    this._roundRect(ctx, x, y, w, h, 10); ctx.fill();
+    // 크림 매트 면
+    ctx.fillStyle = 'rgb(255,250,242)';
+    this._roundRect(ctx, x + 2, y + 2, w - 4, h - 4, 8); ctx.fill();
+    ctx.strokeStyle = 'rgba(180,150,120,.30)';
     ctx.lineWidth = 1;
-    this._roundRect(ctx, x + 1.5, y + 1.5, w - 3, h - 3, 8); ctx.stroke();
+    this._roundRect(ctx, x + 1.5, y + 1.5, w - 3, h - 3, 9); ctx.stroke();
   }
 
   _drawTiles(ctx) {
