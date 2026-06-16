@@ -7,47 +7,26 @@ L=lambda n: Image.open(os.path.join(A,n)).convert("RGBA")
 bg=L("store_bg.png"); char=L("char_player.png")
 plant=L("obstacle_plant.png"); boxes=L("obstacle_boxes.png")
 hint=L("hint_panel.png"); close=L("btn_close.png")
+PLATE={"score":L("plate_score.png"),"stage":L("plate_stage.png"),"timer":L("plate_timer.png")}
 TILES={0:L("tile_clean.png"),1:L("tile_d1.png"),2:L("tile_d2.png"),
        3:L("tile_d3.png"),4:L("tile_d4.png"),5:L("tile_d5.png")}
 FONT="/mnt/skills/examples/canvas-design/canvas-fonts/PixelifySans-Medium.ttf"
 
-# ---------- 코드 HUD(통일 명패 + 픽셀폰트 동적 텍스트) ----------
-def build_hud(W,Hh, score, stage, tmr, SS=3):
-    F=lambda px: ImageFont.truetype(FONT, px*SS)
+# ---------- HUD: 달님 명패(아이콘 유지) + 텍스트 얹기(동적) ----------
+def build_hud(W,Hh, sval, stval, tval, SS=3):
+    F=lambda p: ImageFont.truetype(FONT,p*SS)
     img=Image.new("RGBA",(W*SS,Hh*SS),(0,0,0,0)); d=ImageDraw.Draw(img)
-    WOOD=(120,86,58);WOOD_D=(92,64,42);CREAM=(238,226,200);CREAM_D=(214,196,164);INK=(108,74,48)
-    s=SS
-    def plate(x,y,w,h):
-        d.rounded_rectangle((x+2*s,y+3*s,x+w+2*s,y+h+3*s),8*s,fill=(0,0,0,55))
-        d.rounded_rectangle((x,y,x+w,y+h),8*s,fill=WOOD)
-        d.rounded_rectangle((x+1*s,y+1*s,x+w-1*s,y+h-1*s),7*s,fill=WOOD_D)
-        d.rounded_rectangle((x+3*s,y+3*s,x+w-3*s,y+h-3*s),5*s,fill=CREAM,outline=CREAM_D,width=s)
-    def star(cx,cy,rad):
-        pts=[]
-        for i in range(8):
-            ang=-math.pi/2+i*math.pi/4; rr=rad if i%2==0 else rad*0.4
-            pts.append((cx+math.cos(ang)*rr,cy+math.sin(ang)*rr))
-        d.polygon(pts,fill=(240,184,72),outline=(196,132,40))
-    def clock(cx,cy,rad):
-        d.ellipse((cx-rad,cy-rad,cx+rad,cy+rad),fill=(248,244,236),outline=INK,width=2*s)
-        d.line((cx,cy,cx,cy-rad*0.6),fill=INK,width=2*s); d.line((cx,cy,cx+rad*0.5,cy),fill=INK,width=2*s)
-    def reset(cx,cy,rad):
-        d.arc((cx-rad,cy-rad,cx+rad,cy+rad),25,205,fill=INK,width=2*s)
-        d.arc((cx-rad,cy-rad,cx+rad,cy+rad),205,385,fill=INK,width=2*s)
-        d.polygon([(cx+rad,cy-2*s),(cx+rad-5*s,cy-5*s),(cx+rad+3*s,cy-7*s)],fill=INK)
-        d.polygon([(cx-rad,cy+2*s),(cx-rad+5*s,cy+5*s),(cx-rad-3*s,cy+7*s)],fill=INK)
-    def txt(x,y,t,px): d.text((x,y),t,font=F(px),fill=INK)
-    def twf(t,px): b=d.textbbox((0,0),t,font=F(px)); return b[2]-b[0]
-    pw,ph=int(W*0.3),Hh-8; py=4*s
-    gap=(W-3*pw)/4
-    xs=[int((gap*(i+1)+pw*i))*s for i in range(3)]
-    cy=py+ph*s/2
-    # score
-    plate(xs[0],py,pw*s,ph*s); star(xs[0]+16*s,cy,8*s); txt(xs[0]+28*s,cy-9*s,score,16)
-    # stage
-    lab="STAGE "+stage; plate(xs[1],py,pw*s,ph*s); txt(xs[1]+(pw*s-twf(lab,15))/2,cy-9*s,lab,15)
-    # timer
-    plate(xs[2],py,pw*s,ph*s); clock(xs[2]+15*s,cy,7*s); txt(xs[2]+27*s,cy-9*s,tmr,15); reset(xs[2]+pw*s-15*s,cy,7*s)
+    ph=Hh-8; INK=(92,60,38)
+    items=[(PLATE["score"],(45,173),sval,16),(PLATE["stage"],(7,167),"STAGE "+stval,15),
+           (PLATE["timer"],(46,117),tval,16)]
+    pw=int(W*0.30); gap=(W-3*pw)/4
+    for i,(plate,reg,text,fpx) in enumerate(items):
+        x=int((gap*(i+1)+pw*i))*SS
+        img.alpha_composite(plate.resize((pw*SS,ph*SS),Image.LANCZOS),(x,4*SS))
+        sx=pw/plate.width*SS
+        cxr=x+(reg[0]+reg[1])/2*sx
+        f=F(fpx); b=d.textbbox((0,0),text,font=f)
+        d.text((cxr-(b[2]-b[0])/2,4*SS+ph*SS/2-(b[3]-b[1])/2-b[1]),text,font=f,fill=INK)
     return img.resize((W,Hh),Image.LANCZOS)
 
 HUD=52
@@ -56,7 +35,7 @@ img=Image.new("RGBA",(W,H),(0,0,0,255)); d=ImageDraw.Draw(img)
 img.alpha_composite(bg,(0,HUD))
 # HUD 바 배경 + 코드 HUD(동적 텍스트)
 d.rectangle((0,0,W,HUD),fill=(150,120,86,255)); d.rectangle((0,HUD-3,W,HUD),fill=(96,70,50,255))
-img.alpha_composite(build_hud(W,HUD, score="12/49", stage="3", tmr="0:38"),(0,0))
+img.alpha_composite(build_hud(W,HUD, "12/49", "3", "0:38"),(0,0))
 
 # === 플레이 영역(중앙정렬) ===
 gx0,gy0,gx1,gy1=189,167,515,457
