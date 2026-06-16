@@ -1,45 +1,67 @@
 #!/usr/bin/env python3
-"""달님 제공 '배경(한 판)' + 32x32 타일 + HUD 명패 + 캐릭터로 충실 재현."""
+"""달님 '배경(한 판)' + 32x32 타일 + 장애물 + HUD 명패 + 캐릭터 — 정렬 교정판."""
 import os
 from PIL import Image, ImageDraw
 A=os.path.join(os.path.dirname(__file__),"..","assets")
 L=lambda n: Image.open(os.path.join(A,n)).convert("RGBA")
 bg=L("store_bg.png"); char=L("char_store.png")
 score=L("hud_score.png"); stage=L("hud_stage.png"); timer=L("hud_timer.png")
+plant=L("obstacle_plant.png"); boxes=L("obstacle_boxes.png")
 TILES={0:L("tile_clean.png"),1:L("tile_d1.png"),2:L("tile_d2.png"),
        3:L("tile_d3.png"),4:L("tile_d4.png"),5:L("tile_d5.png")}
 
-HUD=54
+HUD=50
 W=bg.width; H=HUD+bg.height
-img=Image.new("RGBA",(W,H),(60,46,38,255)); d=ImageDraw.Draw(img)
+img=Image.new("RGBA",(W,H),(0,0,0,255)); d=ImageDraw.Draw(img)
 img.alpha_composite(bg,(0,HUD))
 
-# HUD 바
-d.rectangle((0,0,W,HUD),fill=(74,54,42,255)); d.rectangle((0,HUD-4,W,HUD),fill=(48,34,26,255))
-ph=34; ty=(HUD-ph)//2
-def place(im,x,y,h):
-    w=int(im.width*h/im.height); img.alpha_composite(im.resize((w,h),Image.LANCZOS),(int(x),int(y))); return w
-sw=int(score.width*ph/score.height); tw=int(timer.width*ph/timer.height); stw=int(stage.width*ph/stage.height)
-place(score,10,ty,ph); place(timer,W-10-tw,ty,ph); place(stage,(W-stw)//2,ty,ph)
+# === HUD 바 (정렬 교정: 동일 높이, 수직 중앙) ===
+d.rectangle((0,0,W,HUD),fill=(92,66,48,255))
+d.rectangle((0,0,W,3),fill=(120,90,66,255)); d.rectangle((0,HUD-4,W,HUD),fill=(58,40,30,255))
+ph=32; ty=(HUD-ph)//2
+def W_of(im): return int(im.width*ph/im.height)
+def place(im,x): img.alpha_composite(im.resize((W_of(im),ph),Image.LANCZOS),(int(x),ty))
+place(score,12)
+place(timer,W-12-W_of(timer))
+place(stage,(W-W_of(stage))//2)
 
-# 플레이 영역 5x5 (배경 몰딩 안쪽)
-gx0,gy0,gx1,gy1=152,105,496,446
+# === 플레이 영역 (검출 좌표) ===
+gx0,gy0,gx1,gy1=186,163,514,461
 cols=rows=5
 cw=(gx1-gx0)/cols; ch=(gy1-gy0)/rows
-dirt=[[5,3,1,0,2],[3,1,0,2,4],[1,0,2,4,1],[0,2,1,0,1],[2,1,0,1,0]]
+# 레이아웃: O=장애물 화분, B=박스, 숫자=더러움, .=깨끗
+layout=[
+ [3,1,0,2,5],
+ [1,0,'B',0,2],
+ [0,2,4,1,0],
+ [2,'O',1,0,3],
+ [1,0,2,3,1],
+]
 for r in range(rows):
     for c in range(cols):
         x=gx0+c*cw; y=HUD+gy0+r*ch
-        v=dirt[r][c]
-        if v>0:  # 깨끗한 칸은 배경 바닥 그대로
+        v=layout[r][c]
+        if isinstance(v,int) and v>0:
             img.alpha_composite(TILES[v].resize((int(cw)+1,int(ch)+1),Image.LANCZOS),(int(x),int(y)))
-        d.rectangle((int(x),int(y),int(x+cw),int(y+ch)),outline=(150,120,86,70),width=1)
+        d.rectangle((int(x),int(y),int(x+cw),int(y+ch)),outline=(150,120,86,60),width=1)
+# 장애물(셀 위에 얹기, 발밑 정렬)
+def put_obstacle(im,r,c,scale=1.15):
+    x=gx0+c*cw; y=HUD+gy0+r*ch
+    ih=int(ch*scale); iw=int(im.width*ih/im.height)
+    px=int(x+cw/2-iw/2); py=int(y+ch-ih+ch*0.05)
+    d.ellipse((x+cw/2-cw*0.32,y+ch-7-ch*0.1,x+cw/2+cw*0.32,y+ch-7+ch*0.1),fill=(0,0,0,55))
+    img.alpha_composite(im.resize((iw,ih),Image.LANCZOS),(px,py))
+for r in range(rows):
+    for c in range(cols):
+        if layout[r][c]=='O': put_obstacle(plant,r,c,1.4)
+        if layout[r][c]=='B': put_obstacle(boxes,r,c,1.25)
 
-# 캐릭터(가운데 칸)
-chh=int(ch*2.3); cwd=int(char.width*chh/char.height)
-cxp=gx0+2.5*cw; foot=HUD+gy0+3*ch
-d.ellipse((cxp-cw*0.34,foot-7-ch*0.1,cxp+cw*0.34,foot-7+ch*0.1),fill=(0,0,0,55))
-img.alpha_composite(char.resize((cwd,chh),Image.LANCZOS),(int(cxp-cwd/2),int(foot-chh+5)))
+# === 캐릭터 ===
+pr,pc=2,2
+chh=int(ch*2.2); cwd=int(char.width*chh/char.height)
+cxp=gx0+(pc+0.5)*cw; foot=HUD+gy0+(pr+1)*ch
+d.ellipse((cxp-cw*0.32,foot-7-ch*0.1,cxp+cw*0.32,foot-7+ch*0.1),fill=(0,0,0,55))
+img.alpha_composite(char.resize((cwd,chh),Image.LANCZOS),(int(cxp-cwd/2),int(foot-chh+4)))
 
 img.convert("RGB").save(os.path.join(os.path.dirname(__file__),"_store_bg.png"))
-print("saved _store_bg.png", (W,H))
+print("saved", (W,H))
