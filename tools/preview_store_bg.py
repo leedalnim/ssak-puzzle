@@ -4,7 +4,7 @@ import os
 from PIL import Image, ImageDraw
 A=os.path.join(os.path.dirname(__file__),"..","assets")
 L=lambda n: Image.open(os.path.join(A,n)).convert("RGBA")
-bg=L("store_bg.png"); char=L("char_store.png")
+bg=L("store_bg.png"); char=L("char_player.png")
 score=L("hud_score.png"); stage=L("hud_stage.png"); timer=L("hud_timer.png")
 plant=L("obstacle_plant.png"); boxes=L("obstacle_boxes.png")
 TILES={0:L("tile_clean.png"),1:L("tile_d1.png"),2:L("tile_d2.png"),
@@ -58,7 +58,7 @@ for r in range(rows):
 
 # === 캐릭터 ===
 pr,pc=2,2
-chh=int(ch*2.2); cwd=int(char.width*chh/char.height)
+chh=int(ch*1.5); cwd=int(char.width*chh/char.height)
 cxp=gx0+(pc+0.5)*cw; foot=HUD+gy0+(pr+1)*ch
 d.ellipse((cxp-cw*0.32,foot-7-ch*0.1,cxp+cw*0.32,foot-7+ch*0.1),fill=(0,0,0,55))
 img.alpha_composite(char.resize((cwd,chh),Image.LANCZOS),(int(cxp-cwd/2),int(foot-chh+4)))
