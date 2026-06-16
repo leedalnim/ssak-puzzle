@@ -15,18 +15,19 @@ W=bg.width; H=HUD+bg.height
 img=Image.new("RGBA",(W,H),(0,0,0,255)); d=ImageDraw.Draw(img)
 img.alpha_composite(bg,(0,HUD))
 
-# === HUD 바 (정렬 교정: 동일 높이, 수직 중앙) ===
-d.rectangle((0,0,W,HUD),fill=(92,66,48,255))
-d.rectangle((0,0,W,3),fill=(120,90,66,255)); d.rectangle((0,HUD-4,W,HUD),fill=(58,40,30,255))
-ph=32; ty=(HUD-ph)//2
+# === HUD 바: 목업처럼 3등분 균등 배치 ===
+d.rectangle((0,0,W,HUD),fill=(214,198,170,255))
+d.rectangle((0,HUD-3,W,HUD),fill=(150,120,86,255))
+ph=40; ty=(HUD-ph)//2
 def W_of(im): return int(im.width*ph/im.height)
-def place(im,x): img.alpha_composite(im.resize((W_of(im),ph),Image.LANCZOS),(int(x),ty))
-place(score,12)
-place(timer,W-12-W_of(timer))
-place(stage,(W-W_of(stage))//2)
+def place_center(im,cx): img.alpha_composite(im.resize((W_of(im),ph),Image.LANCZOS),(int(cx-W_of(im)/2),ty))
+third=W/3
+place_center(score, third*0.5)
+place_center(stage, third*1.5)
+place_center(timer, third*2.5)
 
-# === 플레이 영역 (검출 좌표) ===
-gx0,gy0,gx1,gy1=186,163,514,461
+# === 플레이 영역 (몰딩 안쪽, 픽셀검출 좌표) ===
+gx0,gy0,gx1,gy1=187,160,514,455
 cols=rows=5
 cw=(gx1-gx0)/cols; ch=(gy1-gy0)/rows
 # 레이아웃: O=장애물 화분, B=박스, 숫자=더러움, .=깨끗
@@ -41,9 +42,9 @@ for r in range(rows):
     for c in range(cols):
         x=gx0+c*cw; y=HUD+gy0+r*ch
         v=layout[r][c]
-        if isinstance(v,int) and v>0:
-            img.alpha_composite(TILES[v].resize((int(cw)+1,int(ch)+1),Image.LANCZOS),(int(x),int(y)))
-        d.rectangle((int(x),int(y),int(x+cw),int(y+ch)),outline=(150,120,86,60),width=1)
+        lvl=v if isinstance(v,int) else 0   # 장애물 칸 바닥은 깨끗 타일
+        # 모든 칸에 타일 배치(기본 타일 포함)
+        img.alpha_composite(TILES[lvl].resize((int(cw)+1,int(ch)+1),Image.LANCZOS),(int(x),int(y)))
 # 장애물(셀 위에 얹기, 발밑 정렬)
 def put_obstacle(im,r,c,scale=1.15):
     x=gx0+c*cw; y=HUD+gy0+r*ch
