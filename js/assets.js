@@ -7,6 +7,8 @@ const MANIFEST = {
   hero_walk_b: 'assets/hero_walk_b.png',
   cat: 'assets/cat.png',
   trashbag: 'assets/trashbag.png',
+  plant: 'assets/plant.png',
+  window: 'assets/window.png',
   tile0: 'assets/tile_0.png',
   tile1: 'assets/tile_1.png',
   tile2: 'assets/tile_2.png',

@@ -21,35 +21,36 @@ TOOLS = os.path.dirname(__file__)
 # ---------------------------------------------------------------------------
 PAL = {
     ".": None,                 # 투명
-    "X": (38, 28, 44, 255),    # 진한 외곽선 (검정 대신 보라빛 다크)
-    "o": (58, 46, 66, 255),    # 부드러운 외곽선/그림자
-    # 머리카락
-    "h": (94, 62, 52, 255),
-    "H": (124, 86, 66, 255),
-    "d": (66, 42, 38, 255),    # 머리 진한부분
+    "X": (58, 44, 54, 255),    # 외곽선(밝은 배경용으로 살짝 부드럽게)
+    "o": (74, 58, 70, 255),    # 부드러운 외곽선/그림자
+    # 머리카락 — 금발 웨이브
+    "h": (232, 196, 118, 255),
+    "H": (248, 226, 168, 255),
+    "d": (198, 158, 90, 255),  # 머리 진한부분
     # 피부
-    "k": (245, 200, 158, 255),
-    "K": (214, 160, 120, 255),
-    "r": (236, 150, 120, 255), # 볼터치
-    "e": (54, 38, 46, 255),    # 눈
-    # 후드(상의)
-    "u": (92, 142, 138, 255),
-    "U": (62, 104, 102, 255),
-    "L": (126, 176, 170, 255),
-    # 바지
-    "p": (74, 88, 120, 255),
-    "P": (52, 62, 92, 255),
-    # 신발
-    "s": (238, 232, 220, 255),
-    "S": (196, 188, 174, 255),
-    # 손(피부 같지만 구분용)
-    "n": (245, 200, 158, 255),
+    "k": (250, 208, 166, 255),
+    "K": (226, 172, 132, 255),
+    "r": (244, 156, 134, 255), # 볼터치
+    "e": (64, 96, 150, 255),   # 파란 눈
+    "q": (242, 246, 250, 255), # 눈 하이라이트
+    # 상의 — 네이비 유니폼 + 흰 카라
+    "u": (80, 102, 158, 255),
+    "U": (56, 74, 122, 255),
+    "L": (238, 242, 248, 255), # 흰 카라
+    # 바지 — 네이비
+    "p": (58, 72, 116, 255),
+    "P": (42, 52, 88, 255),
+    # 신발 — 어두운
+    "s": (78, 70, 90, 255),
+    "S": (54, 48, 64, 255),
+    # 손(피부)
+    "n": (250, 208, 166, 255),
     # 밀대 자루
     "m": (176, 124, 70, 255),
     "M": (134, 92, 48, 255),
     # 밀대 솔
-    "w": (224, 230, 238, 255),
-    "W": (170, 182, 196, 255),
+    "w": (228, 232, 240, 255),
+    "W": (178, 186, 200, 255),
     # 고양이
     "c": (60, 54, 72, 255),    # 검은고양이 몸
     "C": (84, 76, 100, 255),   # 고양이 하이라이트
@@ -59,6 +60,16 @@ PAL = {
     "g": (70, 74, 86, 255),
     "G": (92, 98, 112, 255),   # 비닐 하이라이트
     "t": (120, 110, 80, 255),  # 봉투 묶음끈
+    # 소품 — 화분
+    "a": (118, 176, 96, 255),  # 잎 진한
+    "A": (156, 206, 122, 255), # 잎 밝은
+    "b": (96, 68, 52, 255),    # 흙
+    "z": (206, 124, 86, 255),  # 화분
+    "Z": (170, 94, 62, 255),   # 화분 그늘
+    # 소품 — 창문
+    "F": (242, 244, 250, 255), # 창틀
+    "v": (178, 214, 236, 255), # 유리
+    "V": (212, 234, 250, 255), # 하늘
 }
 
 def grid_to_img(rows, pal=PAL):
@@ -78,23 +89,23 @@ def grid_to_img(rows, pal=PAL):
 # ---------------------------------------------------------------------------
 HERO_IDLE = [
     "................",
-    ".....XXXXXX.....",
-    "....XdhhhhdX....",
-    "...XdhhhhhhdX...",
-    "...XhHHHHHHhX...",
-    "...XhkkkkkkhX...",
-    "...XhkkkkkkhX...",
-    "...XhkekkekhX...",  # 눈
-    "...XhkrkkrkhX...",  # 볼터치
-    "...XhkkookkhX...",  # 작은 입
-    "....XKkkkkKX....",
-    "....XKkkkkKX....",
-    ".....XnnnnX.....",  # 목
-    "...XuuuuuuuuX...",
-    "..XuLLuuuuLLuX..",
-    "..XuLuuuuuuLuX..",
+    "....XdHHHHdX....",
+    "...XdHHHHHHdX...",
+    "..XdHHhhhhHHdX..",
+    "..XHhkkkkkkhHX..",
+    "..XHkkkkkkkkHX..",
+    "..XHkeqkkqekHX..",  # 큰 파란 눈 + 하이라이트
+    "..XHkeekkeekHX..",
+    "..XHkkkkkkkkHX..",
+    "..XHkrkkkkrkHX..",  # 볼터치
+    "..XHhkkKKkkhHX..",  # 작은 입
+    "..XdhkkkkkkhdX..",  # 웨이브 머리 끝 + 턱
+    "...XdkkkkkkdX...",
+    "....LLLLLLLL....",  # 흰 카라
+    "...XuLLLLLLuX...",
     "..nXuuuuuuuuXn..",  # 손(양옆)
     "..XUuuuuuuuuUX..",
+    "...XuuuuuuuuX...",
     "...XppppppppX...",
     "...XpPPPPPPpX...",
     "...Xpp....ppX...",
@@ -175,20 +186,20 @@ def floor_base(seed):
     rnd = random.Random(seed)
     img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
     px = img.load()
-    base = (214, 190, 158)
+    base = (236, 214, 176)
     for y in range(16):
         for x in range(16):
-            n = rnd.randint(-6, 6)
+            n = rnd.randint(-5, 5)
             # 아주 옅은 사선 결
             if (x + y) % 7 == 0:
-                n -= 5
+                n -= 4
             px[x, y] = (max(0, min(255, base[0] + n)),
                         max(0, min(255, base[1] + n)),
                         max(0, min(255, base[2] + n)), 255)
     d = ImageDraw.Draw(img)
     # 베벨: 위/왼쪽 하이라이트, 아래/오른쪽 줄눈(그라우트)
-    hi = (232, 212, 184, 150)
-    lo = (168, 142, 112, 170)
+    hi = (250, 234, 206, 150)
+    lo = (198, 168, 132, 160)
     d.line((0, 0, 15, 0), fill=hi)
     d.line((0, 0, 0, 15), fill=hi)
     d.line((0, 15, 15, 15), fill=lo)
@@ -252,6 +263,47 @@ TRASHBAG = [
     "................",
 ]
 
+PLANT = [
+    "................",
+    ".....aAa.aAa....",
+    "....aAAAaAAAa...",
+    "...aAAAAAAAAAa..",
+    "...aAAAaAAAaAa..",
+    "..aAAAAAAAAAAAa.",
+    "...aAAAAAAAAAa..",
+    "....aAAAAAAAa...",
+    ".....aAAAAAa....",
+    "......aAAAa.....",
+    ".......aAa......",
+    ".......XbX......",
+    "......XzzzzX....",
+    "......XzzzzX....",
+    ".....XZzzzzZX...",
+    ".....XZzzzzZX...",
+    "......XZZZZX....",
+    "................",
+    "................",
+    "................",
+]
+
+WINDOW = [
+    "XXXXXXXXXXXXXXXX",
+    "XFFFFFFFFFFFFFFX",
+    "XFvvvvvFFvvvvvFX",
+    "XFvvvvvFFvvvvvFX",
+    "XFVVvvvFFvvvVVFX",
+    "XFVVvvvFFvvvVVFX",
+    "XFvvvvvFFvvvvvFX",
+    "XFFFFFFFFFFFFFFX",
+    "XFvvvvvFFvvvvvFX",
+    "XFVVvvvFFvvvVVFX",
+    "XFvvvvvFFvvvvvFX",
+    "XFvvvvvFFvvvvvFX",
+    "XFFFFFFFFFFFFFFX",
+    "XXXXXXXXXXXXXXXX",
+]
+
+
 def export():
     os.makedirs(OUT, exist_ok=True)
     hero = build_hero()
@@ -259,6 +311,8 @@ def export():
         v.save(os.path.join(OUT, f"hero_{k}.png"))
     grid_to_img(CAT).save(os.path.join(OUT, "cat.png"))
     grid_to_img(TRASHBAG).save(os.path.join(OUT, "trashbag.png"))
+    grid_to_img(PLANT).save(os.path.join(OUT, "plant.png"))
+    grid_to_img(WINDOW).save(os.path.join(OUT, "window.png"))
     for dur in (0, 1, 2, 3):
         make_tile(dur, seed=dur + 1).save(os.path.join(OUT, f"tile_{dur}.png"))
     print("assets written to", os.path.abspath(OUT))

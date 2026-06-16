@@ -14,10 +14,14 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const easeOut = (t) => 1 - Math.pow(1 - t, 3);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
+const hexRgb = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
 function hexLerp(h1, h2, t) {
-  const p = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
-  const a = p(h1), b = p(h2);
+  const a = hexRgb(h1), b = hexRgb(h2);
   const c = a.map((v, i) => Math.round(lerp(v, b[i], t)));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+function shade(h, amt) {
+  const c = hexRgb(h).map(v => clamp(v + amt, 0, 255));
   return `rgb(${c[0]},${c[1]},${c[2]})`;
 }
 
@@ -248,13 +252,9 @@ export class Game {
     ctx.clearRect(0, 0, VW, VH);
     if (!this.stage) return;
 
-    // 성장 그라데이션 배경(무기력→활력)
+    // 픽셀 방 배경 + 성장(밝아짐) 연출
     const p = this.progress || 0;
-    const bg = ctx.createLinearGradient(0, 0, 0, VH);
-    bg.addColorStop(0, hexLerp(this.stage.moodFrom, this.stage.moodTo, p * 0.6));
-    bg.addColorStop(1, hexLerp('#1a1622', this.stage.moodTo, p));
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, VW, VH);
+    this._drawRoom(ctx, p);
 
     ctx.save();
     if (this.shake > 0) {
@@ -270,18 +270,67 @@ export class Game {
     ctx.restore();
   }
 
+  _drawRoom(ctx, p) {
+    const st = this.stage;
+    const WALL_H = 92;
+    // 벽
+    ctx.fillStyle = st.wall;
+    ctx.fillRect(0, 0, VW, WALL_H);
+    // 벽 도트 패턴(은은한 벽지)
+    ctx.fillStyle = 'rgba(255,255,255,.30)';
+    for (let y = 10, r = 0; y < WALL_H - 12; y += 14, r++)
+      for (let x = 8 + (r % 2 ? 9 : 0); x < VW; x += 18) ctx.fillRect(x, y, 2, 2);
+    // 창문
+    if (IMG.window) {
+      const ww = 70, wh = 60, wx = Math.round((VW - ww) / 2), wy = 14;
+      ctx.fillStyle = 'rgba(0,0,0,.10)';
+      ctx.fillRect(wx - 2, wy + 3, ww + 4, wh + 4);
+      ctx.drawImage(IMG.window, wx, wy, ww, wh);
+      // 햇살(성장에 따라 강해짐)
+      const sun = ctx.createLinearGradient(wx, wy, wx, VH * 0.7);
+      sun.addColorStop(0, `rgba(255,244,200,${0.18 + 0.3 * p})`);
+      sun.addColorStop(1, 'rgba(255,244,200,0)');
+      ctx.fillStyle = sun;
+      ctx.fillRect(wx - 6, wy, ww + 12, VH * 0.6);
+    }
+    // 베이스보드
+    ctx.fillStyle = shade(st.wall, -26);
+    ctx.fillRect(0, WALL_H - 7, VW, 7);
+    ctx.fillStyle = 'rgba(0,0,0,.10)';
+    ctx.fillRect(0, WALL_H, VW, 3);
+    // 바닥
+    ctx.fillStyle = st.floor;
+    ctx.fillRect(0, WALL_H + 3, VW, VH - WALL_H - 3);
+    // 바닥 타일 격자(은은)
+    ctx.strokeStyle = 'rgba(120,86,54,.10)';
+    ctx.lineWidth = 1;
+    for (let x = ((VW / 2) % 24); x <= VW; x += 24) { ctx.beginPath(); ctx.moveTo(x + .5, WALL_H + 3); ctx.lineTo(x + .5, VH); ctx.stroke(); }
+    for (let y = WALL_H + 3; y <= VH; y += 24) { ctx.beginPath(); ctx.moveTo(0, y + .5); ctx.lineTo(VW, y + .5); ctx.stroke(); }
+    // 따뜻한 분위기 빛(성장)
+    const glow = ctx.createRadialGradient(VW / 2, WALL_H, 20, VW / 2, VH * 0.5, VH * 0.8);
+    glow.addColorStop(0, `rgba(255,238,198,${0.05 + 0.18 * p})`);
+    glow.addColorStop(1, 'rgba(255,238,198,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, VW, VH);
+    // 소품: 화분(왼쪽 아래) · 고양이 친구(오른쪽 아래)
+    if (IMG.plant) { const s = 2.3; ctx.drawImage(IMG.plant, 4, VH - 20 * s - 2, 16 * s, 20 * s); }
+    if (IMG.cat) { const s = 2.1; ctx.drawImage(IMG.cat, VW - 16 * s - 4, VH - 16 * s - 6, 16 * s, 16 * s); }
+  }
+
   _drawBoardBase(ctx) {
-    // 보드 밑 깔개(고전 게임식 테두리) — 떠 있는 느낌
-    const pad = Math.round(this.scale * 2);
+    // 보드 밑 러그(매트) — 청소 구역을 방 안에 자연스럽게 안착
+    const pad = Math.round(this.scale * 3);
     const x = this.boardX - pad, y = this.boardY - pad;
     const w = this.cols * this.tilePx + pad * 2, h = this.rows * this.tilePx + pad * 2;
-    ctx.fillStyle = 'rgba(0,0,0,.28)';
-    this._roundRect(ctx, x + 2, y + 4, w, h, 6); ctx.fill();
-    ctx.fillStyle = '#2c2434';
-    this._roundRect(ctx, x, y, w, h, 6); ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,.06)';
+    ctx.fillStyle = 'rgba(70,50,30,.18)';
+    this._roundRect(ctx, x + 1, y + 5, w, h, 8); ctx.fill();
+    ctx.fillStyle = shade(this.stage.floor, -34);   // 러그 테두리(짙은 우드)
+    this._roundRect(ctx, x, y, w, h, 8); ctx.fill();
+    ctx.fillStyle = shade(this.stage.floor, -14);
+    this._roundRect(ctx, x + 2, y + 2, w - 4, h - 4, 6); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.12)';
     ctx.lineWidth = 1;
-    this._roundRect(ctx, x + 0.5, y + 0.5, w - 1, h - 1, 6); ctx.stroke();
+    this._roundRect(ctx, x + 1.5, y + 1.5, w - 3, h - 3, 8); ctx.stroke();
   }
 
   _drawTiles(ctx) {
