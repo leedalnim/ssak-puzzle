@@ -3,8 +3,7 @@ __pycache__/
 *.pyc
 
 # 개발용 미리보기 산출물(재생성 가능)
-tools/_preview.png
-tools/_scene.png
+tools/_*.png
 
 # 노드/에디터
 node_modules/
