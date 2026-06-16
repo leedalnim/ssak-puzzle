@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#241c2c" />
+<title>슥삭퍼즐</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Do+Hyeon&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- 게임 캔버스 -->
+    <canvas id="game"></canvas>
+
+    <!-- 상단 HUD -->
+    <header id="hud" class="hidden">
+      <div class="hud-left">
+        <div class="stage-name"><span id="hudStage">1</span> · <span id="hudTheme">내 방</span></div>
+        <div class="combo" id="hudCombo"></div>
+      </div>
+      <div class="hud-right">
+        <div class="timer" id="hudTimer">2:00</div>
+        <div class="hud-btns">
+          <button id="btnUndo" class="icon-btn" title="되돌리기" aria-label="되돌리기">↩</button>
+          <button id="btnReset" class="icon-btn" title="다시" aria-label="다시 시작">⟳</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 우상단 닫기(앱인토스 필수 요건 자리) -->
+    <button id="btnClose" class="close-btn hidden" aria-label="닫기">✕</button>
+
+    <!-- 진행 게이지 -->
+    <div id="progressWrap" class="hidden"><div id="progressBar"></div></div>
+
+    <!-- 타이틀 화면 -->
+    <section id="screenTitle" class="screen">
+      <div class="title-art">
+        <div class="logo">슥<span>삭</span>퍼즐</div>
+        <div class="tagline">무기력한 방 한 칸에서, 다시 세상 밖으로</div>
+      </div>
+      <button id="btnStart" class="big-btn">시작하기</button>
+      <button id="btnStages" class="ghost-btn">스테이지 선택</button>
+      <div class="rating">전체 이용가</div>
+    </section>
+
+    <!-- 스테이지 선택 -->
+    <section id="screenStages" class="screen hidden">
+      <h2 class="screen-title">스테이지</h2>
+      <div id="stageGrid" class="stage-grid"></div>
+      <button class="ghost-btn" data-back>뒤로</button>
+    </section>
+
+    <!-- 스토리 인트로 컷 -->
+    <section id="screenIntro" class="screen hidden">
+      <p id="introText" class="intro-text"></p>
+      <button id="btnIntroNext" class="big-btn">계속</button>
+    </section>
+
+    <!-- 클리어 모달 -->
+    <section id="screenClear" class="screen modal hidden">
+      <div class="modal-card">
+        <div class="clear-emoji">✨</div>
+        <h2 id="clearTitle">깨끗해졌다!</h2>
+        <p id="clearStory" class="clear-story"></p>
+        <div class="clear-stats">
+          <span id="clearTime"></span>
+          <span id="clearUnlock"></span>
+        </div>
+        <button id="btnNext" class="big-btn">다음 스테이지</button>
+        <button class="ghost-btn" data-back>스테이지 목록</button>
+      </div>
+    </section>
+
+    <!-- 실패 모달 -->
+    <section id="screenFail" class="screen modal hidden">
+      <div class="modal-card">
+        <div class="clear-emoji">😵‍💫</div>
+        <h2 id="failTitle">아직이야…</h2>
+        <p id="failReason" class="clear-story"></p>
+        <button id="btnRetry" class="big-btn">다시 하기</button>
+        <button id="btnAdRevive" class="ghost-btn">⏱ 광고 보고 30초 추가</button>
+      </div>
+    </section>
+
+    <!-- 로딩 -->
+    <section id="screenLoad" class="screen">
+      <div class="loader">슥… 삭…</div>
+    </section>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
