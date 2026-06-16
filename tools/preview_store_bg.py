@@ -12,21 +12,24 @@ TILES={0:L("tile_clean.png"),1:L("tile_d1.png"),2:L("tile_d2.png"),
        3:L("tile_d3.png"),4:L("tile_d4.png"),5:L("tile_d5.png")}
 FONT="/mnt/skills/examples/canvas-design/canvas-fonts/PixelifySans-Medium.ttf"
 
-# ---------- HUD: 달님 명패(아이콘 유지) + 텍스트 얹기(동적) ----------
+# ---------- HUD: 달님 명패(아이콘·비율 유지) + 텍스트 얹기(동적) ----------
 def build_hud(W,Hh, sval, stval, tval, SS=3):
     F=lambda p: ImageFont.truetype(FONT,p*SS)
     img=Image.new("RGBA",(W*SS,Hh*SS),(0,0,0,0)); d=ImageDraw.Draw(img)
-    ph=Hh-8; INK=(92,60,38)
-    items=[(PLATE["score"],(45,173),sval,16),(PLATE["stage"],(7,167),"STAGE "+stval,15),
-           (PLATE["timer"],(46,117),tval,16)]
-    pw=int(W*0.30); gap=(W-3*pw)/4
-    for i,(plate,reg,text,fpx) in enumerate(items):
-        x=int((gap*(i+1)+pw*i))*SS
-        img.alpha_composite(plate.resize((pw*SS,ph*SS),Image.LANCZOS),(x,4*SS))
-        sx=pw/plate.width*SS
-        cxr=x+(reg[0]+reg[1])/2*sx
+    ph=Hh-10; INK=(92,60,38); py=5
+    sc=PLATE["score"]; st=PLATE["stage"]; tm=PLATE["timer"]
+    def sized(im): w=int(im.width*ph/im.height); return im.resize((w*SS,ph*SS),Image.LANCZOS), w
+    s_im,s_w=sized(sc); st_im,st_w=sized(st); t_im,t_w=sized(tm)
+    margin=14
+    layout=[(s_im, margin, sc, (45,173), sval, 16),
+            (st_im,(W-st_w)//2, st, (7,167), "STAGE "+stval, 15),
+            (t_im, W-margin-t_w, tm, (46,117), tval, 16)]
+    for im,x,plate,reg,text,fpx in layout:
+        img.alpha_composite(im,(x*SS,py*SS))
+        scl=ph/plate.height
+        cx=(x+(reg[0]+reg[1])/2*scl)*SS
         f=F(fpx); b=d.textbbox((0,0),text,font=f)
-        d.text((cxr-(b[2]-b[0])/2,4*SS+ph*SS/2-(b[3]-b[1])/2-b[1]),text,font=f,fill=INK)
+        d.text((cx-(b[2]-b[0])/2,(py+ph/2)*SS-(b[3]-b[1])/2-b[1]),text,font=f,fill=INK)
     return img.resize((W,Hh),Image.LANCZOS)
 
 HUD=52
