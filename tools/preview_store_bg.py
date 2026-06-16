@@ -15,12 +15,11 @@ W=bg.width; H=HUD+bg.height
 img=Image.new("RGBA",(W,H),(0,0,0,255)); d=ImageDraw.Draw(img)
 img.alpha_composite(bg,(0,HUD))
 
-# === HUD 바: 목업처럼 3등분 균등 배치 ===
+# === HUD 바: 명패 박스 크기 통일 + 3등분 균등 배치 ===
 d.rectangle((0,0,W,HUD),fill=(214,198,170,255))
 d.rectangle((0,HUD-3,W,HUD),fill=(150,120,86,255))
-ph=40; ty=(HUD-ph)//2
-def W_of(im): return int(im.width*ph/im.height)
-def place_center(im,cx): img.alpha_composite(im.resize((W_of(im),ph),Image.LANCZOS),(int(cx-W_of(im)/2),ty))
+BW,BH=150,42; ty=(HUD-BH)//2          # 세 박스 동일 크기
+def place_center(im,cx): img.alpha_composite(im.resize((BW,BH),Image.LANCZOS),(int(cx-BW/2),ty))
 third=W/3
 place_center(score, third*0.5)
 place_center(stage, third*1.5)
