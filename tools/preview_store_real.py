@@ -6,14 +6,15 @@ A=os.path.join(os.path.dirname(__file__),"..","assets")
 L=lambda n: Image.open(os.path.join(A,n)).convert("RGBA")
 char=L("char_store.png"); fridge=L("store_fridgewall.png"); coffee=L("store_coffeerow.png")
 score=L("hud_score.png"); stage=L("hud_stage.png"); timer=L("hud_timer.png")
+TILES={0:L("tile_clean.png"),1:L("tile_d1.png"),2:L("tile_d2.png"),
+       3:L("tile_d3.png"),4:L("tile_d4.png"),5:L("tile_d5.png")}
 
 W,H=360,640
 img=Image.new("RGBA",(W,H),(228,216,194,255)); d=ImageDraw.Draw(img)
 
-# 바닥 타일
-TS=30; bcol=(232,222,198); grout=(212,200,174)
-floor=Image.new("RGBA",(TS,TS),bcol+(255,)); fd=ImageDraw.Draw(floor)
-fd.line((0,0,TS,0),fill=grout+(255,)); fd.line((0,0,0,TS),fill=grout+(255,))
+# 바닥 타일 — 실제 추출한 깨끗한 타일로 타일링
+TS=30
+floor=TILES[0].resize((TS,TS),Image.NEAREST)
 for y in range(0,H,TS):
     for x in range(0,W,TS): img.alpha_composite(floor,(x,y))
 
@@ -46,14 +47,12 @@ d.rounded_rectangle((gx-12,gy-12,gx+cols*cell+12,gy+rows*cell+12),12,
                     fill=(206,184,150,255),outline=(150,118,82),width=4)
 d.rounded_rectangle((gx-5,gy-5,gx+cols*cell+5,gy+rows*cell+5),8,fill=(236,226,202,255))
 dirt=[[5,3,1,0,2],[3,1,0,2,4],[1,0,2,4,1],[0,2,1,0,1],[2,1,0,1,0]]
-tint={5:(78,58,40,210),4:(96,72,48,180),3:(120,96,64,150),2:(150,128,92,110),1:(186,170,134,72)}
 for r in range(rows):
     for c in range(cols):
         x=gx+c*cell; y=gy+r*cell
-        img.alpha_composite(floor.resize((cell,cell),Image.NEAREST),(x,y))
-        d.rectangle((x,y,x+cell-1,y+cell-1),outline=(160,130,96,110),width=1)
         v=dirt[r][c]
-        if v>0: img.alpha_composite(Image.new("RGBA",(cell,cell),tint[v]),(x,y))
+        img.alpha_composite(TILES[v].resize((cell,cell),Image.NEAREST),(x,y))
+        d.rectangle((x,y,x+cell-1,y+cell-1),outline=(150,120,86,90),width=1)
 # 캐릭터
 chh=int(cell*2.4); cwd=int(char.width*chh/char.height)
 cxp=gx+2*cell+cell//2; foot=gy+2*cell+cell
