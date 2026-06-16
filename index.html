@@ -15,18 +15,13 @@
     <!-- 게임 캔버스 -->
     <canvas id="game"></canvas>
 
-    <!-- 상단 HUD -->
+    <!-- 상단 HUD (달님 명패 + 동적 텍스트) -->
     <header id="hud" class="hidden">
-      <div class="hud-left">
-        <div class="stage-name"><span id="hudStage">1</span> · <span id="hudTheme">내 방</span></div>
-        <div class="combo" id="hudCombo"></div>
-      </div>
-      <div class="hud-right">
-        <div class="timer" id="hudTimer">2:00</div>
-        <div class="hud-btns">
-          <button id="btnUndo" class="icon-btn" title="되돌리기" aria-label="되돌리기">↩</button>
-          <button id="btnReset" class="icon-btn" title="다시" aria-label="다시 시작">⟳</button>
-        </div>
+      <div class="plate plate-score"><span id="hudScore">0/0</span></div>
+      <div class="plate plate-stage"><span id="hudStage">STAGE 1</span></div>
+      <div class="plate plate-timer">
+        <span id="hudTimer">0:00</span>
+        <button id="btnReset" class="reset-hit" aria-label="다시 시작"></button>
       </div>
     </header>
 
@@ -35,6 +30,16 @@
 
     <!-- 진행 게이지 -->
     <div id="progressWrap" class="hidden"><div id="progressBar"></div></div>
+
+    <!-- 힌트(범례) 버튼 + 모달 -->
+    <button id="btnHint" class="hint-btn hidden" aria-label="힌트">?</button>
+    <div id="hintModal" class="hint-modal hidden">
+      <div class="hint-backdrop"></div>
+      <div class="hint-card">
+        <img class="hint-img" src="assets/hint_panel.png" alt="타일 범례" />
+        <button id="btnHintClose" class="hint-close">✕ Close</button>
+      </div>
+    </div>
 
     <!-- 타이틀 화면 -->
     <section id="screenTitle" class="screen">

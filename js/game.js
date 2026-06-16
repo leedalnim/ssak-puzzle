@@ -1,29 +1,16 @@
-// 게임 코어 — 한붓 청소 퍼즐 로직 + 렌더링.
-// 손맛: 이동 트윈/스쿼시, 먼지·반짝임 파티클, 콤보 사운드, 성장 그라데이션.
-
+// 게임 코어 — 한붓 청소 퍼즐 로직 + 편의점 테마 렌더링.
 import { IMG } from './assets.js';
 import { Particles } from './particles.js';
 import { initInput, DIRS } from './input.js';
 import * as Audio from './audio.js';
 
-const VW = 216, VH = 384;     // 가상 캔버스(9:16). CSS가 화면 높이에 맞춰 확대.
-const TILE = 16;              // 스프라이트 네이티브 타일 크기
-const MOVE_MS = 110;          // 한 칸 이동 시간
+const VW = 688, VH = 538;            // 캔버스 = store_bg 원본 크기
+const FRAME = { x0: 189, y0: 167, x1: 515, y1: 457 };  // 몰딩 안쪽(플레이 영역)
+const MOVE_MS = 110;
 
 const lerp = (a, b, t) => a + (b - a) * t;
 const easeOut = (t) => 1 - Math.pow(1 - t, 3);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-
-const hexRgb = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
-function hexLerp(h1, h2, t) {
-  const a = hexRgb(h1), b = hexRgb(h2);
-  const c = a.map((v, i) => Math.round(lerp(v, b[i], t)));
-  return `rgb(${c[0]},${c[1]},${c[2]})`;
-}
-function shade(h, amt) {
-  const c = hexRgb(h).map(v => clamp(v + amt, 0, 255));
-  return `rgb(${c[0]},${c[1]},${c[2]})`;
-}
 
 export class Game {
   constructor(canvas, hooks = {}) {
@@ -31,11 +18,11 @@ export class Game {
     this.ctx = canvas.getContext('2d');
     canvas.width = VW; canvas.height = VH;
     this.ctx.imageSmoothingEnabled = false;
-    this.hooks = hooks;          // { onProgress, onClear, onFail, onTimer, onCombo }
+    this.hooks = hooks;
     this.particles = new Particles();
     this.state = 'idle';
     this.shake = 0;
-    this.tilePx = 32;
+    this.tilePx = 58;
     this.boardX = 0; this.boardY = 0;
     this.last = performance.now();
 
@@ -43,7 +30,6 @@ export class Game {
       onMove: (dir) => this.tryMove(dir),
       onTap: (x, y) => this.onTap(x, y),
     });
-
     requestAnimationFrame(this._loop);
   }
 
@@ -51,30 +37,32 @@ export class Game {
     this.stage = stage;
     this.rows = stage.grid.length;
     this.cols = stage.grid[0].length;
-    // 보드 상태: dur(현재 내구도), wall(벽 여부)
     this.dur = stage.grid.map(row => row.slice());
     this.wall = stage.grid.map(row => row.map(v => v === 0));
-    this.totalDirt = stage.grid.flat().reduce((s, v) => s + v, 0);
+    // 장애물(이동 불가) — 해당 칸을 벽으로
+    this.obstacles = stage.obstacles || [];
+    for (const o of this.obstacles) {
+      if (this.wall[o.y]) this.wall[o.y][o.x] = true;
+      this.dur[o.y][o.x] = 0;
+    }
+    this.totalDirt = this.dur.flat().reduce((s, v) => s + v, 0);
 
-    // 레이아웃: 보드를 화면 중앙에. 스프라이트는 정수배(S)로 그려 픽셀 균일.
-    const availW = VW - 24, availH = VH - 96;
-    const S = clamp(Math.floor(Math.min(availW / (this.cols * TILE), availH / (this.rows * TILE))), 2, 6);
-    this.tilePx = TILE * S;
-    this.scale = S;
-    this.boardX = Math.round((VW - this.cols * this.tilePx) / 2);
-    this.boardY = Math.round((VH - this.rows * this.tilePx) / 2) + 8;
+    // 보드를 프레임 안쪽에 정사각 셀로 중앙 정렬
+    const fw = FRAME.x1 - FRAME.x0, fh = FRAME.y1 - FRAME.y0;
+    const cell = Math.floor(Math.min(fw / this.cols, fh / this.rows));
+    this.tilePx = cell;
+    this.boardX = Math.round(FRAME.x0 + (fw - this.cols * cell) / 2);
+    this.boardY = Math.round(FRAME.y0 + (fh - this.rows * cell) / 2);
 
-    // 히어로 배치 + 시작칸 청소
     this.hero = {
       gx: stage.start.x, gy: stage.start.y,
-      px: stage.start.x, py: stage.start.y, // 셀 단위(트윈용)
+      px: stage.start.x, py: stage.start.y,
       facing: 1, moving: false, t: 0,
-      fromX: 0, fromY: 0, frame: 0, frameT: 0, squash: 0,
+      fromX: 0, fromY: 0, squash: 0, bumpX: 0, bumpY: 0, bumpT: 0,
     };
     this._clean(stage.start.x, stage.start.y, true);
 
     this.combo = 0;
-    this.cleanedCount = (this.totalDirt - this.remainingDirt());
     this.undoStack = [];
     this.time = stage.time || 0;
     this.timeLeft = this.time;
@@ -94,14 +82,28 @@ export class Game {
     return s;
   }
 
+  cleanedTiles() {
+    let s = 0;
+    for (let y = 0; y < this.rows; y++)
+      for (let x = 0; x < this.cols; x++)
+        if (!this.wall[y][x] && this.dur[y][x] === 0) s++;
+    return s;
+  }
+  totalTiles() {
+    let s = 0;
+    for (let y = 0; y < this.rows; y++)
+      for (let x = 0; x < this.cols; x++)
+        if (!this.wall[y][x]) s++;
+    return s;
+  }
+
   _clean(x, y, silent = false) {
-    // 한 번 닦기: 내구도 -1. 0 도달 시 반짝.
     const before = this.dur[y][x];
     if (before <= 0) return false;
     this.dur[y][x] = before - 1;
     const cx = this.boardX + x * this.tilePx + this.tilePx / 2;
     const cy = this.boardY + y * this.tilePx + this.tilePx / 2;
-    const tints = { 3: '#6a5238', 2: '#76829e', 1: '#bcb89a' };
+    const tints = { 5: '#4e3a28', 4: '#604830', 3: '#78603c', 2: '#96825c', 1: '#bcb89a' };
     this.particles.dust(cx, cy, tints[before] || '#b9a98a', 7);
     if (!silent) {
       if (this.dur[y][x] === 0) {
@@ -117,10 +119,7 @@ export class Game {
   }
 
   _snapshot() {
-    return {
-      dur: this.dur.map(r => r.slice()),
-      gx: this.hero.gx, gy: this.hero.gy, combo: this.combo,
-    };
+    return { dur: this.dur.map(r => r.slice()), gx: this.hero.gx, gy: this.hero.gy, combo: this.combo };
   }
 
   tryMove(dir) {
@@ -133,31 +132,25 @@ export class Game {
     this.undoStack.push(this._snapshot());
     if (d.x !== 0) this.hero.facing = d.x > 0 ? 1 : -1;
 
-    // 이동 트윈 시작
     this.hero.fromX = this.hero.gx; this.hero.fromY = this.hero.gy;
     this.hero.gx = nx; this.hero.gy = ny;
     this.hero.moving = true; this.hero.t = 0;
 
-    // 진입 = 청소
     this.combo += 1;
     this._clean(nx, ny);
     if (this.hooks.onCombo) this.hooks.onCombo(this.combo);
     this._emitProgress();
-
     if (this.remainingDirt() === 0) this._win();
   }
 
-  _bump(d) {
-    // 막힌 방향으로 살짝 들썩(피드백)
-    this.hero.bumpX = d.x * 3; this.hero.bumpY = d.y * 3; this.hero.bumpT = 0.12;
-  }
+  _bump(d) { this.hero.bumpX = d.x * 3; this.hero.bumpY = d.y * 3; this.hero.bumpT = 0.12; }
 
   onTap(px, py) {
     if (this.state !== 'playing') return;
     const gx = Math.floor((px - this.boardX) / this.tilePx);
     const gy = Math.floor((py - this.boardY) / this.tilePx);
     const dx = gx - this.hero.gx, dy = gy - this.hero.gy;
-    if (Math.abs(dx) + Math.abs(dy) !== 1) return; // 인접만
+    if (Math.abs(dx) + Math.abs(dy) !== 1) return;
     if (dx === 1) this.tryMove('right');
     else if (dx === -1) this.tryMove('left');
     else if (dy === 1) this.tryMove('down');
@@ -175,15 +168,8 @@ export class Game {
     this._emitProgress();
   }
 
-  reset() {
-    if (!this.stage) return;
-    this.loadStage(this.stage);
-    Audio.sfxUI();
-  }
-
-  addTime(sec) {
-    if (this.time > 0) { this.timeLeft += sec; this.state = 'playing'; }
-  }
+  reset() { if (this.stage) { this.loadStage(this.stage); Audio.sfxUI(); } }
+  addTime(sec) { if (this.time > 0) { this.timeLeft += sec; this.state = 'playing'; } }
 
   _win() {
     this.state = 'clear';
@@ -193,7 +179,6 @@ export class Game {
     const elapsed = this.time > 0 ? this.time - this.timeLeft : null;
     setTimeout(() => this.hooks.onClear && this.hooks.onClear({ elapsed }), 700);
   }
-
   _fail(reason) {
     if (this.state !== 'playing') return;
     this.state = 'fail';
@@ -205,9 +190,10 @@ export class Game {
     const cleaned = this.totalDirt - this.remainingDirt();
     this.progress = this.totalDirt ? cleaned / this.totalDirt : 0;
     if (this.hooks.onProgress) this.hooks.onProgress(this.progress);
+    if (this.hooks.onScore) this.hooks.onScore(this.cleanedTiles(), this.totalTiles());
   }
 
-  // ----------------------------- 렌더 루프 -----------------------------
+  // ----------------------------- 렌더 -----------------------------
   _loop = (now) => {
     const dt = Math.min((now - this.last) / 1000, 0.05);
     this.last = now;
@@ -220,18 +206,8 @@ export class Game {
     const h = this.hero;
     if (h && h.moving) {
       h.t += dt * 1000 / MOVE_MS;
-      if (h.t >= 1) {
-        h.t = 1; h.moving = false;
-        h.px = h.gx; h.py = h.gy;
-        h.squash = 1; // 착지 스쿼시
-      } else {
-        const e = easeOut(h.t);
-        h.px = lerp(h.fromX, h.gx, e);
-        h.py = lerp(h.fromY, h.gy, e);
-        // 걷기 프레임
-        h.frameT += dt;
-        if (h.frameT > 0.09) { h.frameT = 0; h.frame ^= 1; }
-      }
+      if (h.t >= 1) { h.t = 1; h.moving = false; h.px = h.gx; h.py = h.gy; h.squash = 1; }
+      else { const e = easeOut(h.t); h.px = lerp(h.fromX, h.gx, e); h.py = lerp(h.fromY, h.gy, e); }
     }
     if (h) {
       if (h.squash > 0) h.squash = Math.max(0, h.squash - dt * 6);
@@ -239,7 +215,6 @@ export class Game {
     }
     if (this.shake > 0) this.shake = Math.max(0, this.shake - dt * 16);
     this.particles.update(dt);
-
     if (this.state === 'playing' && this.time > 0) {
       this.timeLeft -= dt;
       if (this.hooks.onTimer) this.hooks.onTimer(Math.max(0, this.timeLeft), this.time);
@@ -251,103 +226,15 @@ export class Game {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, VW, VH);
     if (!this.stage) return;
-
-    // 픽셀 방 배경 + 성장(밝아짐) 연출
-    const p = this.progress || 0;
-    this._drawRoom(ctx, p);
+    if (IMG.store_bg) ctx.drawImage(IMG.store_bg, 0, 0, VW, VH);
 
     ctx.save();
-    if (this.shake > 0) {
-      ctx.translate((Math.random() * 2 - 1) * this.shake, (Math.random() * 2 - 1) * this.shake);
-    }
-
-    this._drawBoardBase(ctx);
+    if (this.shake > 0) ctx.translate((Math.random() * 2 - 1) * this.shake, (Math.random() * 2 - 1) * this.shake);
     this._drawTiles(ctx);
-    this._drawDecor(ctx);
+    this._drawObstacles(ctx);
     this._drawHero(ctx);
     this.particles.draw(ctx);
-
     ctx.restore();
-  }
-
-  _drawRoom(ctx, p) {
-    const st = this.stage;
-    const WALL_H = 92;
-    // 벽
-    ctx.fillStyle = st.wall;
-    ctx.fillRect(0, 0, VW, WALL_H);
-    // 벽 도트 패턴(은은한 벽지)
-    ctx.fillStyle = 'rgba(255,255,255,.30)';
-    for (let y = 10, r = 0; y < WALL_H - 12; y += 14, r++)
-      for (let x = 8 + (r % 2 ? 9 : 0); x < VW; x += 18) ctx.fillRect(x, y, 2, 2);
-    // 창문
-    if (IMG.window) {
-      const ww = 70, wh = 60, wx = Math.round((VW - ww) / 2), wy = 14;
-      ctx.fillStyle = 'rgba(0,0,0,.10)';
-      ctx.fillRect(wx - 2, wy + 3, ww + 4, wh + 4);
-      ctx.drawImage(IMG.window, wx, wy, ww, wh);
-      // 햇살(성장에 따라 강해짐)
-      const sun = ctx.createLinearGradient(wx, wy, wx, VH * 0.7);
-      sun.addColorStop(0, `rgba(255,244,200,${0.18 + 0.3 * p})`);
-      sun.addColorStop(1, 'rgba(255,244,200,0)');
-      ctx.fillStyle = sun;
-      ctx.fillRect(wx - 6, wy, ww + 12, VH * 0.6);
-    }
-    // 베이스보드
-    ctx.fillStyle = shade(st.wall, -26);
-    ctx.fillRect(0, WALL_H - 7, VW, 7);
-    ctx.fillStyle = 'rgba(0,0,0,.10)';
-    ctx.fillRect(0, WALL_H, VW, 3);
-    // 바닥
-    ctx.fillStyle = st.floor;
-    ctx.fillRect(0, WALL_H + 3, VW, VH - WALL_H - 3);
-    // 바닥 타일 격자(은은)
-    ctx.strokeStyle = 'rgba(120,86,54,.10)';
-    ctx.lineWidth = 1;
-    for (let x = ((VW / 2) % 24); x <= VW; x += 24) { ctx.beginPath(); ctx.moveTo(x + .5, WALL_H + 3); ctx.lineTo(x + .5, VH); ctx.stroke(); }
-    for (let y = WALL_H + 3; y <= VH; y += 24) { ctx.beginPath(); ctx.moveTo(0, y + .5); ctx.lineTo(VW, y + .5); ctx.stroke(); }
-    // 따뜻한 분위기 빛(성장)
-    const glow = ctx.createRadialGradient(VW / 2, WALL_H, 20, VW / 2, VH * 0.5, VH * 0.8);
-    glow.addColorStop(0, `rgba(255,238,198,${0.05 + 0.18 * p})`);
-    glow.addColorStop(1, 'rgba(255,238,198,0)');
-    ctx.fillStyle = glow;
-    ctx.fillRect(0, 0, VW, VH);
-    // 스테이지별 소품(왼/오 슬롯, 바닥 아래쪽에 안착)
-    const props = st.props || ['plant', 'cat'];
-    const s = 2.3;
-    const place = (name, leftSide) => {
-      const img = IMG[name];
-      if (!img) return;
-      const w = img.width * s, h = img.height * s;
-      const x = leftSide ? 4 : VW - w - 4;
-      const y = VH - h - 4;
-      // 소품 그림자
-      ctx.fillStyle = 'rgba(70,50,30,.16)';
-      ctx.beginPath();
-      ctx.ellipse(x + w / 2, y + h - 3, w * 0.42, 5, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.drawImage(img, x, y, w, h);
-    };
-    if (props[0]) place(props[0], true);
-    if (props[1]) place(props[1], false);
-  }
-
-  _drawBoardBase(ctx) {
-    // 보드 밑 매트 — 부드러운 크림색 + 파스텔 테두리로 청소 구역을 귀엽게 안착
-    const pad = Math.round(this.scale * 3);
-    const x = this.boardX - pad, y = this.boardY - pad;
-    const w = this.cols * this.tilePx + pad * 2, h = this.rows * this.tilePx + pad * 2;
-    ctx.fillStyle = 'rgba(80,60,40,.14)';
-    this._roundRect(ctx, x, y + 5, w, h, 10); ctx.fill();
-    // 파스텔 테두리(벽 색에서 따옴)
-    ctx.fillStyle = shade(this.stage.wall, -8);
-    this._roundRect(ctx, x, y, w, h, 10); ctx.fill();
-    // 크림 매트 면
-    ctx.fillStyle = 'rgb(255,250,242)';
-    this._roundRect(ctx, x + 2, y + 2, w - 4, h - 4, 8); ctx.fill();
-    ctx.strokeStyle = 'rgba(180,150,120,.30)';
-    ctx.lineWidth = 1;
-    this._roundRect(ctx, x + 1.5, y + 1.5, w - 3, h - 3, 9); ctx.stroke();
   }
 
   _drawTiles(ctx) {
@@ -357,82 +244,46 @@ export class Game {
         const d = this.dur[y][x];
         const img = IMG['tile' + d];
         const dx = this.boardX + x * this.tilePx, dy = this.boardY + y * this.tilePx;
-        ctx.drawImage(img, dx, dy, this.tilePx, this.tilePx);
-        // 체커 톤: 격자 가독성 + 바닥다움
-        if ((x + y) & 1) {
-          ctx.fillStyle = 'rgba(60,40,30,.07)';
-          ctx.fillRect(dx, dy, this.tilePx, this.tilePx);
-        }
-        // 남은 횟수 핍 — 여러 번 닦아야 하는 2·3 칸만(가독성)
-        if (d >= 2) this._drawPips(ctx, dx, dy, d);
+        if (img) ctx.drawImage(img, dx, dy, this.tilePx, this.tilePx);
       }
     }
   }
 
-  _drawPips(ctx, dx, dy, n) {
-    const s = this.scale;
-    const r = Math.max(1.5, s * 0.9);
-    const gap = r * 2.4;
-    const totalW = (n - 1) * gap;
-    const cx = dx + this.tilePx / 2 - totalW / 2;
-    const cy = dy + this.tilePx - r * 2.2;
-    const colors = { 3: '#f0d66e', 2: '#9fb6e0', 1: '#e7e1d2' };
-    for (let i = 0; i < n; i++) {
-      ctx.beginPath();
-      ctx.arc(cx + i * gap, cy, r, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fill();
-      ctx.beginPath();
-      ctx.arc(cx + i * gap, cy - 0.5, r * 0.7, 0, Math.PI * 2);
-      ctx.fillStyle = colors[n] || '#fff'; ctx.fill();
-    }
-  }
-
-  _drawDecor(ctx) {
-    if (!this.stage.decor) return;
-    for (const d of this.stage.decor) {
-      if (d.x >= this.cols || d.y >= this.rows) continue;
-      // 해당 칸이 아직 더러우면 쓰레기 표시(닦으면 사라짐)
-      if (!this.wall[d.y][d.x] && this.dur[d.y][d.x] <= 0) continue;
-      const img = IMG[d.type];
+  _drawObstacles(ctx) {
+    for (const o of this.obstacles) {
+      const img = IMG['obstacle_' + o.type];
       if (!img) continue;
-      const dx = this.boardX + d.x * this.tilePx;
-      const dy = this.boardY + d.y * this.tilePx - Math.round(this.scale * 4);
-      ctx.drawImage(img, dx, dy, this.tilePx, this.tilePx);
+      const cell = this.tilePx;
+      const h = cell * 1.35, w = img.width * h / img.height;
+      const cx = this.boardX + o.x * cell + cell / 2;
+      const footY = this.boardY + o.y * cell + cell;
+      ctx.fillStyle = 'rgba(0,0,0,.22)';
+      ctx.beginPath();
+      ctx.ellipse(cx, footY - cell * 0.12, cell * 0.34, cell * 0.12, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.drawImage(img, Math.round(cx - w / 2), Math.round(footY - h + cell * 0.05), Math.round(w), Math.round(h));
     }
   }
 
   _drawHero(ctx) {
-    const h = this.hero, s = this.scale;
-    const baseX = this.boardX + h.px * this.tilePx + this.tilePx / 2 + (h.bumpX || 0) * s / 3;
-    const footY = this.boardY + h.py * this.tilePx + this.tilePx + (h.bumpY || 0) * s / 3;
-    // 그림자
+    const h = this.hero, cell = this.tilePx;
+    const baseX = this.boardX + h.px * cell + cell / 2 + (h.bumpX || 0);
+    const footY = this.boardY + h.py * cell + cell + (h.bumpY || 0);
+    const img = IMG.char_player;
+    const ht = cell * 1.55, w = img ? img.width * ht / img.height : cell;
+
     ctx.fillStyle = 'rgba(0,0,0,.25)';
     ctx.beginPath();
-    ctx.ellipse(baseX, footY - s * 2, this.tilePx * 0.32, this.tilePx * 0.13, 0, 0, Math.PI * 2);
+    ctx.ellipse(baseX, footY - cell * 0.1, cell * 0.3, cell * 0.11, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    const img = (h.moving ? (h.frame ? IMG.hero_walk_b : IMG.hero_walk_a) : IMG.hero_idle);
-    const w = 16 * s, ht = 24 * s;
-    // 착지 스쿼시
     const sq = h.squash;
     const sx = 1 + sq * 0.12, sy = 1 - sq * 0.16;
-    // 걷는 동안 살짝 위아래 바운스
-    const bounce = h.moving ? Math.sin(h.t * Math.PI) * s * 1.2 : 0;
-
+    const bounce = h.moving ? Math.sin(h.t * Math.PI) * cell * 0.12 : 0;
     ctx.save();
     ctx.translate(baseX, footY - bounce);
     ctx.scale(h.facing * sx, sy);
-    ctx.drawImage(img, -w / 2, -ht + s * 2, w, ht);
+    if (img) ctx.drawImage(img, -w / 2, -ht + cell * 0.08, w, ht);
     ctx.restore();
-  }
-
-  _roundRect(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
   }
 }

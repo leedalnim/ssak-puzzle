@@ -24,6 +24,8 @@ function show(id) {
   $('hud').classList.toggle('hidden', !inGame);
   $('btnClose').classList.toggle('hidden', false);
   $('progressWrap').classList.toggle('hidden', !inGame);
+  $('btnHint').classList.toggle('hidden', !inGame);
+  if (!inGame) $('hintModal').classList.add('hidden');
 }
 
 function fmtTime(sec) {
@@ -35,16 +37,12 @@ function fmtTime(sec) {
 function makeGame() {
   game = new Game($('game'), {
     onProgress: (p) => { $('progressBar').style.width = `${Math.round(p * 100)}%`; },
+    onScore: (cleaned, total) => { $('hudScore').textContent = `${cleaned}/${total}`; },
     onTimer: (left, total) => {
       const el = $('hudTimer');
       if (total <= 0) { el.textContent = '∞'; el.classList.remove('warn'); return; }
       el.textContent = fmtTime(left);
       el.classList.toggle('warn', left <= 15);
-    },
-    onCombo: (c) => {
-      const el = $('hudCombo');
-      el.textContent = c >= 3 ? `${c} 콤보!` : '';
-      el.style.transform = c >= 3 ? 'scale(1.15)' : 'scale(1)';
     },
     onClear: ({ elapsed }) => onStageClear(elapsed),
     onFail: ({ reason }) => onStageFail(reason),
@@ -67,8 +65,7 @@ function startStage(idx) {
 
 function beginStage(idx) {
   const st = stages[idx];
-  $('hudStage').textContent = st.id;
-  $('hudTheme').textContent = st.theme;
+  $('hudStage').textContent = 'STAGE ' + st.id;
   show(null);
   game.loadStage(st);
 }
@@ -134,9 +131,13 @@ function wireUI() {
     if (ok) { Toss.track('ad_watched', { stage: stages[current].id }); show(null); game.addTime(30); }
   });
 
-  $('btnUndo').addEventListener('click', () => game.undo());
   $('btnReset').addEventListener('click', () => game.reset());
   $('btnClose').addEventListener('click', () => { Audio.sfxUI(); show('screenTitle'); });
+
+  // 힌트(범례) 모달
+  $('btnHint').addEventListener('click', () => { Audio.sfxUI(); $('hintModal').classList.remove('hidden'); });
+  $('btnHintClose').addEventListener('click', () => { Audio.sfxUI(); $('hintModal').classList.add('hidden'); });
+  $('hintModal').querySelector('.hint-backdrop').addEventListener('click', () => $('hintModal').classList.add('hidden'));
 
   Toss.onClose = () => show('screenTitle');
 

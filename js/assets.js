@@ -1,24 +1,18 @@
 // 에셋 로더 — PNG 스프라이트를 미리 로드해 캐시한다.
-// 에셋 원본은 tools/gen_assets.py 가 생성한 assets/*.png.
-
 const MANIFEST = {
-  hero_idle: 'assets/hero_idle.png',
-  hero_walk_a: 'assets/hero_walk_a.png',
-  hero_walk_b: 'assets/hero_walk_b.png',
-  cat: 'assets/cat.png',
-  trashbag: 'assets/trashbag.png',
-  plant: 'assets/plant.png',
-  window: 'assets/window.png',
-  fridge: 'assets/fridge.png',
-  shelf: 'assets/shelf.png',
-  coffee: 'assets/coffee.png',
-  breadcase: 'assets/breadcase.png',
-  table: 'assets/table.png',
-  bed: 'assets/bed.png',
-  tile0: 'assets/tile_0.png',
-  tile1: 'assets/tile_1.png',
-  tile2: 'assets/tile_2.png',
-  tile3: 'assets/tile_3.png',
+  // 편의점 테마(달님 제작 에셋)
+  store_bg: 'assets/store_bg.png',
+  char_player: 'assets/char_player.png',
+  obstacle_plant: 'assets/obstacle_plant.png',
+  obstacle_boxes: 'assets/obstacle_boxes.png',
+  hint_panel: 'assets/hint_panel.png',
+  // 바닥 타일: 0=깨끗(완료), 1~5=더러움 단계
+  tile0: 'assets/tile_clean.png',
+  tile1: 'assets/tile_d1.png',
+  tile2: 'assets/tile_d2.png',
+  tile3: 'assets/tile_d3.png',
+  tile4: 'assets/tile_d4.png',
+  tile5: 'assets/tile_d5.png',
 };
 
 export const IMG = {};
