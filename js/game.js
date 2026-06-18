@@ -1,4 +1,4 @@
-// 게임 코어 — 한붓 청소 퍼즐 로직 + 편의점 테마 렌더링.
+// 게임 코어 — 한붓 청소 퍼즐 로직 + 집청소(코지룸) 테마 렌더링.
 import { IMG } from './assets.js';
 import { Particles } from './particles.js';
 import { initInput, DIRS } from './input.js';
@@ -86,7 +86,11 @@ export class Game {
     const tints = { 5: '#4e3a28', 4: '#604830', 3: '#78603c', 2: '#96825c', 1: '#bcb89a' };
     this.particles.dust(this._cx(x), this._cy(y), tints[before] || '#b9a98a', 7);
     if (!silent) {
-      if (this.dur[y][x] === 0) { this.particles.sparkle(this._cx(x), this._cy(y), 7); Audio.sfxSparkle(this.combo); this.shake = Math.min(this.shake + 2.2, 4); }
+      if (this.dur[y][x] === 0) {
+        this.particles.sparkle(this._cx(x), this._cy(y), 7);
+        this.particles.spriteBurst(['fx_clean_0', 'fx_clean_1', 'fx_clean_2', 'fx_clean_3'], this._cx(x), this._cy(y), this.cellW * 1.5, 0.5);
+        Audio.sfxSparkle(this.combo); this.shake = Math.min(this.shake + 2.2, 4);
+      }
       else { Audio.sfxClean(this.combo); this.shake = Math.min(this.shake + 1, 3); }
     }
     return true;

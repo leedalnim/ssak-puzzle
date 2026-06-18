@@ -1,8 +1,16 @@
 // 파티클 — 청소할 때 먼지가 흩어지고 반짝이는 연출.
 // 게임의 '손맛'과 시각적 만족감을 담당.
+import { IMG } from './assets.js';
 
 export class Particles {
-  constructor() { this.list = []; }
+  constructor() { this.list = []; this.anims = []; }
+
+  // 스프라이트 이펙트 버스트(프레임 시퀀스를 한 번 재생)
+  spriteBurst(keys, x, y, size, dur = 0.45) {
+    const frames = keys.map(k => IMG[k]).filter(Boolean);
+    if (!frames.length) return;
+    this.anims.push({ frames, x, y, size, dur, t: 0 });
+  }
 
   // 먼지 버스트 (한 칸 닦을 때)
   dust(x, y, tint = '#b9a98a', amount = 8) {
@@ -73,6 +81,11 @@ export class Particles {
       p.y += p.vy * dt;
       if (p.kind === 'confetti') p.rot += p.vr * dt;
     }
+    for (let i = this.anims.length - 1; i >= 0; i--) {
+      const a = this.anims[i];
+      a.t += dt;
+      if (a.t >= a.dur) this.anims.splice(i, 1);
+    }
   }
 
   draw(ctx) {
@@ -95,7 +108,17 @@ export class Particles {
       }
     }
     ctx.globalAlpha = 1;
+    // 스프라이트 이펙트
+    for (const a of this.anims) {
+      const k = a.t / a.dur;
+      const fi = Math.min(a.frames.length - 1, Math.floor(k * a.frames.length));
+      const img = a.frames[fi];
+      const w = a.size, h = img.height * w / img.width;
+      ctx.globalAlpha = Math.max(0, 1 - Math.pow(k, 2.2));
+      ctx.drawImage(img, a.x - w / 2, a.y - h / 2, w, h);
+    }
+    ctx.globalAlpha = 1;
   }
 
-  clear() { this.list.length = 0; }
+  clear() { this.list.length = 0; this.anims.length = 0; }
 }
