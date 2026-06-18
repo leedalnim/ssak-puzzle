@@ -54,6 +54,7 @@ html, body {
 /* ----- 게임 캔버스 (고해상도 에셋 → 부드럽게) ----- */
 #game {
   display: block;
+  order: 2;
   width: var(--gw);
   height: auto;
   margin-top: 4px;
@@ -65,6 +66,7 @@ html, body {
 
 /* ============================ HUD (달님 명패) ============================ */
 #hud {
+  order: 1;
   width: var(--gw);
   display: flex;
   justify-content: space-between;
