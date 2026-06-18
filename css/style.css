@@ -51,11 +51,9 @@ html, body {
   background: radial-gradient(120% 90% at 50% 0%, var(--bg1), var(--bg0) 70%);
 }
 
-/* ----- 게임 캔버스: 픽셀 선명하게 ----- */
+/* ----- 게임 캔버스 (고해상도 에셋 → 부드럽게) ----- */
 #game {
   display: block;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
   width: var(--gw);
   height: auto;
   margin-top: 4px;
@@ -76,11 +74,10 @@ html, body {
 }
 .plate {
   position: relative;
-  height: 38px;
+  height: 40px;
   background-size: 100% 100%;
   background-repeat: no-repeat;
-  image-rendering: pixelated;
-  font-family: 'Mona', 'DungGeunMo', monospace;
+  font-family: 'Mona12', 'Mona12 Text KR', monospace;
   color: #5c3a22;
 }
 .plate span {
@@ -270,7 +267,7 @@ html, body {
   border-radius: 7px;
   background: #decdb2;
   color: #6b4a32;
-  font-family: 'Mona', 'DungGeunMo', monospace;
+  font-family: 'Mona12', 'Mona12 Text KR', monospace;
   font-size: 18px;
   cursor: pointer;
   z-index: 7;
@@ -287,11 +284,10 @@ html, body {
 }
 .hint-img {
   width: min(86vw, 460px);
-  image-rendering: pixelated;
   filter: drop-shadow(0 8px 18px rgba(0,0,0,.4));
 }
 .hint-close {
-  font-family: 'Mona', 'DungGeunMo', monospace;
+  font-family: 'Mona12', 'Mona12 Text KR', monospace;
   font-size: 16px;
   color: #5c3a22;
   background: #e7d3a8;

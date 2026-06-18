@@ -4,32 +4,27 @@ import { Particles } from './particles.js';
 import { initInput, DIRS } from './input.js';
 import * as Audio from './audio.js';
 
-const VW = 688, VH = 538;            // 캔버스 = store_bg 원본 크기
-const FRAME = { x0: 189, y0: 167, x1: 515, y1: 457 };  // 몰딩 안쪽(플레이 영역)
-const MOVE_MS = 110;
+const VW = 688, VH = 538;
+const FRAME = { x0: 189, y0: 167, x1: 515, y1: 457 };  // 몰딩 안쪽
+const MOVE_MS = 120;
 
 const lerp = (a, b, t) => a + (b - a) * t;
 const easeOut = (t) => 1 - Math.pow(1 - t, 3);
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 export class Game {
   constructor(canvas, hooks = {}) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     canvas.width = VW; canvas.height = VH;
-    this.ctx.imageSmoothingEnabled = false;
+    this.ctx.imageSmoothingEnabled = true;        // 고해상도 에셋 → 부드럽게 축소
     this.hooks = hooks;
     this.particles = new Particles();
     this.state = 'idle';
     this.shake = 0;
-    this.tilePx = 58;
-    this.boardX = 0; this.boardY = 0;
+    this.cellW = 60; this.cellH = 58;
+    this.boardX = FRAME.x0; this.boardY = FRAME.y0;
     this.last = performance.now();
-
-    initInput(canvas, {
-      onMove: (dir) => this.tryMove(dir),
-      onTap: (x, y) => this.onTap(x, y),
-    });
+    initInput(canvas, { onMove: (dir) => this.tryMove(dir), onTap: (x, y) => this.onTap(x, y) });
     requestAnimationFrame(this._loop);
   }
 
@@ -39,26 +34,18 @@ export class Game {
     this.cols = stage.grid[0].length;
     this.dur = stage.grid.map(row => row.slice());
     this.wall = stage.grid.map(row => row.map(v => v === 0));
-    // 장애물(이동 불가) — 해당 칸을 벽으로
     this.obstacles = stage.obstacles || [];
-    for (const o of this.obstacles) {
-      if (this.wall[o.y]) this.wall[o.y][o.x] = true;
-      this.dur[o.y][o.x] = 0;
-    }
+    for (const o of this.obstacles) { if (this.wall[o.y]) this.wall[o.y][o.x] = true; this.dur[o.y][o.x] = 0; }
     this.totalDirt = this.dur.flat().reduce((s, v) => s + v, 0);
 
-    // 보드를 프레임 안쪽에 정사각 셀로 중앙 정렬
-    const fw = FRAME.x1 - FRAME.x0, fh = FRAME.y1 - FRAME.y0;
-    const cell = Math.floor(Math.min(fw / this.cols, fh / this.rows));
-    this.tilePx = cell;
-    this.boardX = Math.round(FRAME.x0 + (fw - this.cols * cell) / 2);
-    this.boardY = Math.round(FRAME.y0 + (fh - this.rows * cell) / 2);
+    // 보드를 프레임 안쪽에 꽉 채움(테두리와 정합)
+    this.boardX = FRAME.x0; this.boardY = FRAME.y0;
+    this.cellW = (FRAME.x1 - FRAME.x0) / this.cols;
+    this.cellH = (FRAME.y1 - FRAME.y0) / this.rows;
 
     this.hero = {
-      gx: stage.start.x, gy: stage.start.y,
-      px: stage.start.x, py: stage.start.y,
-      facing: 1, moving: false, t: 0,
-      fromX: 0, fromY: 0, squash: 0, bumpX: 0, bumpY: 0, bumpT: 0,
+      gx: stage.start.x, gy: stage.start.y, px: stage.start.x, py: stage.start.y,
+      dir: 'down', moving: false, t: 0, fromX: 0, fromY: 0, squash: 0, bumpX: 0, bumpY: 0, bumpT: 0,
     };
     this._clean(stage.start.x, stage.start.y, true);
 
@@ -71,29 +58,24 @@ export class Game {
     this.shake = 0;
     this._emitProgress();
     if (this.hooks.onTimer) this.hooks.onTimer(this.timeLeft, this.time);
-    if (this.hooks.onCombo) this.hooks.onCombo(0);
   }
+
+  _cx(x) { return this.boardX + (x + 0.5) * this.cellW; }
+  _cy(y) { return this.boardY + (y + 0.5) * this.cellH; }
 
   remainingDirt() {
     let s = 0;
-    for (let y = 0; y < this.rows; y++)
-      for (let x = 0; x < this.cols; x++)
-        if (!this.wall[y][x]) s += this.dur[y][x];
+    for (let y = 0; y < this.rows; y++) for (let x = 0; x < this.cols; x++) if (!this.wall[y][x]) s += this.dur[y][x];
     return s;
   }
-
   cleanedTiles() {
     let s = 0;
-    for (let y = 0; y < this.rows; y++)
-      for (let x = 0; x < this.cols; x++)
-        if (!this.wall[y][x] && this.dur[y][x] === 0) s++;
+    for (let y = 0; y < this.rows; y++) for (let x = 0; x < this.cols; x++) if (!this.wall[y][x] && this.dur[y][x] === 0) s++;
     return s;
   }
   totalTiles() {
     let s = 0;
-    for (let y = 0; y < this.rows; y++)
-      for (let x = 0; x < this.cols; x++)
-        if (!this.wall[y][x]) s++;
+    for (let y = 0; y < this.rows; y++) for (let x = 0; x < this.cols; x++) if (!this.wall[y][x]) s++;
     return s;
   }
 
@@ -101,44 +83,29 @@ export class Game {
     const before = this.dur[y][x];
     if (before <= 0) return false;
     this.dur[y][x] = before - 1;
-    const cx = this.boardX + x * this.tilePx + this.tilePx / 2;
-    const cy = this.boardY + y * this.tilePx + this.tilePx / 2;
     const tints = { 5: '#4e3a28', 4: '#604830', 3: '#78603c', 2: '#96825c', 1: '#bcb89a' };
-    this.particles.dust(cx, cy, tints[before] || '#b9a98a', 7);
+    this.particles.dust(this._cx(x), this._cy(y), tints[before] || '#b9a98a', 7);
     if (!silent) {
-      if (this.dur[y][x] === 0) {
-        this.particles.sparkle(cx, cy, 7);
-        Audio.sfxSparkle(this.combo);
-        this.shake = Math.min(this.shake + 2.2, 4);
-      } else {
-        Audio.sfxClean(this.combo);
-        this.shake = Math.min(this.shake + 1, 3);
-      }
+      if (this.dur[y][x] === 0) { this.particles.sparkle(this._cx(x), this._cy(y), 7); Audio.sfxSparkle(this.combo); this.shake = Math.min(this.shake + 2.2, 4); }
+      else { Audio.sfxClean(this.combo); this.shake = Math.min(this.shake + 1, 3); }
     }
     return true;
   }
 
-  _snapshot() {
-    return { dur: this.dur.map(r => r.slice()), gx: this.hero.gx, gy: this.hero.gy, combo: this.combo };
-  }
+  _snapshot() { return { dur: this.dur.map(r => r.slice()), gx: this.hero.gx, gy: this.hero.gy, combo: this.combo }; }
 
   tryMove(dir) {
     if (this.state !== 'playing' || this.hero.moving) return;
     const d = DIRS[dir];
     const nx = this.hero.gx + d.x, ny = this.hero.gy + d.y;
+    this.hero.dir = dir;
     if (nx < 0 || ny < 0 || nx >= this.cols || ny >= this.rows) { Audio.sfxMoveBlocked(); return; }
     if (this.wall[ny][nx] || this.dur[ny][nx] <= 0) { Audio.sfxMoveBlocked(); this._bump(d); return; }
-
     this.undoStack.push(this._snapshot());
-    if (d.x !== 0) this.hero.facing = d.x > 0 ? 1 : -1;
-
     this.hero.fromX = this.hero.gx; this.hero.fromY = this.hero.gy;
-    this.hero.gx = nx; this.hero.gy = ny;
-    this.hero.moving = true; this.hero.t = 0;
-
+    this.hero.gx = nx; this.hero.gy = ny; this.hero.moving = true; this.hero.t = 0;
     this.combo += 1;
     this._clean(nx, ny);
-    if (this.hooks.onCombo) this.hooks.onCombo(this.combo);
     this._emitProgress();
     if (this.remainingDirt() === 0) this._win();
   }
@@ -147,8 +114,8 @@ export class Game {
 
   onTap(px, py) {
     if (this.state !== 'playing') return;
-    const gx = Math.floor((px - this.boardX) / this.tilePx);
-    const gy = Math.floor((py - this.boardY) / this.tilePx);
+    const gx = Math.floor((px - this.boardX) / this.cellW);
+    const gy = Math.floor((py - this.boardY) / this.cellH);
     const dx = gx - this.hero.gx, dy = gy - this.hero.gy;
     if (Math.abs(dx) + Math.abs(dy) !== 1) return;
     if (dx === 1) this.tryMove('right');
@@ -160,32 +127,22 @@ export class Game {
   undo() {
     if (this.state !== 'playing' || !this.undoStack.length || this.hero.moving) return;
     const s = this.undoStack.pop();
-    this.dur = s.dur; this.hero.gx = s.gx; this.hero.gy = s.gy;
-    this.hero.px = s.gx; this.hero.py = s.gy;
-    this.combo = 0;
-    if (this.hooks.onCombo) this.hooks.onCombo(0);
-    Audio.sfxUI();
-    this._emitProgress();
+    this.dur = s.dur; this.hero.gx = s.gx; this.hero.gy = s.gy; this.hero.px = s.gx; this.hero.py = s.gy;
+    this.combo = 0; Audio.sfxUI(); this._emitProgress();
   }
-
   reset() { if (this.stage) { this.loadStage(this.stage); Audio.sfxUI(); } }
   addTime(sec) { if (this.time > 0) { this.timeLeft += sec; this.state = 'playing'; } }
 
   _win() {
-    this.state = 'clear';
-    Audio.sfxClear();
-    this.particles.confetti(VW, VH, 70);
-    this.shake = 5;
+    this.state = 'clear'; Audio.sfxClear(); this.particles.confetti(VW, VH, 70); this.shake = 5;
     const elapsed = this.time > 0 ? this.time - this.timeLeft : null;
     setTimeout(() => this.hooks.onClear && this.hooks.onClear({ elapsed }), 700);
   }
   _fail(reason) {
     if (this.state !== 'playing') return;
-    this.state = 'fail';
-    Audio.sfxFail();
+    this.state = 'fail'; Audio.sfxFail();
     setTimeout(() => this.hooks.onFail && this.hooks.onFail({ reason }), 400);
   }
-
   _emitProgress() {
     const cleaned = this.totalDirt - this.remainingDirt();
     this.progress = this.totalDirt ? cleaned / this.totalDirt : 0;
@@ -193,12 +150,9 @@ export class Game {
     if (this.hooks.onScore) this.hooks.onScore(this.cleanedTiles(), this.totalTiles());
   }
 
-  // ----------------------------- 렌더 -----------------------------
   _loop = (now) => {
     const dt = Math.min((now - this.last) / 1000, 0.05);
-    this.last = now;
-    this._update(dt);
-    this._draw();
+    this.last = now; this._update(dt); this._draw();
     requestAnimationFrame(this._loop);
   };
 
@@ -227,7 +181,6 @@ export class Game {
     ctx.clearRect(0, 0, VW, VH);
     if (!this.stage) return;
     if (IMG.store_bg) ctx.drawImage(IMG.store_bg, 0, 0, VW, VH);
-
     ctx.save();
     if (this.shake > 0) ctx.translate((Math.random() * 2 - 1) * this.shake, (Math.random() * 2 - 1) * this.shake);
     this._drawTiles(ctx);
@@ -241,10 +194,8 @@ export class Game {
     for (let y = 0; y < this.rows; y++) {
       for (let x = 0; x < this.cols; x++) {
         if (this.wall[y][x]) continue;
-        const d = this.dur[y][x];
-        const img = IMG['tile' + d];
-        const dx = this.boardX + x * this.tilePx, dy = this.boardY + y * this.tilePx;
-        if (img) ctx.drawImage(img, dx, dy, this.tilePx, this.tilePx);
+        const img = IMG['tile' + this.dur[y][x]];
+        if (img) ctx.drawImage(img, this.boardX + x * this.cellW, this.boardY + y * this.cellH, this.cellW + 0.5, this.cellH + 0.5);
       }
     }
   }
@@ -253,37 +204,37 @@ export class Game {
     for (const o of this.obstacles) {
       const img = IMG['obstacle_' + o.type];
       if (!img) continue;
-      const cell = this.tilePx;
-      const h = cell * 1.35, w = img.width * h / img.height;
-      const cx = this.boardX + o.x * cell + cell / 2;
-      const footY = this.boardY + o.y * cell + cell;
+      const h = this.cellH * 1.4, w = img.width * h / img.height;
+      const cx = this._cx(o.x), footY = this.boardY + (o.y + 1) * this.cellH;
       ctx.fillStyle = 'rgba(0,0,0,.22)';
-      ctx.beginPath();
-      ctx.ellipse(cx, footY - cell * 0.12, cell * 0.34, cell * 0.12, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.drawImage(img, Math.round(cx - w / 2), Math.round(footY - h + cell * 0.05), Math.round(w), Math.round(h));
+      ctx.beginPath(); ctx.ellipse(cx, footY - this.cellH * 0.12, this.cellW * 0.34, this.cellH * 0.12, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.drawImage(img, cx - w / 2, footY - h + this.cellH * 0.05, w, h);
     }
   }
 
   _drawHero(ctx) {
-    const h = this.hero, cell = this.tilePx;
-    const baseX = this.boardX + h.px * cell + cell / 2 + (h.bumpX || 0);
-    const footY = this.boardY + h.py * cell + cell + (h.bumpY || 0);
-    const img = IMG.char_player;
-    const ht = cell * 1.55, w = img ? img.width * ht / img.height : cell;
+    const h = this.hero;
+    const baseX = this.boardX + (h.px + 0.5) * this.cellW + (h.bumpX || 0);
+    const footY = this.boardY + (h.py + 1) * this.cellH + (h.bumpY || 0);
+    // 방향별 프레임 + 걷기 애니
+    let key = 'down', flip = 1;
+    if (h.dir === 'up') key = 'up';
+    else if (h.dir === 'left') { key = 'side'; flip = -1; }
+    else if (h.dir === 'right') key = 'side';
+    const frame = h.moving ? (1 + (Math.floor(h.t * 3) % 2)) : 0;
+    const img = IMG['char_' + key + '_' + frame] || IMG.char_down_0;
+    const ht = this.cellH * 1.5, w = img ? img.width * ht / img.height : this.cellW;
 
     ctx.fillStyle = 'rgba(0,0,0,.25)';
-    ctx.beginPath();
-    ctx.ellipse(baseX, footY - cell * 0.1, cell * 0.3, cell * 0.11, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.ellipse(baseX, footY - this.cellH * 0.1, this.cellW * 0.3, this.cellH * 0.11, 0, 0, Math.PI * 2); ctx.fill();
 
     const sq = h.squash;
     const sx = 1 + sq * 0.12, sy = 1 - sq * 0.16;
-    const bounce = h.moving ? Math.sin(h.t * Math.PI) * cell * 0.12 : 0;
+    const bounce = h.moving ? Math.sin(h.t * Math.PI) * this.cellH * 0.1 : 0;
     ctx.save();
     ctx.translate(baseX, footY - bounce);
-    ctx.scale(h.facing * sx, sy);
-    if (img) ctx.drawImage(img, -w / 2, -ht + cell * 0.08, w, ht);
+    ctx.scale(flip * sx, sy);
+    if (img) ctx.drawImage(img, -w / 2, -ht + this.cellH * 0.08, w, ht);
     ctx.restore();
   }
 }
