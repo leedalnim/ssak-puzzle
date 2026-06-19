@@ -16,24 +16,29 @@
     <!-- 게임 캔버스 -->
     <canvas id="game"></canvas>
 
-    <!-- 상단 HUD (달님 명패 + 동적 텍스트) -->
+    <!-- 상단 HUD (나무 명패: STAGE / TIME / TILES LEFT + 일시정지) -->
     <header id="hud" class="hidden">
-      <div class="plate plate-score"><span id="hudScore">0/0</span></div>
-      <div class="plate plate-stage"><span id="hudStage">STAGE 1</span></div>
-      <div class="plate plate-timer">
-        <span id="hudTimer">0:00</span>
-        <button id="btnReset" class="reset-hit" aria-label="다시 시작"></button>
-      </div>
+      <div class="wplate"><div class="wtab">STAGE</div><div class="wval"><span id="hudStage">1</span></div></div>
+      <div class="wplate"><div class="wtab">TIME</div><div class="wval"><span class="ico ico-clock"></span><span id="hudTimer">0:00</span></div></div>
+      <div class="wplate"><div class="wtab">TILES LEFT</div><div class="wval"><span class="ico ico-tile"></span><span id="hudTiles">0</span></div></div>
+      <button id="btnClose" class="pause-btn hidden" aria-label="일시정지">❚❚</button>
     </header>
 
-    <!-- 우상단 닫기(앱인토스 필수 요건 자리) -->
-    <button id="btnClose" class="close-btn hidden" aria-label="닫기">✕</button>
+    <!-- 하단 툴바: ? + 배너 + 도구 슬롯(되돌리기) -->
+    <div id="toolbar" class="hidden">
+      <button id="btnHint" class="tb-round" aria-label="힌트">?</button>
+      <div class="tb-banner"><span class="spark">✦</span><span id="tbBanner">CLEAN ALL TILES!</span><span class="spark">✦</span></div>
+      <button id="btnReset" class="tb-slot" aria-label="되돌리기">
+        <img class="tb-tool" src="assets/home/tool_mop.png" alt="대걸레" />
+        <span class="tb-badge" id="tbCount">0</span>
+      </button>
+    </div>
 
     <!-- 진행 게이지 -->
     <div id="progressWrap" class="hidden"><div id="progressBar"></div></div>
 
-    <!-- 힌트(범례) 버튼 + 모달 -->
-    <button id="btnHint" class="hint-btn hidden" aria-label="힌트">?</button>
+    <!-- 힌트(범례) 모달 -->
+    <span class="hidden" aria-hidden="true"></span>
     <div id="hintModal" class="hint-modal hidden">
       <div class="hint-backdrop"></div>
       <div class="hint-card">

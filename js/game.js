@@ -191,6 +191,7 @@ export class Game {
     this._drawObstacles(ctx);
     this._drawHero(ctx);
     this.particles.draw(ctx);
+    if (IMG.board_frame) ctx.drawImage(IMG.board_frame, 0, 0, VW, VH);
     ctx.restore();
   }
 

@@ -3,6 +3,7 @@ const H = 'assets/home/';
 const MANIFEST = {
   // 집청소 테마 — 코지룸 배경 + 가구 소품으로 구성
   store_bg: H + 'room_bg.png',
+  board_frame: H + 'board_frame.png',
   obstacle_plant: H + 'furn_plant.png',
   obstacle_boxes: H + 'prop_23.png',
   hint_panel: 'assets/hint_panel.png',

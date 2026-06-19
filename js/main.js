@@ -22,9 +22,8 @@ function show(id) {
   // 게임 HUD/캔버스 표시 여부
   const inGame = id === null;
   $('hud').classList.toggle('hidden', !inGame);
-  $('btnClose').classList.toggle('hidden', false);
-  $('progressWrap').classList.toggle('hidden', !inGame);
-  $('btnHint').classList.toggle('hidden', !inGame);
+  $('toolbar').classList.toggle('hidden', !inGame);
+  $('btnClose').classList.toggle('hidden', !inGame);
   if (!inGame) $('hintModal').classList.add('hidden');
 }
 
@@ -37,7 +36,10 @@ function fmtTime(sec) {
 function makeGame() {
   game = new Game($('game'), {
     onProgress: (p) => { $('progressBar').style.width = `${Math.round(p * 100)}%`; },
-    onScore: (cleaned, total) => { $('hudScore').textContent = `${cleaned}/${total}`; },
+    onScore: (cleaned, total) => {
+      $('hudTiles').textContent = String(total - cleaned);
+      $('tbCount').textContent = String(game ? game.undoStack.length : 0);
+    },
     onTimer: (left, total) => {
       const el = $('hudTimer');
       if (total <= 0) { el.textContent = '∞'; el.classList.remove('warn'); return; }
@@ -65,7 +67,7 @@ function startStage(idx) {
 
 function beginStage(idx) {
   const st = stages[idx];
-  $('hudStage').textContent = 'STAGE ' + st.id;
+  $('hudStage').textContent = String(st.id);
   show(null);
   game.loadStage(st);
 }
@@ -131,8 +133,8 @@ function wireUI() {
     if (ok) { Toss.track('ad_watched', { stage: stages[current].id }); show(null); game.addTime(30); }
   });
 
-  $('btnReset').addEventListener('click', () => game.reset());
-  $('btnClose').addEventListener('click', () => { Audio.sfxUI(); show('screenTitle'); });
+  $('btnReset').addEventListener('click', () => { game.undo(); $('tbCount').textContent = String(game.undoStack.length); });
+  $('btnClose').addEventListener('click', () => { Audio.sfxUI(); buildStageGrid(); show('screenStages'); });
 
   // 힌트(범례) 모달
   $('btnHint').addEventListener('click', () => { Audio.sfxUI(); $('hintModal').classList.remove('hidden'); });

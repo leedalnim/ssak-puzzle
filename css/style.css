@@ -42,7 +42,7 @@ html, body {
   position: fixed;
   inset: 0;
   /* 게임 폭: 화면폭 / (높이-HUD)에 맞춰 작은 쪽 (688:538 비율) */
-  --gw: min(100vw, calc((100vh - 64px) * 688 / 538));
+  --gw: min(100vw, calc((100vh - 150px) * 688 / 538));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -64,56 +64,120 @@ html, body {
 
 .hidden { display: none !important; }
 
-/* ============================ HUD (달님 명패) ============================ */
+/* ============================ HUD (나무 명패) ============================ */
 #hud {
   order: 1;
   width: var(--gw);
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 4px;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 6px 2px;
   z-index: 6;
-}
-.plate {
-  position: relative;
-  height: 40px;
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
   font-family: 'Mona12', 'Mona12 Text KR', monospace;
-  color: #5c3a22;
 }
-.plate span {
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 17px;
-  white-space: nowrap;
-  line-height: 1;
+.wplate {
+  position: relative;
+  flex: 1 1 0;
+  max-width: 168px;
+  padding: 4px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #c79355, #a3702f);
+  border: 2px solid #774d25;
+  box-shadow: 0 3px 0 #6a4220, 0 5px 9px rgba(0,0,0,.32), inset 0 1px 0 #e3b97e;
 }
-.plate-score { width: calc(38px * 180 / 46); background-image: url(../assets/plate_score.png); }
-.plate-score span { left: 60%; }
-.plate-stage { width: calc(38px * 173 / 53); background-image: url(../assets/plate_stage.png); font-size: 15px; }
-.plate-stage span { left: 50%; font-size: 15px; }
-.plate-timer { width: calc(38px * 179 / 62); background-image: url(../assets/plate_timer.png); }
-.plate-timer span { left: 45%; }
-.plate-timer span.warn { color: var(--danger); animation: pulse .6s infinite; }
-@keyframes pulse { 50% { transform: translate(-50%, -50%) scale(1.12); } }
-.reset-hit {
-  position: absolute; right: 2%; top: 14%; width: 22%; height: 72%;
-  background: transparent; border: none; cursor: pointer;
+.wtab {
+  position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+  padding: 2px 12px;
+  font-size: 11px; letter-spacing: 1px; white-space: nowrap;
+  color: #f6e7c4;
+  background: linear-gradient(180deg, #9a6730, #7c4f25);
+  border: 2px solid #6a4220; border-radius: 8px;
+  box-shadow: 0 2px 3px rgba(0,0,0,.3);
+  text-shadow: 0 1px 0 #00000055;
 }
+.wval {
+  height: 34px; margin-top: 7px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #f7ecd0, #ecd9ad);
+  border: 2px solid #b88d52;
+  box-shadow: inset 0 2px 4px rgba(120,80,40,.25);
+  color: #5c3a22; font-size: 19px; line-height: 1;
+}
+.wval span { white-space: nowrap; }
+#hudTimer.warn { color: var(--danger); animation: pulse .6s infinite; }
+@keyframes pulse { 50% { transform: scale(1.14); } }
+.ico { width: 16px; height: 16px; display: inline-block; flex: 0 0 auto; }
+.ico-clock {
+  border-radius: 50%;
+  background: #f4ede0;
+  border: 2px solid #c2402f;
+  position: relative;
+}
+.ico-clock::after { content: ""; position: absolute; left: 50%; top: 50%; width: 1px; height: 5px; background: #5c3a22; transform: translate(-50%,-90%); }
+.ico-tile { border-radius: 3px; background: linear-gradient(180deg,#caa069,#a9743f); border: 2px solid #7c4f25; }
 
-.close-btn {
-  position: absolute;
-  top: calc(var(--safe-t) + 10px);
-  right: calc(var(--safe-r) + 12px);
-  width: 36px; height: 36px;
-  border: none; border-radius: 50%;
-  background: rgba(28,22,34,.6);
-  color: var(--ink-soft);
-  font-size: 16px;
+.pause-btn {
+  flex: 0 0 auto;
+  width: 42px; height: 42px; margin-top: -2px;
+  border: 2px solid #774d25; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #c79355, #9a6730);
+  color: #f6e7c4; font-size: 13px; letter-spacing: 1px;
   cursor: pointer;
-  z-index: 9;
+  box-shadow: 0 3px 0 #6a4220, 0 5px 9px rgba(0,0,0,.32);
+}
+.pause-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #6a4220; }
+
+/* ============================ 하단 툴바 ============================ */
+#toolbar {
+  order: 3;
+  width: var(--gw);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px calc(var(--safe-b) + 8px);
+  z-index: 6;
+  font-family: 'Mona12', 'Mona12 Text KR', monospace;
+}
+.tb-round {
+  flex: 0 0 auto;
+  width: 50px; height: 50px;
+  border: 3px solid #774d25; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #b6823f, #8a5a28);
+  color: #f6e7c4; font-size: 24px; cursor: pointer;
+  box-shadow: 0 3px 0 #5f3c1c, 0 5px 9px rgba(0,0,0,.3);
+}
+.tb-round:active { transform: translateY(2px); box-shadow: 0 1px 0 #5f3c1c; }
+.tb-banner {
+  flex: 1 1 auto; height: 48px;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f7ecd0, #ecd9ad);
+  border: 3px solid #a3702f;
+  box-shadow: inset 0 2px 4px rgba(120,80,40,.22), 0 3px 0 #6a4220;
+  color: #5c3a22; font-size: 17px; letter-spacing: 1px;
+}
+.tb-banner .spark { color: #e0a83c; font-size: 14px; }
+.tb-slot {
+  flex: 0 0 auto;
+  position: relative;
+  width: 56px; height: 56px;
+  border: 3px solid #a3702f; border-radius: 11px;
+  background: linear-gradient(180deg, #f7ecd0, #ecd9ad);
+  box-shadow: inset 0 2px 4px rgba(120,80,40,.22), 0 3px 0 #6a4220;
+  cursor: pointer; padding: 4px;
+}
+.tb-slot:active { transform: translateY(2px); box-shadow: inset 0 2px 4px rgba(120,80,40,.22), 0 1px 0 #6a4220; }
+.tb-tool { width: 100%; height: 100%; object-fit: contain; }
+.tb-badge {
+  position: absolute; right: -7px; bottom: -7px;
+  min-width: 22px; height: 22px; padding: 0 4px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: #5bb85b; color: #fff;
+  border: 2px solid #3a8a3a; font-size: 12px;
+  box-shadow: 0 2px 3px rgba(0,0,0,.3);
 }
 
 /* progress */
