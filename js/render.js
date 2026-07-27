@@ -208,7 +208,8 @@ function footprint(img) {
   g.drawImage(img, 0, 0, S, S);
   const data = g.getImageData(0, 0, S, S).data;
   let minX = S, maxX = -1;
-  for (let y = Math.floor(S * 0.80); y < S; y++) {
+  // 하단 26% — 구간이 좁으면 캐릭터의 대걸레만 잡혀 그림자가 발에서 벗어난다
+  for (let y = Math.floor(S * 0.74); y < S; y++) {
     for (let x = 0; x < S; x++) {
       if (data[(y * S + x) * 4 + 3] > 70) {
         if (x < minX) minX = x;
@@ -217,7 +218,8 @@ function footprint(img) {
     }
   }
   const fp = maxX >= minX
-    ? { cx: (minX + maxX + 1) / 2 / S, w: (maxX - minX + 1) / S }
+    // 접지면이 지나치게 좁게 잡히면(가는 다리·막대 등) 그림자가 빈약해 보인다
+    ? { cx: (minX + maxX + 1) / 2 / S, w: Math.max((maxX - minX + 1) / S, 0.42) }
     : { cx: 0.5, w: 0.6 };
   fpCache.set(img, fp);
   return fp;
@@ -229,19 +231,23 @@ function footprint(img) {
  * 아래로 내려 그리거나 납작하게 늘이면 물체가 떠 보인다.
  */
 function contactShadow(ctx, cx, baseY, footW) {
-  const rx = footW * 0.56;
-  const ry = rx * 0.44;                        // 슬라이버가 아니라 둥글게
+  const rx = footW * 0.62;
+  const ry = rx * 0.46;                        // 슬라이버가 아니라 둥글게
+  // 중심을 바닥선보다 아주 조금만 올린다.
+  //  - 너무 내리면 그림자가 오브젝트 아래로 떨어져 보이고,
+  //  - 너무 올리면 오브젝트 뒤에 완전히 가려 발밑에 아무것도 안 보인다.
+  const cy = baseY - ry * 0.18;
   const draw = (s, a, blur) => {
     ctx.save();
     ctx.filter = `blur(${blur}px)`;
-    ctx.fillStyle = `rgba(66,46,30,${a})`;
+    ctx.fillStyle = `rgba(74,54,36,${a})`;
     ctx.beginPath();
-    ctx.ellipse(cx, baseY, rx * s, ry * s, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy, rx * s, ry * s, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   };
-  draw(1.25, 0.15, ry * 0.8);                  // 넓고 옅은 확산
-  draw(0.90, 0.33, ry * 0.22);                 // 밑면에 붙는 코어
+  draw(1.34, 0.10, ry * 0.95);                 // 넓고 아주 옅은 확산
+  draw(0.94, 0.22, ry * 0.26);                 // 밑면에 붙는 코어
 }
 
 /** 스프라이트 밑면에 맞춘 접지 그림자 (캐릭터 등 외부에서도 사용) */
@@ -251,7 +257,7 @@ export function drawContactShadow(ctx, img, spriteLeft, spriteW, baseY) {
 }
 
 /** 오브젝트를 셀에 세운다 — 밑면이 셀 중앙보다 살짝 아래 */
-export function drawObject(ctx, img, c, r, cols, rows, scale, _key, baseOff = 0.14) {
+export function drawObject(ctx, img, c, r, cols, rows, scale, _key, baseOff = 0.10) {
   if (!img) return;
   const { x, y, cellH } = cellCenter(c, r, cols, rows);
   const h = cellH * scale, w = img.width * h / img.height;

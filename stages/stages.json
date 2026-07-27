@@ -228,7 +228,7 @@
       {
         "x": 3,
         "y": 3,
-        "type": "stool"
+        "type": "books"
       }
     ]
   },
@@ -461,7 +461,7 @@
       {
         "x": 3,
         "y": 3,
-        "type": "stool"
+        "type": "books"
       }
     ]
   },
@@ -694,7 +694,7 @@
       {
         "x": 3,
         "y": 3,
-        "type": "stool"
+        "type": "books"
       }
     ]
   },
@@ -927,7 +927,7 @@
       {
         "x": 3,
         "y": 3,
-        "type": "stool"
+        "type": "books"
       }
     ]
   }
