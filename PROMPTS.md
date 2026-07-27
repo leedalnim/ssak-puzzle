@@ -249,3 +249,77 @@ hair in a messy bun, white t-shirt and green overalls, holding a mop with both
 hands, standing and mopping the floor. She stands on one board tile and fits
 roughly within a single tile. Cute, charming, clearly visible.
 ```
+
+---
+
+# 🧊 3D 방향성 목업 프롬프트 (비교용)
+
+> 픽셀아트 대안으로 3D 느낌을 검토하기 위한 목업.
+> **카메라 각도에 따라 코드 작업량이 크게 달라짐** — 아래 표 참고.
+
+| 방향 | 보드 모양 | 코드 영향 |
+|---|---|---|
+| A. 탑다운 3D (약 15° 기울기) | 직사각 격자 | 현재 구조 그대로 사용 가능 |
+| B. 아이소메트릭 3D (45°) | 마름모 격자 | 좌표계·클릭판정·깊이정렬 전면 수정 |
+
+## A. 탑다운 3D 디오라마 (구조 호환)
+
+```
+A cozy miniature 3D diorama of a small studio apartment bedroom — mobile puzzle
+game screen mockup, portrait orientation. 3D rendered, NOT pixel art.
+
+CAMERA: almost directly overhead, tilted only slightly (about 15 degrees) so the
+floor reads as a flat rectangle. The grid must stay rectangular, not diamond-shaped.
+
+STYLE: soft 3D render, miniature toy diorama, matte clay-like materials, soft
+global illumination with gentle shadows, rounded edges, cute and tactile.
+Bright cheerful palette — cream and ivory, light natural wood, sage green and
+mint accents. Warm daylight from the window. Clean and inviting, not dark.
+
+ROOM: a bed with a green checkered blanket, a desk with a laptop, a bright window
+with curtains, a nightstand with a lamp, shelves, house plants, a laundry basket —
+all placed ONLY along the top, left, right and bottom edges, framing the center.
+
+GAME BOARD (center): a 5x5 rectangular grid of floor tiles with a soft wooden
+frame, about 82% of screen width, sitting flat on the floor.
+
+TILES — 5 dirt levels plus clean, distributed NATURALLY and randomly like a real
+game in progress. Most tiles clean or lightly dirty, only two or three heavily
+dirty. Each dirty tile has small round dot markers on it showing how many wipes
+it needs (1 to 5 dots). Do NOT arrange the dirt in a neat gradient or chart.
+
+OBSTACLES: 2 or 3 objects sitting ON board tiles — a stack of cardboard boxes,
+a potted plant, a laundry basket.
+
+CHARACTER: a cute chibi girl, 2 heads tall (big round head, small body), brown
+hair in a messy bun, white t-shirt and green overalls, holding a mop with both
+hands, standing on one board tile and fitting within a single tile. Soft rounded
+3D toy figure, charming and clearly visible.
+
+TOP UI (slim): a small rounded panel on the left with a clock icon and "01:45";
+on the right a small panel with a tile icon and "12"; a round pause button in the
+top-right corner.
+
+BOTTOM UI: a round "?" help button on the left, a WIDE prominent undo button with
+a back-arrow icon in the center (the biggest control), a round restart button on
+the right. Soft rounded 3D UI panels in cream with subtle depth.
+
+No text other than the UI labels. No border frame around the whole image.
+```
+
+## B. 아이소메트릭 3D — 위 프롬프트에서 두 블록만 교체
+
+```
+CAMERA: isometric 3/4 view at about 45 degrees, like a miniature dollhouse
+diorama floating in space. The room is a small open-top box with visible walls
+on two sides.
+
+GAME BOARD (center): a 5x5 grid of floor tiles laid out in isometric perspective
+(diamond-shaped grid), with a soft wooden border, filling most of the room floor.
+```
+
+## 검토 포인트
+
+- **A**: 격자가 직사각으로 유지되는지 (기울기가 세지면 사다리꼴로 찌그러짐)
+- **B**: 캐릭터·장애물이 뒤쪽 타일을 가리지 않는지 (아이소메트릭 특유의 오클루전)
+- 공통: 타일 점 마커가 3D에서도 읽히는지
