@@ -380,3 +380,85 @@ No text other than the UI labels. No border frame around the whole image.
 - **A**: 격자가 직사각으로 유지되는지 (기울기가 세지면 사다리꼴로 찌그러짐)
 - **B**: 캐릭터·장애물이 뒤쪽 타일을 가리지 않는지 (아이소메트릭 특유의 오클루전)
 - 공통: 타일 점 마커가 3D에서도 읽히는지
+
+---
+
+# 🧱 실제 에셋 생성 프롬프트 (3D 클레이 확정본)
+
+> 클레이 목업을 **참조 이미지로 첨부**할 것 — 재질·팔레트·캐릭터 얼굴 유지.
+> 공통: 마젠타(#FF00FF) 배경 · 균일 격자 · 텍스트/라벨/격자선 금지.
+
+## 1. 타일 시트 (clean + 5단계)
+
+```
+Using the attached image as the exact style reference, create a sprite sheet of
+floor tiles in the same soft 3D clay material and same cream palette.
+
+LAYOUT: a strict uniform grid, 2 rows x 3 columns, evenly spaced, 6 tiles total.
+  Tile 1: perfectly clean, plain cream, no dirt at all
+  Tile 2: very faint dust, barely tinted
+  Tile 3: light brown spots, clearly dirtier than tile 2
+  Tile 4: medium brown stain covering the center
+  Tile 5: heavy dark brown grime covering most of it
+  Tile 6: almost fully covered in very dark brown dirt
+
+Each tile is a perfect SQUARE seen straight from DIRECTLY ABOVE — completely
+flat, no tilt, no perspective, no 3D angle. Soft rounded corners and a slightly
+cushioned clay surface, exactly like the tiles in the reference image.
+All six tiles are exactly the same size and shape — only the dirt differs.
+The six dirt levels must be clearly distinguishable at a glance, in even steps.
+
+BACKGROUND: a single flat solid magenta (#FF00FF) background.
+
+STRICTLY NO text, NO labels, NO numbers, NO dots or markers on the tiles,
+NO drawn grid lines or cell borders, NO shadows on the background.
+```
+
+⚠️ **타일은 반드시 평면 정사각형** — 원근은 코드가 적용하므로 에셋에 원근이
+들어가면 이중으로 기울어져 찌그러진다.
+
+## 2. 캐릭터 시트 (4방향 × 3프레임)
+
+```
+Using the attached image as the exact style reference, create a character sprite
+sheet of the same chibi girl — same face, same messy brown bun, same white
+t-shirt and green overalls, same white sneakers, same soft 3D clay material.
+She holds a mop with both hands, standing upright and mopping.
+
+LAYOUT: a strict uniform grid, 4 rows x 3 columns, evenly spaced.
+  Row 1: facing DOWN, toward the viewer
+  Row 2: facing UP, back turned
+  Row 3: facing LEFT
+  Row 4: facing RIGHT
+Each row is 3 walking animation frames of that direction.
+
+Every cell is exactly the same size. She is centered in her cell and drawn at
+the SAME scale in every cell, full body visible with a small margin.
+
+BACKGROUND: a single flat solid magenta (#FF00FF) background.
+
+STRICTLY NO text, NO labels, NO numbers, NO drawn grid lines or cell borders,
+NO shadows on the background, NO props other than the mop.
+```
+
+## 3. 장애물 3종
+
+```
+Using the attached image as the exact style reference, create three obstacle
+objects in the same soft 3D clay material and palette.
+
+LAYOUT: a single row of 3 objects, evenly spaced, same scale:
+  1. a stack of two cardboard boxes
+  2. a small potted green plant in a light ceramic pot
+  3. a woven laundry basket with folded towels
+
+Each object is seen from slightly above, sitting flat as if placed on a floor,
+exactly matching the obstacles in the reference image. Keep them low-profile.
+
+BACKGROUND: a single flat solid magenta (#FF00FF) background.
+
+STRICTLY NO text, NO labels, NO shadows on the background, NO floor beneath them.
+```
+
+## 전달 방법
+**zip으로 압축해 첨부** — 이 경로가 검증됨 (배경 전달 성공).
