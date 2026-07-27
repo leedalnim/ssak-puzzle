@@ -22,17 +22,6 @@ const BOARD_PX = 1400;                             // 평면 보드 조립 해�
 const FRAME = Math.round(BOARD_PX * 0.040);        // 나무 프레임 두께
 const GAP_R = 0.0028;                              // 타일 간격 비율
 
-// 오브젝트별 접지 그림자 — 밑면 모양에 맞춰야 자연스럽다
-const SHADOW = {
-  boxes:     ['rect', 0.88, 0.085],
-  books:     ['rect', 0.92, 0.070],
-  stool:     ['rect', 0.74, 0.075],
-  basket_sq: ['rect', 0.84, 0.085],
-  plant:     ['ellipse', 0.54, 0.080],
-  basket_rd: ['ellipse', 0.82, 0.090],
-  char:      ['ellipse', 0.40, 0.060],
-};
-
 // ---------------------------------------------------------------- 호모그래피
 function solveHomography(src, dst) {
   const A = [], b = [];
@@ -204,29 +193,70 @@ export function boardCanvas(dur, hole, cols, rows) {
 export function invalidateBoard() { cache.key = ''; }
 
 // ---------------------------------------------------------------- 그림자
-function contactShadow(ctx, cx, baseY, objW, cellH, spec, alpha = 0.34) {
-  const [shape, wr, hr] = spec;
-  const rw = objW * wr / 2, rh = cellH * hr;
-  const blob = (sx, sy, dy, a, blur) => {
+// 스프라이트의 **실제 밑면**을 픽셀에서 재서 그림자를 만든다.
+// 타입별 상수(둥근 화분 / 네모 상자 …)로 모양을 가정하면 반드시 어긋난다.
+const fpCache = new WeakMap();
+
+/** 이미지 하단부의 불투명 영역 → 접지면 중심/폭 (스프라이트 폭 대비 0~1) */
+function footprint(img) {
+  const hit = fpCache.get(img);
+  if (hit) return hit;
+  const S = 72;
+  const cv = document.createElement('canvas');
+  cv.width = S; cv.height = S;
+  const g = cv.getContext('2d', { willReadFrequently: true });
+  g.drawImage(img, 0, 0, S, S);
+  const data = g.getImageData(0, 0, S, S).data;
+  let minX = S, maxX = -1;
+  for (let y = Math.floor(S * 0.80); y < S; y++) {
+    for (let x = 0; x < S; x++) {
+      if (data[(y * S + x) * 4 + 3] > 70) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+      }
+    }
+  }
+  const fp = maxX >= minX
+    ? { cx: (minX + maxX + 1) / 2 / S, w: (maxX - minX + 1) / S }
+    : { cx: 0.5, w: 0.6 };
+  fpCache.set(img, fp);
+  return fp;
+}
+
+/**
+ * 접지 그림자 — 밑면 폭에 맞춘 둥근 타원.
+ * 카메라가 거의 위에서 내려다보므로 그림자는 오브젝트 **바로 밑**에 와야 한다.
+ * 아래로 내려 그리거나 납작하게 늘이면 물체가 떠 보인다.
+ */
+function contactShadow(ctx, cx, baseY, footW) {
+  const rx = footW * 0.56;
+  const ry = rx * 0.44;                        // 슬라이버가 아니라 둥글게
+  const draw = (s, a, blur) => {
     ctx.save();
     ctx.filter = `blur(${blur}px)`;
-    ctx.fillStyle = `rgba(58,40,26,${a})`;
-    const x = cx - rw * sx, y = baseY + dy - rh * sy, w = rw * sx * 2, h = rh * sy * 2;
-    if (shape === 'rect') { roundRect(ctx, x, y, w, h, rh * sy * 0.8); ctx.fill(); }
-    else { ctx.beginPath(); ctx.ellipse(cx, baseY + dy, rw * sx, rh * sy, 0, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = `rgba(66,46,30,${a})`;
+    ctx.beginPath();
+    ctx.ellipse(cx, baseY, rx * s, ry * s, 0, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
   };
-  blob(1.25, 1.6, cellH * 0.010, alpha * 0.45, cellH * 0.11);    // 넓고 옅은 확산
-  blob(0.92, 0.9, -cellH * 0.010, alpha, cellH * 0.055);         // 좁고 진한 코어
+  draw(1.25, 0.15, ry * 0.8);                  // 넓고 옅은 확산
+  draw(0.90, 0.33, ry * 0.22);                 // 밑면에 붙는 코어
+}
+
+/** 스프라이트 밑면에 맞춘 접지 그림자 (캐릭터 등 외부에서도 사용) */
+export function drawContactShadow(ctx, img, spriteLeft, spriteW, baseY) {
+  const fp = footprint(img);
+  contactShadow(ctx, spriteLeft + fp.cx * spriteW, baseY, fp.w * spriteW);
 }
 
 /** 오브젝트를 셀에 세운다 — 밑면이 셀 중앙보다 살짝 아래 */
-export function drawObject(ctx, img, c, r, cols, rows, scale, key, baseOff = 0.18) {
+export function drawObject(ctx, img, c, r, cols, rows, scale, _key, baseOff = 0.14) {
   if (!img) return;
   const { x, y, cellH } = cellCenter(c, r, cols, rows);
   const h = cellH * scale, w = img.width * h / img.height;
   const baseY = y + cellH * baseOff;
-  contactShadow(ctx, x, baseY, w, cellH, SHADOW[key] || SHADOW.plant);
+  drawContactShadow(ctx, img, x - w / 2, w, baseY);
   ctx.drawImage(img, x - w / 2, baseY - h, w, h);
 }
 

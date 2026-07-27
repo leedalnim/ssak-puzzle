@@ -5,7 +5,7 @@ import { initInput, DIRS } from './input.js';
 import * as Audio from './audio.js';
 import {
   VW, VH, boardCanvas, invalidateBoard, cellCenter, hitCell,
-  drawObject, drawBoardShadow,
+  drawObject, drawBoardShadow, drawContactShadow,
 } from './render.js';
 
 const MOVE_MS = 130;
@@ -263,14 +263,9 @@ export class Game {
     const hop = h.moving ? Math.sin(h.t * Math.PI) * cellH * 0.08 : 0;
 
     const ht = cellH * CHAR_SCALE, w = img.width * ht / img.height;
-    const baseY = cy + cellH * 0.16;
-    ctx.save();
-    ctx.filter = 'blur(6px)';
-    ctx.fillStyle = 'rgba(58,40,26,.5)';
-    ctx.beginPath();
-    ctx.ellipse(cx, baseY, w * 0.20, cellH * 0.06, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+    const baseY = cy + cellH * 0.14;
+    // 그림자는 발 위치(고정)에, 캐릭터만 살짝 떠오르게 해야 점프감이 산다
+    drawContactShadow(ctx, img, cx - w / 2, w, baseY);
     ctx.drawImage(img, cx - w / 2, baseY - ht - hop, w, ht);
   }
 }
