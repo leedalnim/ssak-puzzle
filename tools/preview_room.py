@@ -31,16 +31,24 @@ def homography(src, dst):
     return np.append(_solve(src, dst), 1).reshape(3, 3)
 
 
-def _soft_shadow(img, cx, cy, rx, ry, alpha, blur):
-    cx, cy, rx, ry, blur = (float(v) for v in (cx, cy, rx, ry, blur))
-    """부드러운 타원 그림자 — 코어를 작게 깔고 크게 블러."""
+def _contact_shadow(img, cx, base_y, obj_w, cell_h, alpha=150):
+    """접지 그림자 — 오브젝트 바로 밑에 좁고 진한 코어 + 넓고 옅은 확산.
+    코어를 base_y보다 살짝 위(밑면과 겹치게)에 둬야 '붙어' 보인다.
+    (코어 없이 넓은 타원만 깔면 오브젝트가 둥둥 떠 보임)"""
+    cx, base_y, obj_w, cell_h = (float(v) for v in (cx, base_y, obj_w, cell_h))
     W, H = img.size
-    s = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    d = ImageDraw.Draw(s)
-    for i, k in enumerate((1.0, 0.72, 0.46)):
-        a = int(alpha * (0.45 if i else 1.0))
-        d.ellipse((cx - rx * k, cy - ry * k, cx + rx * k, cy + ry * k), fill=(78, 56, 38, a))
-    img.alpha_composite(s.filter(ImageFilter.GaussianBlur(blur)))
+    # 넓고 옅은 확산
+    far = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    ImageDraw.Draw(far).ellipse((cx - obj_w * 0.46, base_y - cell_h * 0.10,
+                                 cx + obj_w * 0.46, base_y + cell_h * 0.13),
+                                fill=(84, 62, 42, int(alpha * 0.45)))
+    img.alpha_composite(far.filter(ImageFilter.GaussianBlur(cell_h * 0.10)))
+    # 좁고 진한 코어 — 밑면과 겹치도록 위로 올림
+    core = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    ImageDraw.Draw(core).ellipse((cx - obj_w * 0.30, base_y - cell_h * 0.085,
+                                  cx + obj_w * 0.30, base_y + cell_h * 0.045),
+                                 fill=(62, 44, 28, alpha))
+    img.alpha_composite(core.filter(ImageFilter.GaussianBlur(cell_h * 0.030)))
 
 
 def build_board(grid, board_px=1400):
@@ -126,7 +134,7 @@ def render(grid, obstacles, hero, hero_dir="down"):
         w, h = int(o.width * s), int(o.height * s)
         ox, oy = (float(v) for v in project((u0 + u1) / 2, (v0 + v1) / 2))
         base_y = oy + cell_h * base_off          # 접지선 = 셀 중앙보다 살짝 아래
-        _soft_shadow(img, ox, base_y, w * shadow_w / 2, cell_h * 0.13, shadow_a, cell_h * 0.11)
+        _contact_shadow(img, ox, base_y, w * shadow_w, cell_h, shadow_a)
         img.alpha_composite(o.resize((w, h), Image.LANCZOS), (int(ox - w / 2), int(base_y - h)))
 
     for (c, r), name in obstacles.items():
