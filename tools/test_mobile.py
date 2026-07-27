@@ -14,6 +14,7 @@ from playwright.sync_api import sync_playwright
 
 DEVICES = [
     ("iPhone SE",         375,  667, 2),
+    ("iPhone 11",         414,  896, 2),
     ("iPhone 14",         390,  844, 3),
     ("iPhone 14 Pro Max", 430,  932, 3),
     ("Galaxy S20",        360,  800, 3),

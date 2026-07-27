@@ -35,13 +35,15 @@
     </div>
 
     <!-- 타이틀 -->
-    <section id="screenTitle" class="screen">
+    <section id="screenTitle" class="screen art-screen">
       <div class="title-art">
         <h1 class="logo">슥삭<span>퍼즐</span></h1>
         <p class="tagline">무기력한 방 한 칸에서, 다시 세상 밖으로</p>
       </div>
-      <button id="btnStart" class="big-btn">시작하기</button>
-      <button id="btnStages" class="ghost-btn">스테이지 선택</button>
+      <div class="screen-actions">
+        <button id="btnStart" class="big-btn">시작하기</button>
+        <button id="btnStages" class="ghost-btn">스테이지 선택</button>
+      </div>
       <div class="rating">전체 이용가</div>
     </section>
 
@@ -53,11 +55,13 @@
     </section>
 
     <!-- 인트로 -->
-    <section id="screenIntro" class="screen hidden">
-      <p class="act-badge" id="introAct"></p>
-      <h2 class="intro-title" id="introTitle"></h2>
-      <p id="introText" class="intro-text"></p>
-      <button id="btnIntroNext" class="big-btn">계속</button>
+    <section id="screenIntro" class="screen art-screen hidden">
+      <div class="intro-copy">
+        <p class="act-badge" id="introAct"></p>
+        <h2 class="intro-title" id="introTitle"></h2>
+        <p id="introText" class="intro-text"></p>
+        <button id="btnIntroNext" class="big-btn">계속</button>
+      </div>
     </section>
 
     <!-- 클리어 -->

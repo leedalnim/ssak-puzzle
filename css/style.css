@@ -175,10 +175,53 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 }
 .modal { background: rgba(60, 44, 28, .48); backdrop-filter: blur(7px); }
 
+/* 일러스트를 배경으로 쓰는 화면(타이틀·인트로) */
+.art-screen {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  justify-content: flex-end;
+  padding-bottom: calc(var(--safe-b) + 40px);
+}
+#screenTitle {
+  background-image: url(../assets/room/screens/title.webp);
+  justify-content: space-between;
+  padding-top: calc(var(--safe-t) + 52px);
+}
+#screenIntro { background-image: url(../assets/room/screens/intro_studio.webp); }
+
+/* 일러스트 위 글자 가독성 — 버튼이 놓이는 아래쪽만 살짝 덮는다.
+   너무 높거나 진하면 캐릭터가 통째로 흐려진다. */
+.art-screen::after {
+  content: '';
+  position: absolute; left: 0; right: 0; bottom: 0; height: 30%;
+  background: linear-gradient(to top,
+    rgba(250, 243, 228, .92) 0%, rgba(250, 243, 228, .55) 45%, rgba(250, 243, 228, 0));
+  pointer-events: none;
+}
+/* 인트로는 글이 많아 조금 더 넓게 덮는다 */
+#screenIntro::after { height: 44%; }
+.art-screen > * { position: relative; z-index: 1; }
+
+.screen-actions {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  margin-bottom: 30px;
+}
+.intro-copy {
+  display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%;
+}
+
+
 .title-art { margin-bottom: 14px; }
-.logo { font-size: 68px; line-height: 1.05; letter-spacing: 1px; color: var(--ink); }
+.logo {
+  font-size: 64px; line-height: 1.05; letter-spacing: 1px; color: var(--ink);
+  text-shadow: 0 3px 0 rgba(255, 252, 244, .9), 0 8px 18px rgba(120, 92, 60, .25);
+}
 .logo span { color: #b58a4e; }
-.tagline { margin-top: 12px; color: var(--ink-soft); font-size: 16px; }
+.tagline {
+  margin-top: 10px; color: #8a6c48; font-size: 15px; font-weight: 800;
+  text-shadow: 0 2px 0 rgba(255, 252, 244, .9);
+}
 
 .big-btn {
   font-family: inherit; font-size: 22px; color: #5c4222;
