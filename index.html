@@ -3,55 +3,42 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-<meta name="theme-color" content="#241c2c" />
+<meta name="theme-color" content="#f6efdf" />
 <title>슥삭퍼즐</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Jua&family=Do+Hyeon&display=swap" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/gh/MonadABXY/mona-font/web/mona.css" rel="stylesheet" />
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
   <div id="app">
-    <!-- 게임 캔버스 -->
-    <canvas id="game"></canvas>
+    <!-- 게임 화면 (캔버스 + 오버레이 UI가 같은 박스를 공유) -->
+    <div id="stage">
+      <canvas id="game"></canvas>
 
-    <!-- 상단 HUD (나무 명패: STAGE / TIME / TILES LEFT + 일시정지) -->
-    <header id="hud" class="hidden">
-      <div class="wplate"><div class="wtab">STAGE</div><div class="wval"><span id="hudStage">1</span></div></div>
-      <div class="wplate"><div class="wtab">TIME</div><div class="wval"><span class="ico ico-clock"></span><span id="hudTimer">0:00</span></div></div>
-      <div class="wplate"><div class="wtab">TILES LEFT</div><div class="wval"><span class="ico ico-tile"></span><span id="hudTiles">0</span></div></div>
-      <button id="btnClose" class="pause-btn hidden" aria-label="일시정지">❚❚</button>
-    </header>
+      <!-- 상단 HUD: 좌측 앵커(시간) / 우측 앵커(남은 칸 + 일시정지) -->
+      <header id="hud" class="hidden">
+        <div class="hud-left">
+          <div class="panel panel-time"><span id="hudTimer">0:00</span></div>
+        </div>
+        <div class="hud-right">
+          <div class="panel panel-tiles"><span id="hudTiles">0</span></div>
+          <button id="btnPause" class="icon-btn btn-pause" aria-label="일시정지"></button>
+        </div>
+      </header>
 
-    <!-- 하단 툴바: ? + 배너 + 도구 슬롯(되돌리기) -->
-    <div id="toolbar" class="hidden">
-      <button id="btnHint" class="tb-round" aria-label="힌트">?</button>
-      <div class="tb-banner"><span class="spark">✦</span><span id="tbBanner">CLEAN ALL TILES!</span><span class="spark">✦</span></div>
-      <button id="btnReset" class="tb-slot" aria-label="되돌리기">
-        <img class="tb-tool" src="assets/home/tool_mop.png" alt="대걸레" />
-        <span class="tb-badge" id="tbCount">0</span>
-      </button>
-    </div>
-
-    <!-- 진행 게이지 -->
-    <div id="progressWrap" class="hidden"><div id="progressBar"></div></div>
-
-    <!-- 힌트(범례) 모달 -->
-    <span class="hidden" aria-hidden="true"></span>
-    <div id="hintModal" class="hint-modal hidden">
-      <div class="hint-backdrop"></div>
-      <div class="hint-card">
-        <img class="hint-img" src="assets/hint_panel.png" alt="타일 범례" />
-        <button id="btnHintClose" class="hint-close">✕ Close</button>
+      <!-- 하단 바: 좌측 도움말 / 중앙 되돌리기 / 우측 다시하기 -->
+      <div id="toolbar" class="hidden">
+        <div class="tool"><button id="btnHelp" class="icon-btn btn-help" aria-label="도움말"></button><span>도움말</span></div>
+        <div class="tool"><button id="btnUndo" class="pill-btn btn-undo" aria-label="되돌리기"></button><span>되돌리기</span></div>
+        <div class="tool"><button id="btnRestart" class="icon-btn btn-restart" aria-label="다시하기"></button><span>다시하기</span></div>
       </div>
+
+      <div id="progressWrap" class="hidden"><div id="progressBar"></div></div>
     </div>
 
-    <!-- 타이틀 화면 -->
+    <!-- 타이틀 -->
     <section id="screenTitle" class="screen">
       <div class="title-art">
-        <div class="logo">슥<span>삭</span>퍼즐</div>
-        <div class="tagline">무기력한 방 한 칸에서, 다시 세상 밖으로</div>
+        <h1 class="logo">슥삭<span>퍼즐</span></h1>
+        <p class="tagline">무기력한 방 한 칸에서, 다시 세상 밖으로</p>
       </div>
       <button id="btnStart" class="big-btn">시작하기</button>
       <button id="btnStages" class="ghost-btn">스테이지 선택</button>
@@ -65,39 +52,62 @@
       <button class="ghost-btn" data-back>뒤로</button>
     </section>
 
-    <!-- 스토리 인트로 컷 -->
+    <!-- 인트로 -->
     <section id="screenIntro" class="screen hidden">
+      <p class="act-badge" id="introAct"></p>
+      <h2 class="intro-title" id="introTitle"></h2>
       <p id="introText" class="intro-text"></p>
       <button id="btnIntroNext" class="big-btn">계속</button>
     </section>
 
-    <!-- 클리어 모달 -->
+    <!-- 클리어 -->
     <section id="screenClear" class="screen modal hidden">
       <div class="modal-card">
         <div class="clear-emoji">✨</div>
         <h2 id="clearTitle">깨끗해졌다!</h2>
         <p id="clearStory" class="clear-story"></p>
-        <div class="clear-stats">
-          <span id="clearTime"></span>
-          <span id="clearUnlock"></span>
-        </div>
+        <div class="clear-stats"><span id="clearTime"></span><span id="clearUnlock"></span></div>
         <button id="btnNext" class="big-btn">다음 스테이지</button>
         <button class="ghost-btn" data-back>스테이지 목록</button>
       </div>
     </section>
 
-    <!-- 실패 모달 -->
+    <!-- 실패 -->
     <section id="screenFail" class="screen modal hidden">
       <div class="modal-card">
         <div class="clear-emoji">😵‍💫</div>
         <h2 id="failTitle">아직이야…</h2>
         <p id="failReason" class="clear-story"></p>
         <button id="btnRetry" class="big-btn">다시 하기</button>
-        <button id="btnAdRevive" class="ghost-btn">⏱ 광고 보고 30초 추가</button>
+        <button id="btnUndoFromFail" class="ghost-btn">↩ 한 수 무르기</button>
       </div>
     </section>
 
-    <!-- 로딩 -->
+    <!-- 도움말(가이드) -->
+    <section id="screenHelp" class="screen modal hidden">
+      <div class="modal-card help-card">
+        <h2>어떻게 하나요?</h2>
+        <p class="help-lead">캐릭터를 움직여 <b>모든 칸을 깨끗하게</b> 만들면 클리어!</p>
+        <ul class="help-rules">
+          <li>지나간 칸은 한 단계씩 닦여요.</li>
+          <li>이미 깨끗해진 칸은 <b>다시 지나갈 수 없어요.</b></li>
+          <li>더러울수록 여러 번 지나가야 해요.</li>
+        </ul>
+        <div class="legend" id="legend"></div>
+        <button id="btnHelpClose" class="big-btn">알겠어요</button>
+      </div>
+    </section>
+
+    <!-- 일시정지 -->
+    <section id="screenPause" class="screen modal hidden">
+      <div class="modal-card">
+        <h2>잠깐 쉬는 중</h2>
+        <button id="btnResume" class="big-btn">이어하기</button>
+        <button id="btnPauseRestart" class="ghost-btn">처음부터</button>
+        <button class="ghost-btn" data-back>스테이지 목록</button>
+      </div>
+    </section>
+
     <section id="screenLoad" class="screen">
       <div class="loader">슥… 삭…</div>
     </section>

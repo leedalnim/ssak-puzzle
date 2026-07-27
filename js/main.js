@@ -5,26 +5,27 @@ import * as Audio from './audio.js';
 import { Toss } from './toss-sdk.js';
 
 const $ = (id) => document.getElementById(id);
-const PROG_KEY = 'ssak_cleared'; // 클리어한 최고 스테이지 id
+const PROG_KEY = 'ssak_cleared';
 
 let stages = [];
 let game = null;
-let current = 0;            // 현재 스테이지 인덱스
+let current = 0;
 let clearedMax = 0;
-let pendingStartFromIntro = null;
+let pendingIntro = null;
+
+const screens = ['screenTitle', 'screenStages', 'screenIntro', 'screenClear',
+                 'screenFail', 'screenHelp', 'screenPause', 'screenLoad'];
 
 function loadProgress() { clearedMax = parseInt(localStorage.getItem(PROG_KEY) || '0', 10); }
 function saveProgress(id) { if (id > clearedMax) { clearedMax = id; localStorage.setItem(PROG_KEY, String(id)); } }
 
-const screens = ['screenTitle', 'screenStages', 'screenIntro', 'screenClear', 'screenFail', 'screenLoad'];
+/** id=null 이면 인게임 화면 */
 function show(id) {
   screens.forEach(s => $(s).classList.toggle('hidden', s !== id));
-  // 게임 HUD/캔버스 표시 여부
-  const inGame = id === null;
+  const inGame = id === null || id === 'screenHelp' || id === 'screenPause';
   $('hud').classList.toggle('hidden', !inGame);
   $('toolbar').classList.toggle('hidden', !inGame);
-  $('btnClose').classList.toggle('hidden', !inGame);
-  if (!inGame) $('hintModal').classList.add('hidden');
+  $('progressWrap').classList.toggle('hidden', !inGame);
 }
 
 function fmtTime(sec) {
@@ -32,14 +33,18 @@ function fmtTime(sec) {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+/** 캔버스 표시 크기에 맞춰 UI 배율(--k)을 맞춘다 */
+function syncScale() {
+  const k = $('stage').getBoundingClientRect().width / 1024;
+  document.documentElement.style.setProperty('--k', k || 1);
+}
+
 // ----------------------------- 게임 훅 -----------------------------
 function makeGame() {
   game = new Game($('game'), {
     onProgress: (p) => { $('progressBar').style.width = `${Math.round(p * 100)}%`; },
-    onScore: (cleaned, total) => {
-      $('hudTiles').textContent = String(total - cleaned);
-      $('tbCount').textContent = String(game ? game.undoStack.length : 0);
-    },
+    onTiles: (left) => { $('hudTiles').textContent = String(left); },
+    onUndoState: (can) => { $('btnUndo').disabled = !can; },
     onTimer: (left, total) => {
       const el = $('hudTimer');
       if (total <= 0) { el.textContent = '∞'; el.classList.remove('warn'); return; }
@@ -57,7 +62,9 @@ function startStage(idx) {
   const st = stages[idx];
   Toss.track('stage_start', { stage: st.id });
   if (st.intro) {
-    pendingStartFromIntro = idx;
+    pendingIntro = idx;
+    $('introAct').textContent = `${st.act}막`;
+    $('introTitle').textContent = st.theme;
     $('introText').textContent = st.intro;
     show('screenIntro');
   } else {
@@ -66,10 +73,9 @@ function startStage(idx) {
 }
 
 function beginStage(idx) {
-  const st = stages[idx];
-  $('hudStage').textContent = String(st.id);
   show(null);
-  game.loadStage(st);
+  syncScale();
+  game.loadStage(stages[idx]);
 }
 
 function onStageClear(elapsed) {
@@ -79,15 +85,16 @@ function onStageClear(elapsed) {
   $('clearStory').textContent = st.clear || '';
   $('clearTime').textContent = elapsed != null ? `⏱ ${fmtTime(elapsed)}` : '';
   $('clearUnlock').textContent = st.unlock ? `🎁 ${st.unlock} 해금!` : '';
-  const hasNext = current + 1 < stages.length;
-  $('btnNext').textContent = hasNext ? '다음 스테이지' : '처음으로';
+  $('btnNext').textContent = current + 1 < stages.length ? '다음 스테이지' : '처음으로';
   show('screenClear');
 }
 
 function onStageFail(reason) {
   Toss.track('stage_fail', { stage: stages[current].id, reason });
-  $('failReason').textContent = reason === 'time' ? '시간이 다 됐어요.\n조금만 더 빠르게!' : '막혀버렸어요.';
-  $('btnAdRevive').classList.toggle('hidden', reason !== 'time' || stages[current].time <= 0);
+  $('failReason').textContent = reason === 'time'
+    ? '시간이 다 됐어요.\n조금만 더 빠르게!'
+    : '갈 곳이 없어요.\n한 수 무르거나 처음부터 해볼까요?';
+  $('btnUndoFromFail').classList.toggle('hidden', !game.canUndo());
   show('screenFail');
 }
 
@@ -105,56 +112,66 @@ function buildStageGrid() {
     const cleared = st.id <= clearedMax;
     const cell = document.createElement('button');
     cell.className = 'stage-cell' + (locked ? ' locked' : '') + (cleared ? ' cleared' : '');
-    cell.innerHTML = `<span class="num">${locked ? '🔒' : st.id}</span>` +
-      `<span class="thm">${st.theme}</span>` +
-      `<span class="star">${cleared ? '★' : ''}</span>`;
+    cell.innerHTML = `<span class="num">${locked ? '🔒' : st.id}</span>`
+      + `<span class="thm">${st.theme}</span>`
+      + `<span class="star">${cleared ? '★' : ''}</span>`;
     if (!locked) cell.addEventListener('click', () => { Audio.sfxUI(); startStage(idx); });
     grid.appendChild(cell);
   });
 }
 
+// ----------------------------- 도움말 범례 -----------------------------
+function buildLegend() {
+  const el = $('legend');
+  if (el.childElementCount) return;
+  const labels = ['깨끗', '1번', '2번', '3번', '4번', '5번'];
+  el.innerHTML = labels.map((t, i) =>
+    `<div class="legend-item"><img src="assets/room/tiles/tile_${i}.png" alt=""><span>${t}</span></div>`
+  ).join('');
+}
+
 // ----------------------------- 버튼 배선 -----------------------------
 function wireUI() {
-  $('btnStart').addEventListener('click', () => { Audio.unlockAudio(); Audio.sfxUI(); startStage(nextUnclearedIndex()); });
+  $('btnStart').addEventListener('click', () => {
+    Audio.unlockAudio(); Audio.sfxUI(); startStage(nextUnclearedIndex());
+  });
   $('btnStages').addEventListener('click', () => { Audio.sfxUI(); buildStageGrid(); show('screenStages'); });
-  document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => { Audio.sfxUI(); buildStageGrid(); show('screenStages'); }));
+  document.querySelectorAll('[data-back]').forEach(b =>
+    b.addEventListener('click', () => { Audio.sfxUI(); buildStageGrid(); show('screenStages'); }));
 
-  $('btnIntroNext').addEventListener('click', () => { Audio.sfxUI(); if (pendingStartFromIntro != null) beginStage(pendingStartFromIntro); });
+  $('btnIntroNext').addEventListener('click', () => {
+    Audio.sfxUI(); if (pendingIntro != null) beginStage(pendingIntro);
+  });
 
   $('btnNext').addEventListener('click', () => {
     Audio.sfxUI();
-    if (current + 1 < stages.length) startStage(current + 1);
-    else show('screenTitle');
+    if (current + 1 < stages.length) startStage(current + 1); else show('screenTitle');
   });
   $('btnRetry').addEventListener('click', () => { Audio.sfxUI(); show(null); game.reset(); });
-  $('btnAdRevive').addEventListener('click', async () => {
-    Audio.sfxUI();
-    const ok = await Toss.showRewardedAd();
-    if (ok) { Toss.track('ad_watched', { stage: stages[current].id }); show(null); game.addTime(30); }
-  });
+  $('btnUndoFromFail').addEventListener('click', () => { Audio.sfxUI(); show(null); game.undo(); });
 
-  $('btnReset').addEventListener('click', () => { game.undo(); $('tbCount').textContent = String(game.undoStack.length); });
-  $('btnClose').addEventListener('click', () => { Audio.sfxUI(); buildStageGrid(); show('screenStages'); });
-
-  // 힌트(범례) 모달
-  $('btnHint').addEventListener('click', () => { Audio.sfxUI(); $('hintModal').classList.remove('hidden'); });
-  $('btnHintClose').addEventListener('click', () => { Audio.sfxUI(); $('hintModal').classList.add('hidden'); });
-  $('hintModal').querySelector('.hint-backdrop').addEventListener('click', () => $('hintModal').classList.add('hidden'));
+  // 인게임 컨트롤
+  $('btnUndo').addEventListener('click', () => game.undo());
+  $('btnRestart').addEventListener('click', () => game.reset());
+  $('btnHelp').addEventListener('click', () => { Audio.sfxUI(); buildLegend(); show('screenHelp'); });
+  $('btnHelpClose').addEventListener('click', () => { Audio.sfxUI(); show(null); });
+  $('btnPause').addEventListener('click', () => { Audio.sfxUI(); show('screenPause'); });
+  $('btnResume').addEventListener('click', () => { Audio.sfxUI(); show(null); });
+  $('btnPauseRestart').addEventListener('click', () => { Audio.sfxUI(); show(null); game.reset(); });
 
   Toss.onClose = () => show('screenTitle');
-
-  // 첫 입력에서 오디오 언락(모바일)
+  window.addEventListener('resize', syncScale);
   window.addEventListener('pointerdown', () => Audio.unlockAudio(), { once: true });
 }
 
 // ----------------------------- 시작 -----------------------------
 async function boot() {
   show('screenLoad');
+  syncScale();
   loadProgress();
   await Toss.init();
   await loadAssets();
-  const res = await fetch('stages/stages.json');
-  stages = await res.json();
+  stages = await (await fetch('stages/stages.json')).json();
   makeGame();
   wireUI();
   show('screenTitle');

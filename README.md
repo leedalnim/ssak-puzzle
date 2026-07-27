@@ -63,3 +63,22 @@ node    tools/test_game.mjs           # game.js 로직으로 8스테이지 클�
 
 `js/toss-sdk.js` 스텁을 실제 SDK(로그인/유저키/AdMob 보상형 광고/이벤트 트래킹)로
 교체하면 됩니다. 게임 로직과 분리돼 있어 완성 후 붙여도 무방.
+
+## 실행
+
+```bash
+python3 -m http.server 8000
+# http://localhost:8000
+```
+
+## 구조 (v2 — 코지룸 3D 클레이)
+
+```
+js/render.js   방 씬 렌더러. 보드를 평면에서 통짜 조립 후 1회 원근 변형(호모그래피)
+js/game.js     퍼즐 로직 + 캔버스 렌더 호출
+js/main.js     화면 상태기계(타이틀/인트로/게임/클리어/실패/도움말/일시정지)
+css/style.css  UI. HUD·툴바는 앵커 기준 배치, --k 배율로 캔버스와 동기화
+assets/room/   배경·타일6·캐릭터12·장애물6·UI6
+```
+
+렌더링·에셋 규칙은 [`CONCEPT.md`](CONCEPT.md) 참조.

@@ -1,26 +1,27 @@
-// 에셋 로더 — PNG 스프라이트를 미리 로드해 캐시한다.
-const H = 'assets/home/';
+// 에셋 로더 — 배경/타일/캐릭터/장애물/UI 스프라이트를 미리 로드해 캐시한다.
+const R = 'assets/room/';
+
 const MANIFEST = {
-  // 집청소 테마 — 코지룸 배경 + 가구 소품으로 구성
-  store_bg: H + 'room_bg.png',
-  board_frame: H + 'board_frame.png',
-  obstacle_plant: H + 'furn_plant.png',
-  obstacle_boxes: H + 'prop_23.png',
-  hint_panel: 'assets/hint_panel.png',
-  // 캐릭터: 앞=down, 뒤=up, 좌=side(우측은 좌우반전), 각 3프레임(쪼그려 청소)
-  char_down_0: H + 'char_front_0.png', char_down_1: H + 'char_front_1.png', char_down_2: H + 'char_front_2.png',
-  char_side_0: H + 'char_left_0.png',  char_side_1: H + 'char_left_1.png',  char_side_2: H + 'char_left_2.png',
-  char_up_0:   H + 'char_back_0.png',   char_up_1:   H + 'char_back_1.png',   char_up_2:   H + 'char_back_2.png',
-  // 바닥 타일: 0=깨끗(완료), 1~5=더러움 단계
-  tile0: H + 'tile_clean.png',
-  tile1: H + 'tile_d1.png',
-  tile2: H + 'tile_d2.png',
-  tile3: H + 'tile_d3.png',
-  tile4: H + 'tile_d4.png',
-  tile5: H + 'tile_d5.png',
-  // 청소 이펙트 스프라이트(반짝임/완료별/먼지)
-  fx_sparkle_0: H + 'fx_sparkle_0.png', fx_sparkle_1: H + 'fx_sparkle_1.png', fx_sparkle_2: H + 'fx_sparkle_2.png', fx_sparkle_3: H + 'fx_sparkle_3.png',
-  fx_clean_0: H + 'fx_clean_0.png', fx_clean_1: H + 'fx_clean_1.png', fx_clean_2: H + 'fx_clean_2.png', fx_clean_3: H + 'fx_clean_3.png',
+  // 배경 (장소별) — 가운데 바닥이 비어 있는 통짜 이미지
+  bg_studio: R + 'bg_studio.webp',
+
+  // 바닥 타일: 0=깨끗, 1~5=더러움 단계
+  tile0: R + 'tiles/tile_0.png', tile1: R + 'tiles/tile_1.png', tile2: R + 'tiles/tile_2.png',
+  tile3: R + 'tiles/tile_3.png', tile4: R + 'tiles/tile_4.png', tile5: R + 'tiles/tile_5.png',
+
+  // 캐릭터: 4방향 × 3프레임 (right는 left 좌우반전본이 파일로 존재)
+  char_down_0: R + 'char/char_down_0.png', char_down_1: R + 'char/char_down_1.png', char_down_2: R + 'char/char_down_2.png',
+  char_up_0: R + 'char/char_up_0.png', char_up_1: R + 'char/char_up_1.png', char_up_2: R + 'char/char_up_2.png',
+  char_left_0: R + 'char/char_left_0.png', char_left_1: R + 'char/char_left_1.png', char_left_2: R + 'char/char_left_2.png',
+  char_right_0: R + 'char/char_right_0.png', char_right_1: R + 'char/char_right_1.png', char_right_2: R + 'char/char_right_2.png',
+
+  // 장애물
+  obs_boxes: R + 'obstacles/obs_boxes.png',
+  obs_plant: R + 'obstacles/obs_plant.png',
+  obs_basket_rd: R + 'obstacles/obs_basket_rd.png',
+  obs_basket_sq: R + 'obstacles/obs_basket_sq.png',
+  obs_books: R + 'obstacles/obs_books.png',
+  obs_stool: R + 'obstacles/obs_stool.png',
 };
 
 export const IMG = {};
@@ -35,13 +36,8 @@ function loadImage(src) {
 }
 
 export async function loadAssets() {
-  const entries = Object.entries(MANIFEST);
-  await Promise.all(entries.map(async ([key, src]) => {
+  await Promise.all(Object.entries(MANIFEST).map(async ([key, src]) => {
     IMG[key] = await loadImage(src);
   }));
   return IMG;
-}
-
-export function tileImg(dur) {
-  return IMG['tile' + dur];
 }
