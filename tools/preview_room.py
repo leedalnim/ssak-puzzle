@@ -86,13 +86,9 @@ def build_board(grid, board_px=1400):
     for y in range(rows):
         for x in range(cols):
             px, py = fr + x * (cw + gap), fr + y * (ch + gap)
-            cell = tiles[grid[y][x]].resize((cw, ch), Image.LANCZOS)
-            # 타일 접지 AO — 아래쪽에 얇은 그늘
-            ao = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
-            ImageDraw.Draw(ao).rounded_rectangle((2, int(ch * 0.70), cw - 3, ch - 2),
-                                                 int(cw * 0.10), fill=(120, 94, 62, 46))
-            cell.alpha_composite(ao.filter(ImageFilter.GaussianBlur(cw * 0.05)))
-            b.alpha_composite(cell, (px, py))
+            # 타일별 AO는 넣지 않는다 — 아래쪽에 회색 띠가 생겨 더러움처럼 보임.
+            # 그림자는 오브젝트에 붙는 접지 그림자만 사용.
+            b.alpha_composite(tiles[grid[y][x]].resize((cw, ch), Image.LANCZOS), (px, py))
     return b, (fr, cw, ch, gap)
 
 
