@@ -307,16 +307,73 @@ the right. Soft rounded 3D UI panels in cream with subtle depth.
 No text other than the UI labels. No border frame around the whole image.
 ```
 
-## B. 아이소메트릭 3D — 위 프롬프트에서 두 블록만 교체
+## B. 아이소메트릭 3D 디오라마 (전체)
 
 ```
+A cozy miniature 3D diorama of a small studio apartment bedroom — mobile puzzle
+game screen mockup, portrait orientation. 3D rendered, NOT pixel art.
+
 CAMERA: isometric 3/4 view at about 45 degrees, like a miniature dollhouse
-diorama floating in space. The room is a small open-top box with visible walls
-on two sides.
+diorama. The room is a small open-top box with two visible walls (back and left),
+floating gently with a soft shadow beneath it.
+
+STYLE: soft 3D render, miniature toy diorama, matte clay-like materials, soft
+global illumination with gentle ambient shadows, rounded edges, cute and tactile.
+Bright cheerful palette — cream and ivory, light natural wood, sage green and
+mint accents. Warm daylight coming through the window. Clean and inviting,
+NOT dark, NOT gloomy.
+
+ROOM: a bed with a green checkered blanket, a desk with a laptop, a bright window
+with curtains, a nightstand with a lamp, shelves with books, house plants, a
+laundry basket. Place all of it ONLY against the two visible walls and along the
+outer edges of the floor, keeping the center floor open.
 
 GAME BOARD (center): a 5x5 grid of floor tiles laid out in isometric perspective
-(diamond-shaped grid), with a soft wooden border, filling most of the room floor.
+(diamond-shaped grid), with a soft wooden border, filling most of the room floor
+and clearly readable as the play area.
+
+TILES — 5 dirt levels plus clean:
+  clean   : plain cream tile, nothing on it
+  level 1 : very faint dust, 1 dot marker
+  level 2 : light brown spots, 2 dot markers
+  level 3 : medium brown stain, 3 dot markers
+  level 4 : dark brown grime, 4 dot markers
+  level 5 : nearly black-brown fully covered, 5 dot markers
+
+Each dirty tile has small round DOT MARKERS on its surface showing how many times
+it must be wiped (1 to 5 dots), lying flat on the tile and following the isometric
+perspective. Clean tiles have no dots.
+Distribute the dirt NATURALLY and RANDOMLY like a real game in progress — most
+tiles clean or only lightly dirty, only two or three heavily dirty. Do NOT arrange
+them in a neat gradient, ordered rows, or a sample chart.
+
+OBSTACLES: 2 or 3 objects sitting ON board tiles — a stack of cardboard boxes,
+a potted plant, a laundry basket. Keep them SHORT and low-profile so they do not
+hide the tiles behind them. Place them toward the front of the board.
+
+CHARACTER: a cute chibi girl, 2 heads tall (big round head, small compact body),
+brown hair in a messy bun, white t-shirt and green overalls, white sneakers,
+holding a mop with both hands, standing upright and mopping. She stands on one
+board tile and fits within a single tile. Soft rounded 3D toy figure, charming
+and clearly visible. Place her near the front of the board so she does not block
+other tiles.
+
+UI — drawn as a FLAT 2D overlay on top of the 3D scene, not inside the 3D space:
+  TOP (slim): a small rounded cream panel on the left with a clock icon and
+  "01:45"; on the right a small panel with a tile icon and "12"; a round pause
+  button in the top-right corner.
+  BOTTOM: a round "?" help button on the left; a WIDE prominent undo button with
+  a back-arrow icon in the center — the biggest, most eye-catching control;
+  a round restart button with a circular arrow on the right.
+  All soft rounded cream panels with subtle depth and light wood accents.
+
+No text other than the UI labels. No border frame around the whole image.
 ```
+
+### 아이소메트릭 전용 주의사항
+- **장애물은 낮고 앞쪽에** — 뒤 타일을 가리지 않도록
+- **캐릭터도 앞쪽 배치** — 같은 이유
+- **UI는 평면 2D 오버레이** — 3D 공간에 박히면 실제 구현 불가
 
 ## 검토 포인트
 
