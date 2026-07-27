@@ -358,17 +358,16 @@ GPT 생성 시트(마젠타 배경, 2행×3열) → 자동 분리. 6단계가 �
 좌·우 끝(아이콘 포함)은 고정, 가운데만 신축 → 내용 길이에 자동 대응.
 CSS `border-image` 로 구현. 숫자·텍스트는 **코드로** 그린다.
 
-### 폰트
+### 폰트 — 자가 호스팅
+`assets/fonts/NanumSquareRound{R,B,EB}.woff2` (+woff 폴백), 400/700/800 세 굵기.
+
 ```css
-@font-face {
-  font-family: 'NanumSquareRound';
-  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/NanumSquareRound.woff') format('woff');
-  font-weight: normal;
-  font-display: swap;
-}
+@font-face { font-family:'NanumSquareRound'; src:url('../assets/fonts/NanumSquareRoundR.woff2') format('woff2'), ...; font-weight:400 }
 ```
-둥근 산세리프로 클레이 톤과 잘 맞음.
-> 개발 샌드박스에서는 CDN이 차단되어 미리보기는 대체 폰트로 렌더됨. 실제 브라우저에선 정상.
+
+> ⚠️ **외부 CDN(jsdelivr) 링크는 폐기.** 네트워크 정책이나 CDN 장애로 차단되면
+> 폰트가 통째로 시스템 기본으로 대체돼 화면이 달라진다(개발 샌드박스에서 실제로 발생).
+> npm `@kfonts/nanum-square-round`에서 받아 레포에 포함. OFL-1.1로 재배포 허용.
 
 ### 미해결
 `btn_undo` 는 화살표가 **정중앙**이라 "되돌리기" 텍스트와 겹침.
