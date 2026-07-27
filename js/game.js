@@ -262,7 +262,11 @@ export class Game {
   _drawHero(ctx) {
     const h = this.hero;
     const frame = h.moving ? 1 + (Math.floor(h.t * 3) % 2) : 0;
-    const img = IMG[`char_${h.dir}_${frame}`] || IMG.char_down_0;
+    // 측면 스프라이트(char_left_*)는 실제로 '오른쪽'을 향한다.
+    // 그래서 좌우 모두 이 한 벌을 소스로 쓰고, 왼쪽일 때만 캔버스에서 뒤집는다.
+    const isLeft = h.dir === 'left';
+    const key = (h.dir === 'left' || h.dir === 'right') ? 'left' : h.dir;
+    const img = IMG[`char_${key}_${frame}`] || IMG.char_down_0;
     if (!img) return;
     // 이동 중에는 셀 사이를 보간 — 정수 셀이 아니므로 좌표를 직접 계산
     const a = cellCenter(Math.floor(h.px), Math.floor(h.py), this.cols, this.rows);
@@ -277,6 +281,14 @@ export class Game {
     const baseY = cy + cellH * 0.10;
     // 그림자는 발 위치(고정)에, 캐릭터만 살짝 떠오르게 해야 점프감이 산다
     drawContactShadow(ctx, img, cx - w / 2, w, baseY);
-    ctx.drawImage(img, cx - w / 2, baseY - ht - hop, w, ht);
+    if (isLeft) {
+      ctx.save();
+      ctx.translate(cx, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(img, -w / 2, baseY - ht - hop, w, ht);
+      ctx.restore();
+    } else {
+      ctx.drawImage(img, cx - w / 2, baseY - ht - hop, w, ht);
+    }
   }
 }

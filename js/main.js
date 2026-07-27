@@ -68,7 +68,8 @@ function startStage(idx) {
   Toss.track('stage_start', { stage: st.id });
   if (st.intro) {
     pendingIntro = idx;
-    $('introAct').textContent = `${st.act}막`;
+    const sub = ((st.id - 1) % 3) + 1;
+    $('introAct').textContent = `${st.place} · ${st.act}-${sub}`;
     $('introTitle').textContent = st.theme;
     $('introText').textContent = st.intro;
     show('screenIntro');
@@ -109,16 +110,25 @@ function nextUnclearedIndex() {
 }
 
 // ----------------------------- 스테이지 선택 -----------------------------
+/** 장소(막)별로 묶고, 퍼즐은 "막-순번"(예: 1-2)으로 표기 */
 function buildStageGrid() {
   const grid = $('stageGrid');
   grid.innerHTML = '';
+  let curAct = null;
   stages.forEach((st, idx) => {
+    if (st.act !== curAct) {                       // 새 장소 → 헤더
+      curAct = st.act;
+      const head = document.createElement('div');
+      head.className = 'stage-place';
+      head.textContent = `${st.act}. ${st.place}`;
+      grid.appendChild(head);
+    }
+    const sub = ((st.id - 1) % 3) + 1;             // 막 안에서의 순번
     const locked = st.id > clearedMax + 1;
     const cleared = st.id <= clearedMax;
     const cell = document.createElement('button');
     cell.className = 'stage-cell' + (locked ? ' locked' : '') + (cleared ? ' cleared' : '');
-    cell.innerHTML = `<span class="num">${locked ? '🔒' : st.id}</span>`
-      + `<span class="thm">${st.theme}</span>`
+    cell.innerHTML = `<span class="num">${locked ? '🔒' : `${st.act}-${sub}`}</span>`
       + `<span class="star">${cleared ? '★' : ''}</span>`;
     if (!locked) cell.addEventListener('click', () => { Audio.sfxUI(); startStage(idx); });
     grid.appendChild(cell);
@@ -141,8 +151,11 @@ function wireUI() {
     Audio.unlockAudio(); Audio.sfxUI(); startStage(nextUnclearedIndex());
   });
   $('btnStages').addEventListener('click', () => { Audio.sfxUI(); buildStageGrid(); show('screenStages'); });
+  // 클리어/실패/일시정지의 '스테이지 목록' → 스테이지 화면으로
   document.querySelectorAll('[data-back]').forEach(b =>
     b.addEventListener('click', () => { Audio.sfxUI(); buildStageGrid(); show('screenStages'); }));
+  // 스테이지 화면의 '뒤로' → 타이틀로 (자기 자신으로 가면 아무 일도 안 일어남)
+  $('btnStagesBack').addEventListener('click', () => { Audio.sfxUI(); show('screenTitle'); });
 
   $('btnIntroNext').addEventListener('click', () => {
     Audio.sfxUI(); if (pendingIntro != null) beginStage(pendingIntro);
