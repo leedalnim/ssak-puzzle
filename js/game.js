@@ -62,12 +62,13 @@ export class Game {
     this.undoStack = [];
     this.time = stage.time || 0;
     this.timeLeft = this.time;
+    this.elapsed = 0;           // 제한 없는 판에서도 경과 시간을 보여준다
     this.particles.clear();
     this.state = 'playing';
     this.shake = 0;
     invalidateBoard();
     this._emitProgress();
-    if (this.hooks.onTimer) this.hooks.onTimer(this.timeLeft, this.time);
+    if (this.hooks.onTimer) this.hooks.onTimer(this.timeLeft, this.time, this.elapsed);
   }
 
   // ------------------------------------------------------------- 상태 조회
@@ -164,6 +165,10 @@ export class Game {
     this._emitProgress();
   }
   reset() { if (this.stage) { this.loadStage(this.stage); Audio.sfxUI(); } }
+
+  /** 모달(일시정지·도움말)을 여는 동안 시계와 입력을 멈춘다 */
+  pause() { if (this.state === 'playing') this.state = 'paused'; }
+  resume() { if (this.state === 'paused') this.state = 'playing'; }
   addTime(sec) { if (this.time > 0) { this.timeLeft += sec; this.state = 'playing'; } }
 
   // ------------------------------------------------------------- 종료 처리
@@ -172,8 +177,7 @@ export class Game {
     Audio.sfxClear();
     this.particles.confetti(VW, VH, 90);
     this.shake = 7;
-    const elapsed = this.time > 0 ? this.time - this.timeLeft : null;
-    setTimeout(() => this.hooks.onClear && this.hooks.onClear({ elapsed }), 800);
+    setTimeout(() => this.hooks.onClear && this.hooks.onClear({ elapsed: this.elapsed }), 800);
   }
   _fail(reason) {
     if (this.state !== 'playing') return;
@@ -191,14 +195,17 @@ export class Game {
 
   // ------------------------------------------------------------- 루프
   _loop = (now) => {
-    const dt = Math.min((now - this.last) / 1000, 0.05);
+    const raw = (now - this.last) / 1000;
     this.last = now;
-    this._update(dt);
+    // 애니메이션은 프레임이 튀어도 안정적이도록 짧게 자른다.
+    // 시계는 그러면 안 된다 — 저프레임에서 실제보다 느리게 흘러 버린다.
+    // (탭 전환 등으로 크게 벌어진 구간만 방어적으로 자른다)
+    this._update(Math.min(raw, 0.05), Math.min(raw, 0.5));
     this._draw();
     requestAnimationFrame(this._loop);
   };
 
-  _update(dt) {
+  _update(dt, clockDt) {
     const h = this.hero;
     if (h?.moving) {
       h.t += dt * 1000 / MOVE_MS;
@@ -208,10 +215,11 @@ export class Game {
     if (h?.bumpT > 0) { h.bumpT -= dt; if (h.bumpT <= 0) h.bumpX = h.bumpY = 0; }
     if (this.shake > 0) this.shake = Math.max(0, this.shake - dt * 22);
     this.particles.update(dt);
-    if (this.state === 'playing' && this.time > 0) {
-      this.timeLeft -= dt;
-      this.hooks.onTimer?.(Math.max(0, this.timeLeft), this.time);
-      if (this.timeLeft <= 0) { this.timeLeft = 0; this._fail('time'); }
+    if (this.state === 'playing') {
+      this.elapsed += clockDt;
+      if (this.time > 0) this.timeLeft -= clockDt;
+      this.hooks.onTimer?.(Math.max(0, this.timeLeft), this.time, this.elapsed);
+      if (this.time > 0 && this.timeLeft <= 0) { this.timeLeft = 0; this._fail('time'); }
     }
   }
 

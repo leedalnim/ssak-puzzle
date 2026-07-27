@@ -94,6 +94,7 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
   height: calc(110px * var(--k));
   justify-content: center;
   font-size: calc(48px * var(--k));
+  font-weight: 800;
   line-height: 1;
 }
 .panel-time {
@@ -135,9 +136,15 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
    → 버튼 아래에 캡션으로 표기해 기능을 명확히 한다. */
 .tool { display: flex; flex-direction: column; align-items: center; gap: calc(8px * var(--k)); }
 .tool > span {
-  font-size: calc(30px * var(--k));
-  color: #7a5c3a;
-  text-shadow: 0 calc(2px * var(--k)) 0 rgba(255, 250, 235, .85);
+  font-size: calc(31px * var(--k));
+  font-weight: 800;
+  color: #6b4f2e;
+  /* 배경(바닥)과 대비를 확보 — 밝은 외곽선 + 옅은 그림자 */
+  text-shadow:
+     0 calc(2px * var(--k)) 0 rgba(255, 251, 240, .95),
+     calc(-1px * var(--k)) 0 0 rgba(255, 251, 240, .8),
+     calc(1px * var(--k)) 0 0 rgba(255, 251, 240, .8),
+     0 calc(4px * var(--k)) calc(5px * var(--k)) rgba(96, 72, 46, .28);
   white-space: nowrap;
 }
 .tool:has(button:disabled) > span { opacity: .45; }

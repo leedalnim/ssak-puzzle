@@ -45,9 +45,14 @@ function makeGame() {
     onProgress: (p) => { $('progressBar').style.width = `${Math.round(p * 100)}%`; },
     onTiles: (left) => { $('hudTiles').textContent = String(left); },
     onUndoState: (can) => { $('btnUndo').disabled = !can; },
-    onTimer: (left, total) => {
+    onTimer: (left, total, elapsed) => {
       const el = $('hudTimer');
-      if (total <= 0) { el.textContent = '∞'; el.classList.remove('warn'); return; }
+      if (total <= 0) {
+        // 제한 시간이 없는 판 — 얼마나 걸렸는지 볼 수 있게 경과 시간을 센다
+        el.textContent = fmtTime(elapsed);
+        el.classList.remove('warn');
+        return;
+      }
       el.textContent = fmtTime(left);
       el.classList.toggle('warn', left <= 15);
     },
@@ -153,10 +158,10 @@ function wireUI() {
   // 인게임 컨트롤
   $('btnUndo').addEventListener('click', () => game.undo());
   $('btnRestart').addEventListener('click', () => game.reset());
-  $('btnHelp').addEventListener('click', () => { Audio.sfxUI(); buildLegend(); show('screenHelp'); });
-  $('btnHelpClose').addEventListener('click', () => { Audio.sfxUI(); show(null); });
-  $('btnPause').addEventListener('click', () => { Audio.sfxUI(); show('screenPause'); });
-  $('btnResume').addEventListener('click', () => { Audio.sfxUI(); show(null); });
+  $('btnHelp').addEventListener('click', () => { Audio.sfxUI(); buildLegend(); game.pause(); show('screenHelp'); });
+  $('btnHelpClose').addEventListener('click', () => { Audio.sfxUI(); show(null); game.resume(); });
+  $('btnPause').addEventListener('click', () => { Audio.sfxUI(); game.pause(); show('screenPause'); });
+  $('btnResume').addEventListener('click', () => { Audio.sfxUI(); show(null); game.resume(); });
   $('btnPauseRestart').addEventListener('click', () => { Audio.sfxUI(); show(null); game.reset(); });
 
   Toss.onClose = () => show('screenTitle');
