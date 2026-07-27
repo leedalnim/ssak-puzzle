@@ -116,22 +116,23 @@ def render(grid, obstacles, hero, hero_dir="down"):
         return ((fr + c * (cw + gap)) / bw, (fr + r * (ch + gap)) / bh,
                 (fr + c * (cw + gap) + cw) / bw, (fr + r * (ch + gap) + ch) / bh)
 
-    def put(png, c, r, scale, anchor=0.55, shadow_w=0.72, shadow_a=125):
+    def put(png, c, r, scale, base_off=0.18, shadow_w=0.66, shadow_a=130):
+        """오브젝트는 **밑면**을 셀 중앙에 놓고 위로 세운다.
+        (바운딩박스 중앙 정렬이면 공중에 뜬 것처럼 보임)"""
         o = Image.open(png).convert("RGBA")
         u0, v0, u1, v1 = cell_uv(c, r)
         cell_h = float(project((u0 + u1) / 2, v1)[1] - project((u0 + u1) / 2, v0)[1])
         s = cell_h * scale / o.height
         w, h = int(o.width * s), int(o.height * s)
         ox, oy = (float(v) for v in project((u0 + u1) / 2, (v0 + v1) / 2))
-        base = oy + h * (1 - anchor) * 0.72
-        _soft_shadow(img, ox, base + cell_h * 0.04, w * shadow_w / 2,
-                     cell_h * 0.13, shadow_a, cell_h * 0.10)
-        img.alpha_composite(o.resize((w, h), Image.LANCZOS), (int(ox - w / 2), int(oy - h * anchor)))
+        base_y = oy + cell_h * base_off          # 접지선 = 셀 중앙보다 살짝 아래
+        _soft_shadow(img, ox, base_y, w * shadow_w / 2, cell_h * 0.13, shadow_a, cell_h * 0.11)
+        img.alpha_composite(o.resize((w, h), Image.LANCZOS), (int(ox - w / 2), int(base_y - h)))
 
     for (c, r), name in obstacles.items():
-        put(f"assets/room/obstacles/obs_{name}.png", c, r, 0.80)
-    put(f"assets/room/char/char_{hero_dir}_0.png", *hero, 1.35, anchor=0.62,
-        shadow_w=0.55, shadow_a=135)
+        put(f"assets/room/obstacles/obs_{name}.png", c, r, 1.05)
+    put(f"assets/room/char/char_{hero_dir}_0.png", *hero, 1.85,
+        base_off=0.16, shadow_w=0.42, shadow_a=140)
     return img
 
 
