@@ -31,12 +31,24 @@ def homography(src, dst):
     return np.append(_solve(src, dst), 1).reshape(3, 3)
 
 
+def _soft_shadow(img, cx, cy, rx, ry, alpha, blur):
+    cx, cy, rx, ry, blur = (float(v) for v in (cx, cy, rx, ry, blur))
+    """부드러운 타원 그림자 — 코어를 작게 깔고 크게 블러."""
+    W, H = img.size
+    s = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(s)
+    for i, k in enumerate((1.0, 0.72, 0.46)):
+        a = int(alpha * (0.45 if i else 1.0))
+        d.ellipse((cx - rx * k, cy - ry * k, cx + rx * k, cy + ry * k), fill=(78, 56, 38, a))
+    img.alpha_composite(s.filter(ImageFilter.GaussianBlur(blur)))
+
+
 def build_board(grid, board_px=1400):
     """평면 보드 한 장(나무 프레임 + 타일 격자)을 만든다."""
     rows, cols = len(grid), len(grid[0])
-    fr = int(board_px * 0.036)
+    fr = int(board_px * 0.040)
     inner = board_px - fr * 2
-    gap = max(2, int(inner * 0.006))
+    gap = max(1, int(inner * 0.0028))          # 갭 축소 → 타일이 붙어 보이게
     cw = (inner - gap * (cols - 1)) // cols
     ch = (inner - gap * (rows - 1)) // rows
     bw = fr * 2 + cw * cols + gap * (cols - 1)
@@ -44,23 +56,35 @@ def build_board(grid, board_px=1400):
 
     b = Image.new("RGBA", (bw, bh), (0, 0, 0, 0))
     d = ImageDraw.Draw(b)
-    r = int(fr * 0.9)
-    d.rounded_rectangle((0, 0, bw - 1, bh - 1), r, fill=(226, 196, 148, 255))
-    for i in range(fr):                                   # 나무 결 그라데이션
+    r = int(fr * 0.85)
+    # 우드 트레이 — 목업의 따뜻한 미디엄 오크
+    d.rounded_rectangle((0, 0, bw - 1, bh - 1), r, fill=(198, 154, 100, 255))
+    for gy in range(4, bh - 4, max(7, fr // 5)):          # 나무 결
+        d.line((4, gy, bw - 5, gy), fill=(176, 132, 82, 90))
+    # 바깥쪽 밝은 베벨 → 안쪽으로 갈수록 어둡게 (입체감)
+    for i in range(fr):
         t = i / fr
         d.rounded_rectangle((i, i, bw - 1 - i, bh - 1 - i), max(2, r - i),
-                            outline=(int(240 - 32 * t), int(214 - 36 * t), int(170 - 36 * t), 255))
-    d.rounded_rectangle((0, 0, bw - 1, bh - 1), r, outline=(184, 148, 102, 255), width=4)
-    sh = Image.new("RGBA", (bw, bh), (0, 0, 0, 0))        # 안쪽 그림자
-    ImageDraw.Draw(sh).rounded_rectangle((fr - 4, fr - 4, bw - fr + 3, bh - fr + 3), 12,
-                                         outline=(118, 90, 56, 150), width=10)
-    b.alpha_composite(sh.filter(ImageFilter.GaussianBlur(7)))
+                            outline=(int(226 - 66 * t), int(190 - 68 * t), int(138 - 60 * t), 190))
+    d.rounded_rectangle((2, 2, bw - 3, bh - 3), r, outline=(240, 214, 172, 200), width=4)  # 상단 하이라이트
+    d.rounded_rectangle((0, 0, bw - 1, bh - 1), r, outline=(138, 100, 60, 255), width=5)   # 외곽선
+
+    sh = Image.new("RGBA", (bw, bh), (0, 0, 0, 0))        # 안쪽 그림자(AO)
+    ImageDraw.Draw(sh).rounded_rectangle((fr - 5, fr - 5, bw - fr + 4, bh - fr + 4), 14,
+                                         outline=(96, 68, 40, 195), width=15)
+    b.alpha_composite(sh.filter(ImageFilter.GaussianBlur(10)))
 
     tiles = [Image.open(f"assets/room/tiles/tile_{i}.png").convert("RGBA") for i in range(6)]
     for y in range(rows):
         for x in range(cols):
-            b.alpha_composite(tiles[grid[y][x]].resize((cw, ch), Image.LANCZOS),
-                              (fr + x * (cw + gap), fr + y * (ch + gap)))
+            px, py = fr + x * (cw + gap), fr + y * (ch + gap)
+            cell = tiles[grid[y][x]].resize((cw, ch), Image.LANCZOS)
+            # 타일 접지 AO — 아래쪽에 얇은 그늘
+            ao = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
+            ImageDraw.Draw(ao).rounded_rectangle((2, int(ch * 0.70), cw - 3, ch - 2),
+                                                 int(cw * 0.10), fill=(120, 94, 62, 46))
+            cell.alpha_composite(ao.filter(ImageFilter.GaussianBlur(cw * 0.05)))
+            b.alpha_composite(cell, (px, py))
     return b, (fr, cw, ch, gap)
 
 
@@ -75,8 +99,10 @@ def render(grid, obstacles, hero, hero_dir="down"):
     img = bg.copy()
 
     drop = Image.new("RGBA", (W, H), (0, 0, 0, 0))        # 보드 드롭섀도우
-    ImageDraw.Draw(drop).polygon([(x, y + 16) for x, y in dst], fill=(96, 74, 52, 110))
-    img.alpha_composite(drop.filter(ImageFilter.GaussianBlur(18)))
+    dd = ImageDraw.Draw(drop)
+    for off, a in ((26, 70), (16, 80), (8, 70)):
+        dd.polygon([(x, y + off) for x, y in dst], fill=(88, 66, 44, a))
+    img.alpha_composite(drop.filter(ImageFilter.GaussianBlur(22)))
     img.alpha_composite(board.transform(
         (W, H), Image.PERSPECTIVE, _solve(dst, [(0, 0), (bw, 0), (bw, bh), (0, bh)]), Image.BICUBIC))
 
@@ -93,16 +119,13 @@ def render(grid, obstacles, hero, hero_dir="down"):
     def put(png, c, r, scale, anchor=0.55, shadow_w=0.72, shadow_a=125):
         o = Image.open(png).convert("RGBA")
         u0, v0, u1, v1 = cell_uv(c, r)
-        cell_h = project((u0 + u1) / 2, v1)[1] - project((u0 + u1) / 2, v0)[1]
+        cell_h = float(project((u0 + u1) / 2, v1)[1] - project((u0 + u1) / 2, v0)[1])
         s = cell_h * scale / o.height
         w, h = int(o.width * s), int(o.height * s)
-        ox, oy = project((u0 + u1) / 2, (v0 + v1) / 2)
-        sh = Image.new("RGBA", (W, H), (0, 0, 0, 0))      # 접지 그림자
+        ox, oy = (float(v) for v in project((u0 + u1) / 2, (v0 + v1) / 2))
         base = oy + h * (1 - anchor) * 0.72
-        ImageDraw.Draw(sh).ellipse((ox - w * shadow_w / 2, base - cell_h * 0.10,
-                                    ox + w * shadow_w / 2, base + cell_h * 0.10),
-                                   fill=(84, 62, 42, shadow_a))
-        img.alpha_composite(sh.filter(ImageFilter.GaussianBlur(9)))
+        _soft_shadow(img, ox, base + cell_h * 0.04, w * shadow_w / 2,
+                     cell_h * 0.13, shadow_a, cell_h * 0.10)
         img.alpha_composite(o.resize((w, h), Image.LANCZOS), (int(ox - w / 2), int(oy - h * anchor)))
 
     for (c, r), name in obstacles.items():
