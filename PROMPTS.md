@@ -462,3 +462,76 @@ STRICTLY NO text, NO labels, NO shadows on the background, NO floor beneath them
 
 ## 전달 방법
 **zip으로 압축해 첨부** — 이 경로가 검증됨 (배경 전달 성공).
+
+---
+
+# 📱 다음 작업 — 앱 아이콘 & 타이틀 로고
+
+## 1. 앱 아이콘 (모바일 북마크 / favicon)
+
+아이콘은 **48px까지 작아진다.** 배경 일러스트를 그대로 쓰면 뭉개지므로
+피사체를 크게, 형태를 단순하게 가야 한다.
+
+### A안 — 캐릭터 얼굴 (브랜드가 됨)
+```
+Using the attached image as the exact style reference, create a mobile app
+icon in the same soft 3D clay style, same cream and sage palette.
+
+SUBJECT: an EXTREME CLOSE-UP of just the chibi girl's head and shoulders,
+centered — big round head, brown hair in a messy bun, bright smiling eyes.
+She holds the mop head up beside her face, and the black-and-white tuxedo
+cat's face peeks in from the lower corner.
+
+COMPOSITION: square 1:1. The character fills MOST of the frame — her head
+alone should take up about 60% of the width. Simple flat cream background
+with a soft rounded gradient, no room, no furniture, no floor.
+Keep a small safe margin around the edges so nothing gets cropped.
+
+CRITICAL: this will be viewed as small as 48x48 pixels. Use BOLD simple
+shapes and STRONG contrast. No fine details, no thin lines, no small props,
+no busy background.
+
+STRICTLY NO text, NO logo, NO border frame, NO drop shadow outside the subject.
+```
+
+### B안 — 대걸레 심볼 (작아도 안 뭉개짐)
+위 프롬프트에서 SUBJECT만 교체:
+```
+SUBJECT: a single cute 3D clay mop standing upright, with two or three
+sparkle marks around it, centered on a flat cream background. Bold, simple,
+instantly readable at tiny sizes.
+```
+
+> 둘 다 뽑아 **48px로 축소해 비교할 것.** 큰 화면에서 예쁜 것이 작을 때도 예쁘진 않다.
+
+### 받은 뒤 Claude가 할 일
+`favicon.ico` · `apple-touch-icon`(180px) · PWA 매니페스트(192/512px) 생성 후 연결.
+
+---
+
+## 2. 타이틀 로고 "슥삭퍼즐"
+
+현재는 웹폰트 텍스트라 밋밋하다. 이미지 로고로 교체 예정.
+
+```
+Using the attached image as the exact style reference, create a game logo
+in the same soft 3D clay style, same warm cream and sage palette.
+
+TEXT: the Korean word "슥삭퍼즐" written in chunky rounded 3D clay letters —
+soft matte clay material, gently beveled edges, a warm wood-brown color with
+a lighter cream highlight on the top of each letter.
+
+The letters sit on a single horizontal line, slightly playful and bouncy in
+their baseline. Add two or three small sparkle marks around the letters.
+
+BACKGROUND: a single flat solid magenta (#FF00FF) background.
+
+CRITICAL: the Korean characters must be spelled EXACTLY "슥삭퍼즐" —
+four syllable blocks, in that order. Render them clearly and legibly.
+
+STRICTLY NO other text, NO English, NO border frame, NO shadows on the background.
+```
+
+> ⚠️ AI 이미지 모델은 **한글 자소를 자주 틀린다.** 받은 뒤 글자가 정확히
+> `슥 / 삭 / 퍼 / 즐` 인지 반드시 확인할 것. 틀리면 재생성하거나,
+> 폰트로 조판한 텍스트를 클레이 스타일로 변환 요청하는 편이 확실하다.
