@@ -119,9 +119,12 @@ export class Game {
     if (this.state !== 'playing' || this.hero.moving) return;
     const d = DIRS[dir];
     const nx = this.hero.gx + d.x, ny = this.hero.gy + d.y;
-    this.hero.dir = dir;
+    // 방향(바라보는 쪽)은 **이동에 성공할 때만** 바꾼다.
+    // 막힌 칸(경계·벽·이미 닦은 칸)으로 시도할 때도 돌려버리면,
+    // 되돌아가려다 막힐 때마다 캐릭터가 홱 반대로 도는 것처럼 보인다.
     if (nx < 0 || ny < 0 || nx >= this.cols || ny >= this.rows) { Audio.sfxMoveBlocked(); return; }
     if (this.wall[ny][nx] || this.dur[ny][nx] <= 0) { Audio.sfxMoveBlocked(); this._bump(d); return; }
+    this.hero.dir = dir;
     this.undoStack.push(this._snapshot());
     this.hero.fromX = this.hero.gx; this.hero.fromY = this.hero.gy;
     this.hero.gx = nx; this.hero.gy = ny; this.hero.moving = true; this.hero.t = 0;

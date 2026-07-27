@@ -191,6 +191,7 @@ async function boot() {
   await loadAssets();
   stages = await (await fetch('stages/stages.json')).json();
   makeGame();
+  window.__game = game;  // 디버그
   wireUI();
   show('screenTitle');
 }
