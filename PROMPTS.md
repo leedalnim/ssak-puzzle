@@ -122,3 +122,86 @@ letting in morning light
 | 빈 공간이 너무 작음 | `Make the empty center floor area much larger — at least 80% of the image width and 45% of the height.` |
 | 그림자가 짐 | `Use flat even lighting on the center floor with no cast shadows.` |
 | 시점이 기울어짐 | `Strict top-down camera angle, same as the reference image.` |
+
+---
+
+# 🖼️ 전체 화면 목업 프롬프트 (UI안 B 기준)
+
+> 배경 + 보드 + 타일단계 + 장애물 + 캐릭터 + 상하단 UI를 모두 포함한 **디자인 기준서용** 목업.
+> 이걸로 비율·색·스타일을 확정한 뒤, 배경/캐릭터/장애물만 따로 받아 게임에 넣는다.
+
+```
+Top-down view of a small cozy studio apartment bedroom — full mobile puzzle game
+screen mockup, portrait orientation, 16-bit pixel art.
+
+PALETTE — bright, clean and cheerful: soft cream and ivory base, light natural
+wood (beige-toned, NOT orange or amber), sage green and mint accents, bright
+natural daylight. NOT dark, NOT gloomy, NOT sepia, NOT muddy.
+
+ROOM (background): a bed with a green checkered blanket, a desk with a laptop,
+a bright window with curtains, a nightstand with a lamp, shelves with books,
+house plants, a laundry basket. Place all of it ONLY along the top, left, right
+and bottom edges, framing the center.
+
+GAME BOARD (center): a 5x5 grid puzzle board with a light wooden frame,
+taking about 82% of the screen width, centered.
+
+TILES — 5 dirt levels plus clean:
+  clean   : plain cream tile, nothing on it
+  level 1 : very faint dust, 1 dot marker
+  level 2 : light brown spots, 2 dot markers
+  level 3 : medium brown stain, 3 dot markers
+  level 4 : dark brown grime, 4 dot markers
+  level 5 : nearly black-brown fully covered, 5 dot markers
+
+IMPORTANT: each dirty tile has small round DOT MARKERS drawn on it in a row at
+the tile center, showing how many times that tile must be wiped (1 to 5 dots).
+Clean tiles have no dots.
+Distribute the dirt NATURALLY and RANDOMLY like a real game in progress — most
+tiles clean or only lightly dirty, only two or three heavily dirty. Do NOT
+arrange them in a neat gradient, ordered rows, or a sample chart.
+
+OBSTACLES: 2 or 3 obstacle objects sitting ON board tiles — a stack of cardboard
+boxes, a potted plant, a laundry basket. They block those tiles. Draw them on
+the grid itself, not at the room edges.
+
+CHARACTER: a young woman with brown hair seen from behind, crouching and wiping
+the floor with a cloth, standing on one of the board tiles. Make her LARGE and
+clearly visible — about 1.5 tiles tall. She is the focal point of the screen.
+
+TOP UI (compact and slim): on the left a small cream pill with a clock icon and
+"01:45"; on the right a small cream pill with a tile icon and "12"; a small round
+pause button in the top-right corner. Keep the top bar slim so the room stays visible.
+
+BOTTOM UI (three controls in a row):
+  left   : a round cream button with a "?" help icon
+  center : a WIDE prominent button with a back-arrow undo icon — the biggest and
+           most eye-catching control on screen
+  right  : a round cream button with a circular restart arrow icon
+All bright cream panels with light wood borders, crisp and cheerful.
+
+Do not add any legend panel, any border frame around the whole image,
+or any text other than the UI labels described above.
+```
+
+## UI안 C(아이템 확장형)로 바꾸려면
+
+BOTTOM UI 블록만 아래로 교체:
+
+```
+BOTTOM UI (four controls in a row):
+  left   : a round cream button with a "?" help icon
+  center : a prominent wide button with a back-arrow undo icon
+  right  : two square item slots holding cleaning items (a mop and a spray
+           bottle), each with a small green count badge
+```
+
+## 이 목업에서 뽑아낼 것
+
+| 확정할 값 | 용도 |
+|---|---|
+| 보드 폭 / 화면 폭 비율 | 코드의 보드 영역 좌표 |
+| 셀 크기 대비 캐릭터 높이 | 캐릭터 렌더 스케일 |
+| 상단바 / 하단바 높이 | 캔버스 높이 계산 |
+| 타일 5단계 색상값 | 코드 타일 팔레트 |
+| UI 패널 색 / 테두리 색 | CSS 변수 |
