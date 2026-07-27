@@ -10,6 +10,7 @@
     python3 tools/preview_room.py [출력경로]
 """
 import sys, random
+from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
@@ -31,24 +32,44 @@ def homography(src, dst):
     return np.append(_solve(src, dst), 1).reshape(3, 3)
 
 
-def _contact_shadow(img, cx, base_y, obj_w, cell_h, alpha=150):
-    """접지 그림자 — 오브젝트 바로 밑에 좁고 진한 코어 + 넓고 옅은 확산.
-    코어를 base_y보다 살짝 위(밑면과 겹치게)에 둬야 '붙어' 보인다.
-    (코어 없이 넓은 타원만 깔면 오브젝트가 둥둥 떠 보임)"""
+# 오브젝트별 접지 그림자 스펙 — 밑면 모양에 맞춰야 자연스럽다.
+#   shape : "ellipse"(둥근 밑면) / "rect"(네모난 밑면)
+#   w     : 오브젝트 폭 대비 그림자 폭
+#   h     : 셀 높이 대비 그림자 두께
+SHADOW = {
+    "obs_boxes":     ("rect",    0.88, 0.085),   # 상자 — 네모 밑면
+    "obs_books":     ("rect",    0.92, 0.070),   # 책더미 — 넓고 얇게
+    "obs_stool":     ("rect",    0.74, 0.075),   # 발판 — 다리 사이 안쪽
+    "obs_basket_sq": ("rect",    0.84, 0.085),   # 사각 바구니
+    "obs_plant":     ("ellipse", 0.54, 0.080),   # 화분 — 좁고 둥근 밑동
+    "obs_basket_rd": ("ellipse", 0.82, 0.090),   # 둥근 바구니
+    "char":          ("ellipse", 0.40, 0.060),   # 캐릭터 — 발 밑에 작게
+}
+
+
+def _contact_shadow(img, cx, base_y, obj_w, cell_h, shape="ellipse", wr=0.7, hr=0.08,
+                    alpha=150):
+    """접지 그림자 — 좁고 진한 코어 + 넓고 옅은 확산.
+    코어를 base_y보다 살짝 위(밑면과 겹치게) 둬야 '붙어' 보인다."""
     cx, base_y, obj_w, cell_h = (float(v) for v in (cx, base_y, obj_w, cell_h))
     W, H = img.size
-    # 넓고 옅은 확산
-    far = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    ImageDraw.Draw(far).ellipse((cx - obj_w * 0.46, base_y - cell_h * 0.10,
-                                 cx + obj_w * 0.46, base_y + cell_h * 0.13),
-                                fill=(84, 62, 42, int(alpha * 0.45)))
-    img.alpha_composite(far.filter(ImageFilter.GaussianBlur(cell_h * 0.10)))
-    # 좁고 진한 코어 — 밑면과 겹치도록 위로 올림
-    core = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    ImageDraw.Draw(core).ellipse((cx - obj_w * 0.30, base_y - cell_h * 0.085,
-                                  cx + obj_w * 0.30, base_y + cell_h * 0.045),
-                                 fill=(62, 44, 28, alpha))
-    img.alpha_composite(core.filter(ImageFilter.GaussianBlur(cell_h * 0.030)))
+    rw, rh = obj_w * wr / 2, cell_h * hr
+
+    def blob(layer, sx, sy, dy, color):
+        d = ImageDraw.Draw(layer)
+        box = (cx - rw * sx, base_y + dy - rh * sy, cx + rw * sx, base_y + dy + rh * sy)
+        if shape == "rect":
+            d.rounded_rectangle(box, radius=rh * sy * 0.8, fill=color)
+        else:
+            d.ellipse(box, fill=color)
+
+    far = Image.new("RGBA", (W, H), (0, 0, 0, 0))       # 넓고 옅은 확산
+    blob(far, 1.18, 1.5, cell_h * 0.012, (84, 62, 42, int(alpha * 0.42)))
+    img.alpha_composite(far.filter(ImageFilter.GaussianBlur(cell_h * 0.075)))
+
+    core = Image.new("RGBA", (W, H), (0, 0, 0, 0))      # 좁고 진한 코어
+    blob(core, 1.0, 1.0, -cell_h * 0.012, (58, 40, 26, alpha))
+    img.alpha_composite(core.filter(ImageFilter.GaussianBlur(cell_h * 0.022)))
 
 
 def build_board(grid, board_px=1400):
@@ -120,7 +141,7 @@ def render(grid, obstacles, hero, hero_dir="down"):
         return ((fr + c * (cw + gap)) / bw, (fr + r * (ch + gap)) / bh,
                 (fr + c * (cw + gap) + cw) / bw, (fr + r * (ch + gap) + ch) / bh)
 
-    def put(png, c, r, scale, base_off=0.18, shadow_w=0.66, shadow_a=130):
+    def put(png, c, r, scale, base_off=0.18, key=None, shadow_a=140):
         """오브젝트는 **밑면**을 셀 중앙에 놓고 위로 세운다.
         (바운딩박스 중앙 정렬이면 공중에 뜬 것처럼 보임)"""
         o = Image.open(png).convert("RGBA")
@@ -130,13 +151,14 @@ def render(grid, obstacles, hero, hero_dir="down"):
         w, h = int(o.width * s), int(o.height * s)
         ox, oy = (float(v) for v in project((u0 + u1) / 2, (v0 + v1) / 2))
         base_y = oy + cell_h * base_off          # 접지선 = 셀 중앙보다 살짝 아래
-        _contact_shadow(img, ox, base_y, w * shadow_w, cell_h, shadow_a)
+        shape, wr, hr = SHADOW.get(key or Path(png).stem, ("ellipse", 0.70, 0.080))
+        _contact_shadow(img, ox, base_y, w, cell_h, shape, wr, hr, shadow_a)
         img.alpha_composite(o.resize((w, h), Image.LANCZOS), (int(ox - w / 2), int(base_y - h)))
 
     for (c, r), name in obstacles.items():
         put(f"assets/room/obstacles/obs_{name}.png", c, r, 1.05)
     put(f"assets/room/char/char_{hero_dir}_0.png", *hero, 1.85,
-        base_off=0.16, shadow_w=0.42, shadow_a=140)
+        base_off=0.16, key="char", shadow_a=150)
     return img
 
 
