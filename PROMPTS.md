@@ -205,3 +205,47 @@ BOTTOM UI (four controls in a row):
 | 상단바 / 하단바 높이 | 캔버스 높이 계산 |
 | 타일 5단계 색상값 | 코드 타일 팔레트 |
 | UI 패널 색 / 테두리 색 | CSS 변수 |
+
+---
+
+# 🧍 캐릭터 스프라이트 시트 프롬프트 (2등신 치비)
+
+> 슬라이싱 실패를 막기 위해 **균일 그리드 · 마젠타 배경 · 텍스트 금지**를 명시.
+
+```
+Character sprite sheet for a 2D pixel art puzzle game. Chibi style.
+
+CHARACTER: a cute chibi girl, 2 heads tall (big round head, small compact body),
+brown hair tied in a messy bun, wearing a white t-shirt and green overalls,
+white sneakers. She is HOLDING A MOP with both hands, standing upright and
+walking. Simple cute face with small dot eyes and a tiny smile.
+
+SHEET LAYOUT — follow this EXACTLY:
+- A strict uniform grid of 4 rows x 3 columns, evenly spaced.
+- Row 1: facing DOWN (toward viewer)
+- Row 2: facing UP (back turned)
+- Row 3: facing LEFT
+- Row 4: facing RIGHT
+- Each row shows 3 walking animation frames of that direction.
+- Every cell is exactly the same size. The character is centered in her cell
+  and drawn at the SAME scale in every cell, with a small margin around her.
+
+BACKGROUND: a single flat solid magenta background (#FF00FF) behind everything.
+No shadows on the background.
+
+STRICTLY DO NOT INCLUDE: any text, any labels, any row or column titles,
+any numbers, any drawn grid lines or cell borders, any decorations,
+any props other than the mop.
+
+STYLE: 16-bit pixel art, bright cream and sage green palette matching a cozy
+game, clean readable shapes, crisp outlines.
+```
+
+## 통짜 목업용 캐릭터 블록 (교체용)
+
+```
+CHARACTER: a cute chibi girl, 2 heads tall (big round head, small body), brown
+hair in a messy bun, white t-shirt and green overalls, holding a mop with both
+hands, standing and mopping the floor. She stands on one board tile and fits
+roughly within a single tile. Cute, charming, clearly visible.
+```
