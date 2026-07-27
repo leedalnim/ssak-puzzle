@@ -62,7 +62,11 @@ def solve(grid, start, node_cap=4_000_000):
 
 
 def check_stage(st):
-    sol = solve(st['grid'], st['start'])
+    # 장애물이 놓인 칸은 통행 불가 — 게임 로직과 동일하게 0으로 막고 푼다
+    grid = [row[:] for row in st['grid']]
+    for o in st.get('obstacles', []):
+        grid[o['y']][o['x']] = 0
+    sol = solve(grid, st['start'])
     name = f"#{st.get('id','?')} {st.get('theme','')}"
     if sol is None:
         print(f"  ✗ {name}: 풀 수 없음!")

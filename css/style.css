@@ -73,7 +73,7 @@ html, body {
   transform: translateY(calc(3px * var(--k)));
   filter: drop-shadow(0 calc(2px * var(--k)) calc(4px * var(--k)) rgba(110, 84, 56, .3));
 }
-.icon-btn { aspect-ratio: 1 / 1; }
+
 button:disabled { opacity: .45; filter: none; cursor: default; }
 
 /* ================================ 상단 HUD ================================ */
@@ -89,36 +89,41 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 }
 .hud-left, .hud-right { display: flex; align-items: center; gap: calc(18px * var(--k)); }
 
+/* 에셋 원본 비율을 반드시 유지한다 — 가로로 눌리면 내장 아이콘이 찌그러진다 */
 .panel {
   height: calc(110px * var(--k));
-  /* 아이콘이 왼쪽에 내장 → 값은 오른쪽 영역에 중앙 정렬 */
-  padding-left: calc(96px * var(--k));
-  padding-right: calc(34px * var(--k));
-  min-width: calc(200px * var(--k));
   justify-content: center;
-  font-size: calc(50px * var(--k));
+  font-size: calc(48px * var(--k));
   line-height: 1;
 }
-.panel-time  { background-image: url(../assets/room/ui/hud_time.png); }
-.panel-tiles { background-image: url(../assets/room/ui/hud_tiles.png); padding-left: calc(104px * var(--k)); min-width: calc(190px * var(--k)); }
+.panel-time {
+  background-image: url(../assets/room/ui/hud_time.png);
+  aspect-ratio: 676 / 266;
+  padding-left: calc(74px * var(--k));   /* 내장 시계 아이콘 폭만큼 */
+}
+.panel-tiles {
+  background-image: url(../assets/room/ui/hud_tiles.png);
+  aspect-ratio: 505 / 266;
+  padding-left: calc(66px * var(--k));
+}
 #hudTimer.warn { color: var(--danger); animation: pulse .7s infinite; }
 @keyframes pulse { 50% { transform: scale(1.1); } }
 
-.btn-pause   { height: calc(110px * var(--k)); background-image: url(../assets/room/ui/btn_pause.png); }
+.btn-pause   { height: calc(110px * var(--k)); aspect-ratio: 258 / 271; background-image: url(../assets/room/ui/btn_pause.png); }
 
 /* ================================ 하단 툴바 ================================ */
 #toolbar {
   position: absolute;
-  left: calc(56px * var(--k));
-  right: calc(56px * var(--k));
+  left: 0; right: 0;
   bottom: calc(var(--safe-b) + 40px * var(--k));
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: calc(34px * var(--k));
   z-index: 5;
 }
-.btn-help    { height: calc(148px * var(--k)); background-image: url(../assets/room/ui/btn_help.png); }
-.btn-restart { height: calc(148px * var(--k)); background-image: url(../assets/room/ui/btn_restart.png); }
+.btn-help    { height: calc(148px * var(--k)); aspect-ratio: 328 / 343; background-image: url(../assets/room/ui/btn_help.png); }
+.btn-restart { height: calc(148px * var(--k)); aspect-ratio: 326 / 343; background-image: url(../assets/room/ui/btn_restart.png); }
 .btn-undo {
   /* 에셋 자체 비율(742:344)을 유지해야 화살표가 찌그러지지 않는다 */
   height: calc(148px * var(--k));

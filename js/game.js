@@ -42,8 +42,12 @@ export class Game {
     this.hole = stage.grid.map(row => row.map(v => v === 0));   // 보드에 뚫린 칸
     this.wall = stage.grid.map(row => row.map(v => v === 0));   // 지나갈 수 없는 칸
     this.obstacles = stage.obstacles || [];
+    // 장애물 칸: 게임 로직상 통행 불가(dur=0)지만, 화면에는 원래 더러움 타일을 그린다.
+    // (tile_0만 밝게 튀어 바닥이 어색해 보이는 문제)
+    this.obstDisp = {};
     for (const o of this.obstacles) {
       if (this.wall[o.y]) this.wall[o.y][o.x] = true;
+      this.obstDisp[o.x + ',' + o.y] = stage.grid[o.y][o.x];
       this.dur[o.y][o.x] = 0;
     }
     this.totalDirt = this.dur.flat().reduce((s, v) => s + v, 0);
@@ -211,6 +215,13 @@ export class Game {
     }
   }
 
+  /** 렌더용 그리드 — 장애물 칸만 원래 더러움 값으로 되돌린 사본 */
+  _dispGrid() {
+    const d = this.dur.map(r => r.slice());
+    for (const o of this.obstacles) d[o.y][o.x] = this.obstDisp[o.x + ',' + o.y] ?? 0;
+    return d;
+  }
+
   _draw() {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, VW, VH);
@@ -222,7 +233,7 @@ export class Game {
       ctx.translate((Math.random() * 2 - 1) * this.shake, (Math.random() * 2 - 1) * this.shake);
     }
     drawBoardShadow(ctx);
-    ctx.drawImage(boardCanvas(this.dur, this.hole, this.cols, this.rows), 0, 0);
+    ctx.drawImage(boardCanvas(this._dispGrid(), this.hole, this.cols, this.rows), 0, 0);
 
     // 뒤쪽(위쪽) 오브젝트부터 그려야 앞이 뒤를 가린다
     const drawables = this.obstacles.map(o => ({ r: o.y, draw: () => this._drawObstacle(ctx, o) }));
