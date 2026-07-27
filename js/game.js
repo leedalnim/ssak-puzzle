@@ -9,7 +9,10 @@ import {
 } from './render.js';
 
 const MOVE_MS = 130;
-const CHAR_SCALE = 1.55;      // 셀 높이 대비 캐릭터 크기 (이웃 칸을 과하게 가리지 않는 선)
+// 캐릭터 크기: 셀 높이에 비례하되 최소 크기를 보장한다.
+// 셀에만 비례시키면 7x7 같은 큰 판에서 배경 소품(고양이 139px)보다도 작아진다.
+const CHAR_SCALE = 1.9;                 // 셀 높이 배수
+const CHAR_MIN_H = VH * 0.115;          // 화면 높이 대비 최소 높이(약 177px)
 const OBST_SCALE = 1.05;
 
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -270,7 +273,7 @@ export class Game {
     const cellH = a.cellH;
     const hop = h.moving ? Math.sin(h.t * Math.PI) * cellH * 0.08 : 0;
 
-    const ht = cellH * CHAR_SCALE, w = img.width * ht / img.height;
+    const ht = Math.max(cellH * CHAR_SCALE, CHAR_MIN_H), w = img.width * ht / img.height;
     const baseY = cy + cellH * 0.14;
     // 그림자는 발 위치(고정)에, 캐릭터만 살짝 떠오르게 해야 점프감이 산다
     drawContactShadow(ctx, img, cx - w / 2, w, baseY);
