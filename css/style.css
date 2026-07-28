@@ -60,12 +60,13 @@ html, body {
 }
 
 #app { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-/* 세로로 긴 폰에서 캔버스(2:3) 위아래에 생기는 빈 띠를, 같은 방 배경을 크게 blur해
-   채운다 — 빈 크림 여백 대신 방이 이어지는 느낌. 캔버스/화면은 이 위에 얹힌다. */
+/* 세로로 긴 폰에서 캔버스(2:3) 위아래 빈 띠를 채운다.
+   벽(위)·바닥(아래)을 늘려 만든 확장 배경(bg_studio_ext)을 cover로 깔면,
+   폭맞춤·중앙정렬이 캔버스와 같아 원본 영역이 캔버스 뒤에 정확히 겹치고
+   위아래는 벽/바닥이 자연스럽게 이어진다. 캔버스/화면은 이 위에 얹힌다. */
 #app::before {
-  content: ''; position: absolute; inset: -6%;
-  background: url(../assets/room/bg_studio.webp) center / cover no-repeat;
-  filter: blur(26px) saturate(1.05) brightness(1.02);
+  content: ''; position: absolute; inset: 0;
+  background: url(../assets/room/bg_studio_ext.webp) center / cover no-repeat;
   z-index: 0; pointer-events: none;
 }
 #stage { z-index: 1; }
