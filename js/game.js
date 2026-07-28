@@ -265,16 +265,18 @@ export class Game {
   _drawHero(ctx) {
     const h = this.hero;
     const frame = h.moving ? 1 + (Math.floor(h.t * 3) % 2) : 0;
-    // 측면 스프라이트는 프레임마다 방향이 뒤섞여 있다
-    // (char_right_0=왼쪽, char_right_1/2=오른쪽, char_left_0=오른쪽, char_left_1=왼쪽…).
-    // 그래서 **오른쪽을 보는 프레임만** 프레임별로 골라 한 벌로 쓴다.
-    // 왼쪽 이동은 이 오른쪽 벌을 캔버스에서 좌우 반전해 그린다.
-    const SIDE = ['char_left_0', 'char_right_1', 'char_right_2']; // 0=정지, 1·2=걷기 (모두 오른쪽)
-    const isLeft = h.dir === 'left';
-    const img = (h.dir === 'left' || h.dir === 'right')
-      ? (IMG[SIDE[frame]] || IMG.char_down_0)
+    // 측면은 **char_right_* 한 시트만** 쓴다(프레임 간 몸 정렬이 맞아 흔들림이 없다).
+    // 단 char_right_0(정지)만 왼쪽을 보므로 그 프레임만 뒤집어 오른쪽으로 통일한다.
+    //   SIDE[frame] = [키, 이 프레임을 오른쪽으로 만들려면 뒤집어야 하나]
+    const SIDE = [['char_right_0', true], ['char_right_1', false], ['char_right_2', false]];
+    const horiz = h.dir === 'left' || h.dir === 'right';
+    const [sideKey, sideFlip] = SIDE[frame];
+    const img = horiz
+      ? (IMG[sideKey] || IMG.char_down_0)
       : (IMG[`char_${h.dir}_${frame}`] || IMG.char_down_0);
     if (!img) return;
+    // 최종 좌우반전 = 프레임 자체 보정(sideFlip) XOR 왼쪽 이동
+    const flip = horiz && (sideFlip !== (h.dir === 'left'));
     // 이동 중에는 셀 사이를 보간 — 정수 셀이 아니므로 좌표를 직접 계산
     const a = cellCenter(Math.floor(h.px), Math.floor(h.py), this.cols, this.rows);
     const b = cellCenter(Math.ceil(h.px), Math.ceil(h.py), this.cols, this.rows);
@@ -288,7 +290,7 @@ export class Game {
     const baseY = cy + cellH * 0.10;
     // 그림자는 발 위치(고정)에, 캐릭터만 살짝 떠오르게 해야 점프감이 산다
     drawContactShadow(ctx, img, cx - w / 2, w, baseY);
-    if (isLeft) {
+    if (flip) {
       ctx.save();
       ctx.translate(cx, 0);
       ctx.scale(-1, 1);
