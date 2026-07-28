@@ -353,10 +353,11 @@ export function drawObject(ctx, img, c, r, cols, rows, scale, _key, baseOff = 0.
   // 밑면 실측(bbox)으로 그림자 중심·폭을 잡는다 — 원근 쏠림 방지.
   const fp = objectFootprint(img);
   const footX = (x - w / 2) + fp.cx * w;
-  // 납작하고 넓은 물체(책·택배박스)는 그림자를 더 넓게 깔아야 자연스럽다.
+  // 납작하고 넓은 물체(책·택배박스)는 그림자를 더 넓게 깔고, 위로 올려 물체와 겹치게 한다.
   const WMUL = { books: 1.18, boxes: 1.14 };
+  const LIFT = { books: 0.42, boxes: 0.40 };     // 값↑ = 그림자가 위로 올라가 오브젝트와 더 겹침
   const footW = fp.w * w * (WMUL[_key] ?? 0.82);
-  const depthMul = 1.15, lift = 0.10;
+  const depthMul = 1.15, lift = LIFT[_key] ?? 0.10;
   const ry = footW * 0.58 * 0.44 * depthMul;
   shadowOval(ctx, footX, baseY - ry * lift, footW, 0.22, 0.34, depthMul);
   ctx.drawImage(img, x - w / 2, baseY - h, w, h);

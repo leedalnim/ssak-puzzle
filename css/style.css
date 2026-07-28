@@ -208,8 +208,8 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
      ⚠️ 배율이 부족하면 위아래에 빈 띠가 생긴다 — cover 이상으로 잡을 것. */
   /* 세로가 딱 맞는 cover에서는 background-position이 먹지 않는다.
      세로로 넘치도록 확대해야 위치 조정이 가능하다. */
-  background-size: auto 128%;
-  background-position: center 74%;             /* 값↑ = 배경 인물이 화면 위로 올라와 타이틀에 가까워짐 */
+  background-size: auto 134%;
+  background-position: center 90%;             /* 값↑ = 배경 인물이 화면 위로 (고양이 얼굴이 시작 버튼 위로) */
   background-color: #f6ecd8;                  /* 혹시 모를 여백 대비 */
   justify-content: space-between;
   padding-top: calc(var(--safe-t) + 132px);   /* 로고를 아래로 */
