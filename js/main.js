@@ -68,8 +68,6 @@ function startStage(idx) {
   Toss.track('stage_start', { stage: st.id });
   if (st.intro) {
     pendingIntro = idx;
-    const sub = ((st.id - 1) % 3) + 1;
-    $('introAct').textContent = `${st.place} · ${st.act}-${sub}`;
     $('introTitle').textContent = st.theme;
     $('introText').textContent = st.intro;
     show('screenIntro');

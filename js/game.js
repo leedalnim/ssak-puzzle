@@ -265,10 +265,11 @@ export class Game {
   _drawHero(ctx) {
     const h = this.hero;
     const frame = h.moving ? 1 + (Math.floor(h.t * 3) % 2) : 0;
-    // 측면 스프라이트(char_left_*)는 실제로 '오른쪽'을 향한다.
-    // 그래서 좌우 모두 이 한 벌을 소스로 쓰고, 왼쪽일 때만 캔버스에서 뒤집는다.
+    // 측면 스프라이트는 char_right_* 한 벌을 소스로 쓴다(0/1/2 모두 '오른쪽'을 향해
+    // 방향이 일관됨). char_left_* 는 1번 프레임만 왼쪽을 봐서 걸을 때 몸이 홱 돌아간다.
+    // 왼쪽 이동은 이 오른쪽 스프라이트를 캔버스에서 좌우 반전해 그린다.
     const isLeft = h.dir === 'left';
-    const key = (h.dir === 'left' || h.dir === 'right') ? 'left' : h.dir;
+    const key = (h.dir === 'left' || h.dir === 'right') ? 'right' : h.dir;
     const img = IMG[`char_${key}_${frame}`] || IMG.char_down_0;
     if (!img) return;
     // 이동 중에는 셀 사이를 보간 — 정수 셀이 아니므로 좌표를 직접 계산

@@ -303,7 +303,6 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 .stage-cell.locked { opacity: .45; filter: grayscale(.5); cursor: default; }
 .stage-cell.cleared { border-color: #d8a53c; }
 
-.act-badge { font-size: 13px; color: var(--ink-soft); letter-spacing: 3px; }
 .intro-title { font-size: 30px; margin-bottom: 6px; }
 .intro-text, .clear-story {
   font-size: 18px; line-height: 1.8; color: var(--ink);
