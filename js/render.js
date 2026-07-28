@@ -251,9 +251,9 @@ function footprint(img) {
 function contactShadow(ctx, baseY, feetX, feetW, sMin, sMax, opts = {}) {
   const depthMul = opts.depthMul ?? 1;           // 그림자 세로 크기 배수(둥근 오브젝트↑)
   const lift = opts.lift ?? 0.04;                // 접지선보다 위로 당기는 정도(ry 대비)
-  const coreOut = opts.coreOut ?? 0.34;          // 발밑 코어 바깥 진하기
-  const coreIn = opts.coreIn ?? 0.60;            // 발밑 코어 중심 진하기
-  const mopA = opts.mopA ?? 0.16;                // 대걸레 밑 그림자 진하기(옅게)
+  const coreOut = opts.coreOut ?? 0.18;          // 발밑 코어 바깥 진하기(옅고 넓게)
+  const coreIn = opts.coreIn ?? 0.30;            // 발밑 코어 중심 진하기(진한 점 방지)
+  const mopA = opts.mopA ?? 0.10;                // 대걸레 밑 그림자 진하기(아주 옅게)
   // 세로 반경(그림자 깊이)은 **발 폭 기준으로 고정** — 접지범위가 넓어도(대걸레)
   // 그림자가 세로로 커지지 않게. 카메라가 거의 위라 발끝 바로 아래에 얹는다.
   const ry = feetW * 0.58 * 0.44 * depthMul;
@@ -276,16 +276,17 @@ function contactShadow(ctx, baseY, feetX, feetW, sMin, sMax, opts = {}) {
   };
   const spanX = (sMin + sMax) / 2, spanW = Math.max(sMax - sMin, feetW);
   // 1) 발~대걸레 전체 접지범위를 덮는 넓고 옅은 확산
-  blob(spanX, spanW * 0.60, 0.14, 0.05);
-  // 2) 대걸레 머리쪽(발에서 먼 끝)에 옅은 그림자 — 걸레도 바닥에 닿지만 약하게
+  blob(spanX, spanW * 0.60, 0.10, 0.04);
+  // 2) 대걸레 머리쪽(발에서 먼 끝)에 아주 옅은 그림자 — 걸레도 바닥에 닿지만 약하게
   const mopX = (Math.abs(sMax - feetX) > Math.abs(feetX - sMin)) ? sMax : sMin;
   if (Math.abs(mopX - feetX) > feetW * 0.35) {
     const mopInset = feetX + (mopX - feetX) * 0.80;
     blob(mopInset, feetW * 0.44, mopA, mopA * 0.5);
   }
-  // 3) 발밑을 채우는 진한 코어 (2겹)
-  blob(feetX, feetW * 0.60, coreOut, coreOut * 0.5);
-  blob(feetX, feetW * 0.36, coreIn, coreIn * 0.55);
+  // 3) 발밑 그림자 — 진한 점이 아니라 **넓고 고르게** 퍼지는 부드러운 타원
+  //    (좁고 진하면 걸레 밑 검은 덩어리처럼 보인다)
+  blob(feetX, feetW * 0.82, coreOut, coreOut * 0.55);
+  blob(feetX, feetW * 0.54, coreIn, coreIn * 0.6);
 }
 
 /** 스프라이트 밑면에 맞춘 접지 그림자 (캐릭터 등 외부에서도 사용) */
@@ -298,13 +299,14 @@ export function drawContactShadow(ctx, img, spriteLeft, spriteW, baseY, opts) {
 }
 
 /** 오브젝트를 셀에 세운다 — 밑면이 셀 중앙보다 살짝 아래 */
-export function drawObject(ctx, img, c, r, cols, rows, scale, _key, baseOff = 0.10) {
+export function drawObject(ctx, img, c, r, cols, rows, scale, _key, baseOff = 0.16) {
   if (!img) return;
   const { x, y, cellH } = cellCenter(c, r, cols, rows);
   const h = cellH * scale, w = img.width * h / img.height;
-  const baseY = y + cellH * baseOff;
-  // 장애물은 둥근 물체라 그림자를 조금 더 크게(depthMul) + 밑면에 더 붙게(lift) 올린다
-  drawContactShadow(ctx, img, x - w / 2, w, baseY, { depthMul: 1.28, lift: 0.16 });
+  const baseY = y + cellH * baseOff;             // 오브젝트를 살짝 아래로 → 그림자를 더 덮는다
+  // 장애물 그림자는 밑면 깊숙이(lift 큼) 넣어 대부분 오브젝트가 가리게 하고,
+  // 바닥 접지 느낌만 남긴다.
+  drawContactShadow(ctx, img, x - w / 2, w, baseY, { depthMul: 1.1, lift: 0.55, coreOut: 0.24, coreIn: 0.34 });
   ctx.drawImage(img, x - w / 2, baseY - h, w, h);
 }
 
