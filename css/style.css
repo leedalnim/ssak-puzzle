@@ -59,7 +59,16 @@ html, body {
   overscroll-behavior: none;
 }
 
-#app { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+#app { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+/* 세로로 긴 폰에서 캔버스(2:3) 위아래에 생기는 빈 띠를, 같은 방 배경을 크게 blur해
+   채운다 — 빈 크림 여백 대신 방이 이어지는 느낌. 캔버스/화면은 이 위에 얹힌다. */
+#app::before {
+  content: ''; position: absolute; inset: -6%;
+  background: url(../assets/room/bg_studio.webp) center / cover no-repeat;
+  filter: blur(26px) saturate(1.05) brightness(1.02);
+  z-index: 0; pointer-events: none;
+}
+#stage { z-index: 1; }
 
 /* 캔버스와 오버레이 UI가 정확히 같은 박스를 공유한다 */
 #stage {

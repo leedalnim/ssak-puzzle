@@ -265,12 +265,15 @@ export class Game {
   _drawHero(ctx) {
     const h = this.hero;
     const frame = h.moving ? 1 + (Math.floor(h.t * 3) % 2) : 0;
-    // 측면 스프라이트는 char_right_* 한 벌을 소스로 쓴다(0/1/2 모두 '오른쪽'을 향해
-    // 방향이 일관됨). char_left_* 는 1번 프레임만 왼쪽을 봐서 걸을 때 몸이 홱 돌아간다.
-    // 왼쪽 이동은 이 오른쪽 스프라이트를 캔버스에서 좌우 반전해 그린다.
+    // 측면 스프라이트는 프레임마다 방향이 뒤섞여 있다
+    // (char_right_0=왼쪽, char_right_1/2=오른쪽, char_left_0=오른쪽, char_left_1=왼쪽…).
+    // 그래서 **오른쪽을 보는 프레임만** 프레임별로 골라 한 벌로 쓴다.
+    // 왼쪽 이동은 이 오른쪽 벌을 캔버스에서 좌우 반전해 그린다.
+    const SIDE = ['char_left_0', 'char_right_1', 'char_right_2']; // 0=정지, 1·2=걷기 (모두 오른쪽)
     const isLeft = h.dir === 'left';
-    const key = (h.dir === 'left' || h.dir === 'right') ? 'right' : h.dir;
-    const img = IMG[`char_${key}_${frame}`] || IMG.char_down_0;
+    const img = (h.dir === 'left' || h.dir === 'right')
+      ? (IMG[SIDE[frame]] || IMG.char_down_0)
+      : (IMG[`char_${h.dir}_${frame}`] || IMG.char_down_0);
     if (!img) return;
     // 이동 중에는 셀 사이를 보간 — 정수 셀이 아니므로 좌표를 직접 계산
     const a = cellCenter(Math.floor(h.px), Math.floor(h.py), this.cols, this.rows);
