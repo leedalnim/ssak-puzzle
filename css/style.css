@@ -245,7 +245,7 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
   filter: drop-shadow(0 6px 10px rgba(120, 92, 60, .28));
 }
 .tagline {
-  margin-top: 10px; color: #8a6c48; font-size: 15px; font-weight: 800;
+  margin-bottom: 12px; color: #8a6c48; font-size: 15px; font-weight: 800;
   text-shadow: 0 2px 0 rgba(255, 252, 244, .9);
 }
 
