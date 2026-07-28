@@ -265,18 +265,18 @@ export class Game {
   _drawHero(ctx) {
     const h = this.hero;
     const frame = h.moving ? 1 + (Math.floor(h.t * 3) % 2) : 0;
-    // 측면은 **char_right_* 한 시트만** 쓴다(프레임 간 몸 정렬이 맞아 흔들림이 없다).
-    // 단 char_right_0(정지)만 왼쪽을 보므로 그 프레임만 뒤집어 오른쪽으로 통일한다.
-    //   SIDE[frame] = [키, 이 프레임을 오른쪽으로 만들려면 뒤집어야 하나]
-    const SIDE = [['char_right_0', true], ['char_right_1', false], ['char_right_2', false]];
+    // 측면은 **방향이 일관된 char_right_1·2(둘 다 오른쪽)만** 쓴다.
+    // char_right_0은 왼쪽을 보고, 뒤집으면 정렬이 어긋나 걸을 때 몸이 흔들리므로 제외.
+    // 정지=char_right_1, 걷기=1↔2 교대. 모두 오른쪽 원본이라 뒤집기 보정이 없고,
+    // 왼쪽 이동만 통째로 좌우반전한다 → 좌/우 이동 모두 프레임 방향이 완전히 일관.
+    const SIDE = ['char_right_1', 'char_right_2'];
     const horiz = h.dir === 'left' || h.dir === 'right';
-    const [sideKey, sideFlip] = SIDE[frame];
+    const sideIdx = h.moving ? (Math.floor(h.t * 3) % 2) : 0;
     const img = horiz
-      ? (IMG[sideKey] || IMG.char_down_0)
+      ? (IMG[SIDE[sideIdx]] || IMG.char_down_0)
       : (IMG[`char_${h.dir}_${frame}`] || IMG.char_down_0);
     if (!img) return;
-    // 최종 좌우반전 = 프레임 자체 보정(sideFlip) XOR 왼쪽 이동
-    const flip = horiz && (sideFlip !== (h.dir === 'left'));
+    const flip = horiz && h.dir === 'left';
     // 이동 중에는 셀 사이를 보간 — 정수 셀이 아니므로 좌표를 직접 계산
     const a = cellCenter(Math.floor(h.px), Math.floor(h.py), this.cols, this.rows);
     const b = cellCenter(Math.ceil(h.px), Math.ceil(h.py), this.cols, this.rows);

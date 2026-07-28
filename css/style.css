@@ -60,19 +60,17 @@ html, body {
 }
 
 #app {
-  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  position: fixed; inset: 0; display: flex; align-items: flex-start; justify-content: center;
   overflow: hidden; background: #efe3cf;
-  /* 상태바/홈바(세이프에어리어)만큼 비워 캔버스가 그 아래에 놓이게 — 상단 잘림 방지 */
-  padding: var(--safe-t) 0 var(--safe-b);
+  padding-top: var(--safe-t);            /* 캔버스 상단을 상태바 아래로 → 천장 안 잘림 */
 }
 
-/* 캔버스와 오버레이 UI가 정확히 같은 박스를 공유한다.
-   세로형 배경(1024×2219 ≈ 9:19.5)이라 세이프에어리어 안에서 화면을 거의 채운다. */
+/* 캔버스는 **화면 폭을 꽉 채운다**(좌우 여백 없음). 세로형 배경(1024×2219)이라
+   높이가 화면보다 약간 길면 아래쪽(빈 바닥)만 잘린다. HUD/툴바는 화면 세이프존에 별도 고정. */
 #stage {
   position: relative;
-  --avail-h: calc(100vh - var(--safe-t) - var(--safe-b));
-  width: min(100vw, calc(var(--avail-h) * 1024 / 2219));
-  height: min(var(--avail-h), calc(100vw * 2219 / 1024));
+  width: 100vw;
+  height: calc(100vw * 2219 / 1024);
 }
 #game { display: block; width: 100%; height: 100%; touch-action: none; }
 
@@ -103,8 +101,8 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 
 /* ================================ 상단 HUD ================================ */
 #hud {
-  position: absolute;
-  top: calc(34px * var(--k));
+  position: fixed;
+  top: calc(var(--safe-t) + 22px * var(--k));
   left: calc(34px * var(--k));
   right: calc(34px * var(--k));
   display: flex;
@@ -139,9 +137,9 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 
 /* ================================ 하단 툴바 ================================ */
 #toolbar {
-  position: absolute;
+  position: fixed;
   left: 0; right: 0;
-  bottom: calc(40px * var(--k));
+  bottom: calc(var(--safe-b) + 20px * var(--k));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -176,9 +174,9 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 
 /* ================================ 진행 게이지 ============================== */
 #progressWrap {
-  position: absolute;
+  position: fixed;
   left: 50%; transform: translateX(-50%);
-  bottom: calc(250px * var(--k));
+  bottom: calc(var(--safe-b) + 210px * var(--k));
   width: 46%; height: calc(14px * var(--k));
   background: rgba(120, 94, 62, .22);
   border-radius: 99px; overflow: hidden; z-index: 4;
