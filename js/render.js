@@ -197,30 +197,37 @@ export function invalidateBoard() { cache.key = ''; }
 // 타입별 상수(둥근 화분 / 네모 상자 …)로 모양을 가정하면 반드시 어긋난다.
 const fpCache = new WeakMap();
 
-/** 이미지 하단부의 불투명 영역 → 접지면 중심/폭 (스프라이트 폭 대비 0~1) */
+/** 이미지 하단부의 불투명 영역 → 접지면 중심/폭 (스프라이트 폭 대비 0~1)
+ *
+ * 단순히 밑면의 min~max를 쓰면, 바닥까지 닿는 **얇은 대걸레 자루/머리**가
+ * 접지면에 섞여 그림자 중심이 발에서 밀려난다(특히 옆모습: 발은 왼쪽, 대걸레는 오른쪽).
+ * → 열(column)별 불투명 픽셀 수를 **제곱 가중**해 무게중심을 구하면
+ *   두꺼운 몸통·다리(발)가 지배하고 얇은 대걸레는 사실상 무시된다. */
 function footprint(img) {
   const hit = fpCache.get(img);
   if (hit) return hit;
-  const S = 72;
+  const S = 80;
   const cv = document.createElement('canvas');
   cv.width = S; cv.height = S;
   const g = cv.getContext('2d', { willReadFrequently: true });
   g.drawImage(img, 0, 0, S, S);
   const data = g.getImageData(0, 0, S, S).data;
-  let minX = S, maxX = -1;
-  // 하단 26% — 구간이 좁으면 캐릭터의 대걸레만 잡혀 그림자가 발에서 벗어난다
-  for (let y = Math.floor(S * 0.74); y < S; y++) {
-    for (let x = 0; x < S; x++) {
-      if (data[(y * S + x) * 4 + 3] > 70) {
-        if (x < minX) minX = x;
-        if (x > maxX) maxX = x;
-      }
-    }
+  const y0 = Math.floor(S * 0.60);             // 다리~발 구간(대걸레 머리보다 위부터)
+  const col = new Array(S).fill(0);
+  for (let x = 0; x < S; x++) {
+    let c = 0;
+    for (let y = y0; y < S; y++) if (data[(y * S + x) * 4 + 3] > 70) c++;
+    col[x] = c;
   }
-  const fp = maxX >= minX
-    // 접지면이 지나치게 좁게 잡히면(가는 다리·막대 등) 그림자가 빈약해 보인다
-    ? { cx: (minX + maxX + 1) / 2 / S, w: Math.max((maxX - minX + 1) / S, 0.42) }
-    : { cx: 0.5, w: 0.6 };
+  let wsum = 0, xsum = 0;
+  for (let x = 0; x < S; x++) { const w = col[x] * col[x]; wsum += w; xsum += w * x; }
+  if (wsum === 0) { const fp = { cx: 0.5, w: 0.6 }; fpCache.set(img, fp); return fp; }
+  const mx = xsum / wsum;                       // 가중 무게중심(px)
+  let x2 = 0;
+  for (let x = 0; x < S; x++) { const w = col[x] * col[x]; x2 += w * (x - mx) * (x - mx); }
+  const std = Math.sqrt(x2 / wsum);
+  // 폭은 가중 분산에서 — 얇은 대걸레는 가중치가 작아 폭에 거의 영향 없다
+  const fp = { cx: mx / S, w: Math.min(Math.max(std * 3.0 / S, 0.34), 0.7) };
   fpCache.set(img, fp);
   return fp;
 }
@@ -236,26 +243,27 @@ function contactShadow(ctx, cx, baseY, footW) {
   // 중심을 바닥선보다 아주 조금만 올린다.
   //  - 너무 내리면 그림자가 오브젝트 아래로 떨어져 보이고,
   //  - 너무 올리면 오브젝트 뒤에 완전히 가려 발밑에 아무것도 안 보인다.
-  const cy = baseY - ry * 0.12;
+  const cy = baseY - ry * 0.04;                  // 발끝 바로 아래에 접지
   // 라디얼 그라데이션 = 기기 상관없이 확실히 부드러운 가장자리.
   // (ctx.filter 블러는 일부 모바일 브라우저에서 무시돼 딱딱하게 나온다)
   const blob = (radScale, a0, a1) => {
     ctx.save();
     ctx.translate(cx, cy);
-    ctx.scale(1, ry / rx);                       // 원을 눌러 타원 블롭으로
+    ctx.scale(1, ry / rx);                        // 원을 눌러 타원 블롭으로
     const R = rx * radScale;
     const g = ctx.createRadialGradient(0, 0, 0, 0, 0, R);
-    g.addColorStop(0,    `rgba(52,38,26,${a0})`);
-    g.addColorStop(0.62, `rgba(52,38,26,${a1})`);
-    g.addColorStop(1,    'rgba(52,38,26,0)');
+    g.addColorStop(0,    `rgba(50,36,24,${a0})`);
+    g.addColorStop(0.6,  `rgba(50,36,24,${a1})`);
+    g.addColorStop(1,    'rgba(50,36,24,0)');
     ctx.fillStyle = g;
     ctx.beginPath();
     ctx.arc(0, 0, R, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   };
-  blob(1.18, 0.20, 0.09);                        // 넓게 퍼지는 바깥 확산
-  blob(0.66, 0.36, 0.18);                        // 발밑에 딱 붙는 진한 코어
+  blob(1.28, 0.16, 0.06);                         // 넓게 퍼지는 바깥 확산
+  blob(0.80, 0.30, 0.14);                         // 중간 톤
+  blob(0.44, 0.44, 0.24);                         // 발밑을 채우는 진한 코어
 }
 
 /** 스프라이트 밑면에 맞춘 접지 그림자 (캐릭터 등 외부에서도 사용) */
