@@ -354,8 +354,8 @@ export function drawObject(ctx, img, c, r, cols, rows, scale, _key, baseOff = 0.
   const fp = objectFootprint(img);
   const footX = (x - w / 2) + fp.cx * w;
   // 납작하고 넓은 물체(책·택배박스)는 그림자를 더 넓게 깔고, 위로 올려 물체와 겹치게 한다.
-  const WMUL = { books: 1.42, boxes: 1.36 };
-  const LIFT = { books: 0.56, boxes: 0.54 };     // 값↑ = 그림자가 위로 올라가 오브젝트와 더 겹침
+  const WMUL = { books: 1.20, boxes: 1.16 };     // 최하단 모서리를 넘지 않게 살짝 줄임
+  const LIFT = { books: 0.64, boxes: 0.62 };     // 값↑ = 그림자가 위로 올라가 오브젝트와 더 겹침
   const footW = fp.w * w * (WMUL[_key] ?? 0.82);
   const depthMul = 1.15, lift = LIFT[_key] ?? 0.10;
   const ry = footW * 0.58 * 0.44 * depthMul;

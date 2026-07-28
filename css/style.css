@@ -212,7 +212,7 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
   background-position: center 90%;             /* 값↑ = 배경 인물이 화면 위로 (고양이 얼굴이 시작 버튼 위로) */
   background-color: #f6ecd8;                  /* 혹시 모를 여백 대비 */
   justify-content: space-between;
-  padding-top: calc(var(--safe-t) + 132px);   /* 로고를 아래로 */
+  padding-top: calc(var(--safe-t) + 96px);     /* 타이틀+서브타이틀 위치(값↓ = 위로) */
 }
 #screenIntro { background-image: url(../assets/room/screens/intro_studio.webp); }
 
