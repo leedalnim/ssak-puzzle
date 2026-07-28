@@ -8,10 +8,10 @@
 //   3. 그림자는 오브젝트 접지 그림자만. 타일별 AO는 넣지 않는다.
 import { IMG } from './assets.js';
 
-export const VW = 1024, VH = 1536;                 // 배경 원본 해상도 = 캔버스 좌표계
+export const VW = 1024, VH = 2219;                 // 배경 원본 해상도 = 캔버스 좌표계(세로형)
 
-// 보드 사다리꼴 (배경 기준 실측값)
-const TOPW = 680, BOTW = 760, Y0 = 556, Y1 = 1256;
+// 보드 사다리꼴 (세로형 배경의 빈 바닥에 맞춤)
+const TOPW = 700, BOTW = 812, Y0 = 1120, Y1 = 2010;
 const CX = VW / 2;
 const QUAD = [
   [CX - TOPW / 2, Y0], [CX + TOPW / 2, Y0],

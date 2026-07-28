@@ -6,12 +6,34 @@ import { Toss } from './toss-sdk.js';
 
 const $ = (id) => document.getElementById(id);
 const PROG_KEY = 'ssak_cleared';
+const STAR_KEY = 'ssak_stars';
+const ST = 'assets/room/ui/stage/';
+
+// 장소(영역) — 자취방만 실제 콘텐츠, 나머지는 곧 공개
+const AREAS = [
+  { name: '자취방', act: 1, thumb: ST + 'thumb_studio.png' },
+  { name: '편의점', coming: true, thumb: ST + 'thumb_store.png' },
+  { name: '카페', coming: true },
+  { name: '베이커리', coming: true },
+];
 
 let stages = [];
 let game = null;
 let current = 0;
 let clearedMax = 0;
 let pendingIntro = null;
+let areaIdx = 0;
+let stars = {};
+
+function loadStars() { try { stars = JSON.parse(localStorage.getItem(STAR_KEY) || '{}'); } catch { stars = {}; } }
+function saveStars() { localStorage.setItem(STAR_KEY, JSON.stringify(stars)); }
+/** 클리어 시간 대비 별점(1~3). par = 총 걸레질 횟수(격자 합) 기준 */
+function starsFor(st, elapsed) {
+  const par = st.grid.reduce((a, row) => a + row.reduce((b, v) => b + v, 0), 0) * 0.8;
+  if (!elapsed || elapsed <= par * 0.9) return 3;
+  if (elapsed <= par * 1.5) return 2;
+  return 1;
+}
 
 const screens = ['screenTitle', 'screenStages', 'screenIntro', 'screenClear',
                  'screenFail', 'screenHelp', 'screenPause', 'screenLoad'];
@@ -85,7 +107,9 @@ function beginStage(idx) {
 function onStageClear(elapsed) {
   const st = stages[current];
   saveProgress(st.id);
-  Toss.track('stage_clear', { stage: st.id, elapsed });
+  const s = starsFor(st, elapsed);
+  if (s > (stars[st.id] || 0)) { stars[st.id] = s; saveStars(); }
+  Toss.track('stage_clear', { stage: st.id, elapsed, stars: s });
   $('clearStory').textContent = st.clear || '';
   $('clearTime').textContent = elapsed != null ? `⏱ ${fmtTime(elapsed)}` : '';
   $('clearUnlock').textContent = st.unlock ? `🎁 ${st.unlock} 해금!` : '';
@@ -107,30 +131,82 @@ function nextUnclearedIndex() {
   return i < 0 ? 0 : i;
 }
 
-// ----------------------------- 스테이지 선택 -----------------------------
-/** 장소(막)별로 묶고, 퍼즐은 "막-순번"(예: 1-2)으로 표기 */
-function buildStageGrid() {
-  const grid = $('stageGrid');
-  grid.innerHTML = '';
-  let curAct = null;
-  stages.forEach((st, idx) => {
-    if (st.act !== curAct) {                       // 새 장소 → 헤더
-      curAct = st.act;
-      const head = document.createElement('div');
-      head.className = 'stage-place';
-      head.textContent = `${st.act}. ${st.place}`;
-      grid.appendChild(head);
-    }
-    const sub = ((st.id - 1) % 3) + 1;             // 막 안에서의 순번
+// ----------------------------- 스테이지 선택 (페이저) -----------------------------
+function el(tag, cls, html) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (html != null) e.innerHTML = html;
+  return e;
+}
+
+/** 한 영역(자취방)의 레벨 그리드 페이지 */
+function areaPage(area) {
+  const page = el('div', 'area-page');
+  const header = el('div', 'area-header');
+  if (area.thumb) header.appendChild(el('img')).src = area.thumb;
+  const list = stages.filter(s => s.act === area.act);
+  const clearedCount = list.filter(s => s.id <= clearedMax).length;
+  header.appendChild(el('div', 'area-name', area.name));
+  header.appendChild(el('div', 'area-progress', `${clearedCount} / ${list.length}`));
+  page.appendChild(header);
+
+  const panel = el('div', 'level-panel');
+  const grid = el('div', 'level-grid');
+  list.forEach(st => {
+    const idx = stages.indexOf(st);
     const locked = st.id > clearedMax + 1;
     const cleared = st.id <= clearedMax;
-    const cell = document.createElement('button');
-    cell.className = 'stage-cell' + (locked ? ' locked' : '') + (cleared ? ' cleared' : '');
-    cell.innerHTML = `<span class="num">${locked ? '🔒' : `${st.act}-${sub}`}</span>`
-      + `<span class="star">${cleared ? '★' : ''}</span>`;
+    const state = cleared ? 'clear' : (locked ? 'lock' : 'cur');
+    const cell = el('button', `lvl ${state}`);
+    let inner = `<span class="n">${st.sub ?? st.id}</span>`;
+    if (cleared) {
+      const n = stars[st.id] || 1;
+      inner += `<span class="stars">${`<img src="${ST}star.png">`.repeat(n)}</span>`;
+    } else if (locked) {
+      inner += `<img class="lk" src="${ST}lock.png">`;
+    }
+    cell.innerHTML = inner;
     if (!locked) cell.addEventListener('click', () => { Audio.sfxUI(); startStage(idx); });
     grid.appendChild(cell);
   });
+  panel.appendChild(grid);
+  page.appendChild(panel);
+  return page;
+}
+
+/** 곧 공개 영역 페이지 */
+function comingPage(area) {
+  const page = el('div', 'area-page');
+  const box = el('div', 'coming');
+  if (area.thumb) box.appendChild(el('img')).src = area.thumb;
+  const inner = el('div', 'cm-in');
+  const lk = el('img', 'cm-lock'); lk.src = ST + 'lock.png';
+  inner.appendChild(lk);
+  inner.appendChild(el('div', 'cm-txt', `${area.name} · 준비 중`));
+  box.appendChild(inner);
+  page.appendChild(box);
+  return page;
+}
+
+function goArea(i) {
+  areaIdx = Math.max(0, Math.min(AREAS.length - 1, i));
+  $('areaTrack').style.transform = `translateX(${-areaIdx * 100}%)`;
+  [...$('pgDots').children].forEach((d, k) => d.classList.toggle('on', k === areaIdx));
+  $('pgPrev').disabled = areaIdx === 0;
+  $('pgNext').disabled = areaIdx === AREAS.length - 1;
+}
+
+function buildStages() {
+  const track = $('areaTrack');
+  track.innerHTML = '';
+  AREAS.forEach(a => track.appendChild(a.coming ? comingPage(a) : areaPage(a)));
+  const dots = $('pgDots');
+  dots.innerHTML = '';
+  AREAS.forEach(() => dots.appendChild(el('span')));
+  // 진행 중인(첫 미클리어) 영역으로 시작
+  const cur = stages.find(s => s.id > clearedMax);
+  const startArea = cur ? AREAS.findIndex(a => a.act === cur.act) : 0;
+  goArea(startArea < 0 ? 0 : startArea);
 }
 
 // ----------------------------- 도움말 범례 -----------------------------
@@ -148,12 +224,15 @@ function wireUI() {
   $('btnStart').addEventListener('click', () => {
     Audio.unlockAudio(); Audio.sfxUI(); startStage(nextUnclearedIndex());
   });
-  $('btnStages').addEventListener('click', () => { Audio.sfxUI(); buildStageGrid(); show('screenStages'); });
+  $('btnStages').addEventListener('click', () => { Audio.sfxUI(); buildStages(); show('screenStages'); });
   // 클리어/실패/일시정지의 '스테이지 목록' → 스테이지 화면으로
   document.querySelectorAll('[data-back]').forEach(b =>
-    b.addEventListener('click', () => { Audio.sfxUI(); buildStageGrid(); show('screenStages'); }));
-  // 스테이지 화면의 '뒤로' → 타이틀로 (자기 자신으로 가면 아무 일도 안 일어남)
+    b.addEventListener('click', () => { Audio.sfxUI(); buildStages(); show('screenStages'); }));
+  // 스테이지 화면의 '뒤로' → 타이틀로
   $('btnStagesBack').addEventListener('click', () => { Audio.sfxUI(); show('screenTitle'); });
+  // 영역 페이저
+  $('pgPrev').addEventListener('click', () => { Audio.sfxUI(); goArea(areaIdx - 1); });
+  $('pgNext').addEventListener('click', () => { Audio.sfxUI(); goArea(areaIdx + 1); });
 
   $('btnIntroNext').addEventListener('click', () => {
     Audio.sfxUI(); if (pendingIntro != null) beginStage(pendingIntro);
@@ -185,6 +264,7 @@ async function boot() {
   show('screenLoad');
   syncScale();
   loadProgress();
+  loadStars();
   await Toss.init();
   await loadAssets();
   stages = await (await fetch('stages/stages.json')).json();

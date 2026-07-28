@@ -54,10 +54,15 @@
     </section>
 
     <!-- 스테이지 선택 -->
-    <section id="screenStages" class="screen hidden">
-      <h2 class="screen-title">스테이지</h2>
-      <div id="stageGrid" class="stage-grid"></div>
-      <button id="btnStagesBack" class="ghost-btn">뒤로</button>
+    <section id="screenStages" class="screen hidden stage-screen">
+      <button id="btnStagesBack" class="stage-back" aria-label="뒤로">‹</button>
+      <div class="title-pill">스테이지</div>
+      <div class="area-viewport"><div class="area-track" id="areaTrack"></div></div>
+      <div class="pager">
+        <button class="pg-arrow" id="pgPrev" aria-label="이전">‹</button>
+        <div class="pg-dots" id="pgDots"></div>
+        <button class="pg-arrow" id="pgNext" aria-label="다음">›</button>
+      </div>
     </section>
 
     <!-- 인트로 -->

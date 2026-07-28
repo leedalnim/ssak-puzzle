@@ -3,7 +3,7 @@ const R = 'assets/room/';
 
 const MANIFEST = {
   // 배경 (장소별) — 가운데 바닥이 비어 있는 통짜 이미지
-  bg_studio: R + 'bg_studio.webp',
+  bg_studio: R + 'bg_studio_tall.webp',
 
   // 바닥 타일: 0=깨끗, 1~5=더러움 단계
   tile0: R + 'tiles/tile_0.png', tile1: R + 'tiles/tile_1.png', tile2: R + 'tiles/tile_2.png',
