@@ -316,15 +316,47 @@ export function drawContactShadow(ctx, img, spriteLeft, spriteW, baseY, opts = {
   }
 }
 
+// 장애물 전용 밑면 측정 — 캐릭터(대걸레) 로직과 분리.
+// 원근으로 그린 물체는 맨 아래 픽셀이 "앞쪽 모서리/다리 하나"라 그것만 잡으면
+// 그림자가 쏠린다. 밑면에서 **위로 28%까지** 올라온 구간의 bbox를 쓰면
+// 물체의 진짜 접지면(중심·폭)이 잡힌다.
+const ofpCache = new WeakMap();
+function objectFootprint(img) {
+  const hit = ofpCache.get(img);
+  if (hit) return hit;
+  const S = 80;
+  const cv = document.createElement('canvas');
+  cv.width = S; cv.height = S;
+  const g = cv.getContext('2d', { willReadFrequently: true });
+  g.drawImage(img, 0, 0, S, S);
+  const d = g.getImageData(0, 0, S, S).data;
+  let top = S, bot = -1;
+  for (let y = 0; y < S; y++) {
+    for (let x = 0; x < S; x++) if (d[(y * S + x) * 4 + 3] > 60) { if (y < top) top = y; if (y > bot) bot = y; break; }
+  }
+  if (bot < 0) { const fp = { cx: 0.5, w: 0.6 }; ofpCache.set(img, fp); return fp; }
+  const y0 = Math.floor(bot - (bot - top) * 0.28);
+  let mn = S, mx = -1;
+  for (let y = y0; y <= bot; y++) for (let x = 0; x < S; x++)
+    if (d[(y * S + x) * 4 + 3] > 60) { if (x < mn) mn = x; if (x > mx) mx = x; }
+  const fp = { cx: (mn + mx + 1) / 2 / S, w: (mx - mn + 1) / S };
+  ofpCache.set(img, fp);
+  return fp;
+}
+
 /** 오브젝트를 셀에 세운다 — 밑면이 셀 중앙보다 살짝 아래 */
 export function drawObject(ctx, img, c, r, cols, rows, scale, _key, baseOff = 0.30) {
   if (!img) return;
   const { x, y, cellH } = cellCenter(c, r, cols, rows);
   const h = cellH * scale, w = img.width * h / img.height;
   const baseY = y + cellH * baseOff;             // 오브젝트를 살짝 아래로 → 가운데 정렬처럼
-  // 장애물 그림자: 밑면에 살짝 걸치게(lift 작게) 둬서 납작한 물체(책·상자)도
-  // 접지 그림자가 보이게 한다. lift가 크면 키 낮은 물체는 그림자가 완전히 숨어 떠 보인다.
-  drawContactShadow(ctx, img, x - w / 2, w, baseY, { depthMul: 1.28, lift: 0.14, coreOut: 0.26, coreIn: 0.42 });
+  // 밑면 실측(bbox)으로 그림자 중심·폭을 잡는다 — 원근 쏠림 방지.
+  const fp = objectFootprint(img);
+  const footX = (x - w / 2) + fp.cx * w;
+  const footW = fp.w * w * 0.82;                 // 밑면 폭에 맞춤(살짝 안쪽)
+  const depthMul = 1.15, lift = 0.10;
+  const ry = footW * 0.58 * 0.44 * depthMul;
+  shadowOval(ctx, footX, baseY - ry * lift, footW, 0.22, 0.34, depthMul);
   ctx.drawImage(img, x - w / 2, baseY - h, w, h);
 }
 
