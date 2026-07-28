@@ -305,10 +305,10 @@ export function drawContactShadow(ctx, img, spriteLeft, spriteW, baseY, opts = {
   // 스프라이트 세로 비율(0=위,1=아래) → 화면 y. baseY는 스프라이트 밑면.
   const yAt = (fy) => baseY - ht * (1 - fy) - spriteW * 0.58 * 0.44 * depthMul * lift;
   const feetW = fp.w * spriteW;
-  // 대걸레가 있는 캐릭터만 발 높이(feetY)로 올려 그린다. 장애물은 밑면=접지이므로
-  // 세로 보정을 끄고(=1.0) 밑면에 둔다(v5의 승인된 모습 유지).
+  // 캐릭터(대걸레 있음)는 걸레보다 위인 **발 높이(feetY)**로 올려 그린다.
+  // 장애물은 게임이 밑면을 baseY에 맞춰 그리므로 baseY(=1.0)에 둔다 — feetY로
+  // 올리면 그림자가 물체 뒤로 숨어 납작한 물체가 떠 보인다.
   const feetYeff = fp.mopX != null ? fp.feetY : 1.0;
-  // 발 그림자 (몸 중심, 발 높이)
   shadowOval(ctx, spriteLeft + fp.cx * spriteW, yAt(feetYeff), feetW, coreOut, coreIn, depthMul);
   // 걸레 그림자 (있으면, 걸레 높이·위치에 아주 옅게)
   if (fp.mopX != null) {
@@ -317,14 +317,14 @@ export function drawContactShadow(ctx, img, spriteLeft, spriteW, baseY, opts = {
 }
 
 /** 오브젝트를 셀에 세운다 — 밑면이 셀 중앙보다 살짝 아래 */
-export function drawObject(ctx, img, c, r, cols, rows, scale, _key, baseOff = 0.16) {
+export function drawObject(ctx, img, c, r, cols, rows, scale, _key, baseOff = 0.30) {
   if (!img) return;
   const { x, y, cellH } = cellCenter(c, r, cols, rows);
   const h = cellH * scale, w = img.width * h / img.height;
-  const baseY = y + cellH * baseOff;             // 오브젝트를 살짝 아래로 → 그림자를 더 덮는다
-  // 장애물 그림자는 밑면 깊숙이(lift 큼) 넣어 대부분 오브젝트가 가리게 하고,
-  // 바닥 접지 느낌만 남긴다.
-  drawContactShadow(ctx, img, x - w / 2, w, baseY, { depthMul: 1.1, lift: 0.55, coreOut: 0.24, coreIn: 0.34 });
+  const baseY = y + cellH * baseOff;             // 오브젝트를 살짝 아래로 → 가운데 정렬처럼
+  // 장애물 그림자: 밑면에 살짝 걸치게(lift 작게) 둬서 납작한 물체(책·상자)도
+  // 접지 그림자가 보이게 한다. lift가 크면 키 낮은 물체는 그림자가 완전히 숨어 떠 보인다.
+  drawContactShadow(ctx, img, x - w / 2, w, baseY, { depthMul: 1.28, lift: 0.14, coreOut: 0.26, coreIn: 0.42 });
   ctx.drawImage(img, x - w / 2, baseY - h, w, h);
 }
 
