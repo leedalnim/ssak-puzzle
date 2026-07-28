@@ -231,23 +231,31 @@ function footprint(img) {
  * 아래로 내려 그리거나 납작하게 늘이면 물체가 떠 보인다.
  */
 function contactShadow(ctx, cx, baseY, footW) {
-  const rx = footW * 0.62;
-  const ry = rx * 0.46;                        // 슬라이버가 아니라 둥글게
+  const rx = footW * 0.58;
+  const ry = rx * 0.44;                         // 슬라이버가 아니라 둥글게
   // 중심을 바닥선보다 아주 조금만 올린다.
   //  - 너무 내리면 그림자가 오브젝트 아래로 떨어져 보이고,
   //  - 너무 올리면 오브젝트 뒤에 완전히 가려 발밑에 아무것도 안 보인다.
-  const cy = baseY - ry * 0.18;
-  const draw = (s, a, blur) => {
+  const cy = baseY - ry * 0.12;
+  // 라디얼 그라데이션 = 기기 상관없이 확실히 부드러운 가장자리.
+  // (ctx.filter 블러는 일부 모바일 브라우저에서 무시돼 딱딱하게 나온다)
+  const blob = (radScale, a0, a1) => {
     ctx.save();
-    ctx.filter = `blur(${blur}px)`;
-    ctx.fillStyle = `rgba(74,54,36,${a})`;
+    ctx.translate(cx, cy);
+    ctx.scale(1, ry / rx);                       // 원을 눌러 타원 블롭으로
+    const R = rx * radScale;
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, R);
+    g.addColorStop(0,    `rgba(52,38,26,${a0})`);
+    g.addColorStop(0.62, `rgba(52,38,26,${a1})`);
+    g.addColorStop(1,    'rgba(52,38,26,0)');
+    ctx.fillStyle = g;
     ctx.beginPath();
-    ctx.ellipse(cx, cy, rx * s, ry * s, 0, 0, Math.PI * 2);
+    ctx.arc(0, 0, R, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   };
-  draw(1.34, 0.10, ry * 0.95);                 // 넓고 아주 옅은 확산
-  draw(0.94, 0.22, ry * 0.26);                 // 밑면에 붙는 코어
+  blob(1.18, 0.20, 0.09);                        // 넓게 퍼지는 바깥 확산
+  blob(0.66, 0.36, 0.18);                        // 발밑에 딱 붙는 진한 코어
 }
 
 /** 스프라이트 밑면에 맞춘 접지 그림자 (캐릭터 등 외부에서도 사용) */
