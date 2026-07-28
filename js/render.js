@@ -212,27 +212,32 @@ function footprint(img) {
   const g = cv.getContext('2d', { willReadFrequently: true });
   g.drawImage(img, 0, 0, S, S);
   const data = g.getImageData(0, 0, S, S).data;
-  const y0 = Math.floor(S * 0.60);             // 다리~발 구간(대걸레 머리보다 위부터)
-  const col = new Array(S).fill(0);
-  let minX = S, maxX = -1;                      // 전체 접지범위(발~대걸레 머리까지)
-  for (let x = 0; x < S; x++) {
-    let c = 0;
-    for (let y = y0; y < S; y++) if (data[(y * S + x) * 4 + 3] > 70) c++;
-    col[x] = c;
-    if (c > 0) { if (x < minX) minX = x; if (x > maxX) maxX = x; }
-  }
-  let wsum = 0, xsum = 0;
-  for (let x = 0; x < S; x++) { const w = col[x] * col[x]; wsum += w; xsum += w * x; }
-  if (wsum === 0) { const fp = { cx: 0.5, w: 0.6, sMin: 0.2, sMax: 0.8 }; fpCache.set(img, fp); return fp; }
-  const mx = xsum / wsum;                       // 가중 무게중심(px) = 발 위치
-  let x2 = 0;
-  for (let x = 0; x < S; x++) { const w = col[x] * col[x]; x2 += w * (x - mx) * (x - mx); }
-  const std = Math.sqrt(x2 / wsum);
+  // 세로 구간의 열별 불투명 픽셀 수 → 제곱 가중 무게중심/표준편차/범위
+  const band = (y0f, y1f) => {
+    const y0 = Math.floor(S * y0f), y1 = Math.floor(S * y1f);
+    let wsum = 0, xsum = 0, mn = S, mx = -1;
+    const col = new Array(S);
+    for (let x = 0; x < S; x++) {
+      let c = 0;
+      for (let y = y0; y < y1; y++) if (data[(y * S + x) * 4 + 3] > 70) c++;
+      col[x] = c;
+      const w = c * c; wsum += w; xsum += w * x;
+      if (c > 0) { if (x < mn) mn = x; if (x > mx) mx = x; }
+    }
+    if (wsum === 0) return null;
+    const cx = xsum / wsum;
+    let v = 0; for (let x = 0; x < S; x++) v += col[x] * col[x] * (x - cx) * (x - cx);
+    return { cx, sd: Math.sqrt(v / wsum), mn, mx };
+  };
+  // 발 코어는 **다리 구간(대걸레 머리 제외)** 중심에 — 걸레 머리가 밑에서 넓게
+  // 잡혀 무게중심이 걸레 쪽으로 쏠리는 걸 막는다.
+  const leg = band(0.58, 0.82) || band(0.60, 1.0) || { cx: S / 2, sd: S * 0.15, mn: S * 0.25, mx: S * 0.75 };
+  const span = band(0.60, 1.0) || leg;          // 전체 접지범위(발~대걸레 머리)
   const fp = {
-    cx: mx / S,                                 // 발 중심(대걸레 무시)
-    w: Math.min(Math.max(std * 3.0 / S, 0.34), 0.7),
-    sMin: minX / S,                             // 접지범위 좌
-    sMax: (maxX + 1) / S,                       // 접지범위 우 (대걸레 머리 포함)
+    cx: leg.cx / S,                             // 발/몸 중심(대걸레 제외)
+    w: Math.min(Math.max(leg.sd * 3.0 / S, 0.30), 0.7),
+    sMin: span.mn / S,                          // 접지범위 좌
+    sMax: (span.mx + 1) / S,                    // 접지범위 우 (대걸레 머리 포함)
   };
   fpCache.set(img, fp);
   return fp;
@@ -243,11 +248,16 @@ function footprint(img) {
  * 카메라가 거의 위에서 내려다보므로 그림자는 오브젝트 **바로 밑**에 와야 한다.
  * 아래로 내려 그리거나 납작하게 늘이면 물체가 떠 보인다.
  */
-function contactShadow(ctx, baseY, feetX, feetW, sMin, sMax) {
+function contactShadow(ctx, baseY, feetX, feetW, sMin, sMax, opts = {}) {
+  const depthMul = opts.depthMul ?? 1;           // 그림자 세로 크기 배수(둥근 오브젝트↑)
+  const lift = opts.lift ?? 0.04;                // 접지선보다 위로 당기는 정도(ry 대비)
+  const coreOut = opts.coreOut ?? 0.34;          // 발밑 코어 바깥 진하기
+  const coreIn = opts.coreIn ?? 0.60;            // 발밑 코어 중심 진하기
+  const mopA = opts.mopA ?? 0.16;                // 대걸레 밑 그림자 진하기(옅게)
   // 세로 반경(그림자 깊이)은 **발 폭 기준으로 고정** — 접지범위가 넓어도(대걸레)
   // 그림자가 세로로 커지지 않게. 카메라가 거의 위라 발끝 바로 아래에 얹는다.
-  const ry = feetW * 0.58 * 0.44;
-  const cy = baseY - ry * 0.04;
+  const ry = feetW * 0.58 * 0.44 * depthMul;
+  const cy = baseY - ry * lift;
   // 라디얼 그라데이션 = 기기 상관없이 확실히 부드러운 가장자리.
   // (ctx.filter 블러는 일부 모바일 브라우저에서 무시돼 딱딱하게 나온다)
   const blob = (cx, rx, a0, a1) => {
@@ -266,25 +276,25 @@ function contactShadow(ctx, baseY, feetX, feetW, sMin, sMax) {
   };
   const spanX = (sMin + sMax) / 2, spanW = Math.max(sMax - sMin, feetW);
   // 1) 발~대걸레 전체 접지범위를 덮는 넓고 옅은 확산
-  blob(spanX, spanW * 0.60, 0.15, 0.06);
-  // 2) 대걸레 머리쪽(발에서 먼 끝)에 중간 그림자 — 걸레도 바닥에 닿으니까
+  blob(spanX, spanW * 0.60, 0.14, 0.05);
+  // 2) 대걸레 머리쪽(발에서 먼 끝)에 옅은 그림자 — 걸레도 바닥에 닿지만 약하게
   const mopX = (Math.abs(sMax - feetX) > Math.abs(feetX - sMin)) ? sMax : sMin;
   if (Math.abs(mopX - feetX) > feetW * 0.35) {
     const mopInset = feetX + (mopX - feetX) * 0.80;
-    blob(mopInset, feetW * 0.42, 0.30, 0.16);
+    blob(mopInset, feetW * 0.44, mopA, mopA * 0.5);
   }
-  // 3) 발밑을 채우는 진한 코어
-  blob(feetX, feetW * 0.56, 0.30, 0.16);
-  blob(feetX, feetW * 0.34, 0.46, 0.26);
+  // 3) 발밑을 채우는 진한 코어 (2겹)
+  blob(feetX, feetW * 0.60, coreOut, coreOut * 0.5);
+  blob(feetX, feetW * 0.36, coreIn, coreIn * 0.55);
 }
 
 /** 스프라이트 밑면에 맞춘 접지 그림자 (캐릭터 등 외부에서도 사용) */
-export function drawContactShadow(ctx, img, spriteLeft, spriteW, baseY) {
+export function drawContactShadow(ctx, img, spriteLeft, spriteW, baseY, opts) {
   const fp = footprint(img);
   const feetX = spriteLeft + fp.cx * spriteW;
   const sMin = spriteLeft + (fp.sMin ?? 0.2) * spriteW;
   const sMax = spriteLeft + (fp.sMax ?? 0.8) * spriteW;
-  contactShadow(ctx, baseY, feetX, fp.w * spriteW, sMin, sMax);
+  contactShadow(ctx, baseY, feetX, fp.w * spriteW, sMin, sMax, opts);
 }
 
 /** 오브젝트를 셀에 세운다 — 밑면이 셀 중앙보다 살짝 아래 */
@@ -293,7 +303,8 @@ export function drawObject(ctx, img, c, r, cols, rows, scale, _key, baseOff = 0.
   const { x, y, cellH } = cellCenter(c, r, cols, rows);
   const h = cellH * scale, w = img.width * h / img.height;
   const baseY = y + cellH * baseOff;
-  drawContactShadow(ctx, img, x - w / 2, w, baseY);
+  // 장애물은 둥근 물체라 그림자를 조금 더 크게(depthMul) + 밑면에 더 붙게(lift) 올린다
+  drawContactShadow(ctx, img, x - w / 2, w, baseY, { depthMul: 1.28, lift: 0.16 });
   ctx.drawImage(img, x - w / 2, baseY - h, w, h);
 }
 
