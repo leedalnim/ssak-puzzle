@@ -296,7 +296,7 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
   font-family: inherit; box-shadow: 0 5px 0 var(--wood-dark);
   transition: transform .1s ease;
 }
-.stage-cell .num { font-size: 28px; }
+.stage-cell .num { font-size: 20px; font-weight: 800; text-align: center; width: 100%; }
 .stage-cell .thm { font-size: 11px; color: var(--ink-soft); }
 .stage-cell .star { font-size: 12px; color: #d8a53c; height: 14px; }
 .stage-cell:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--wood-dark); }
