@@ -19,7 +19,6 @@ const MANIFEST = {
   obs_boxes: R + 'obstacles/obs_boxes.png',
   obs_plant: R + 'obstacles/obs_plant.png',
   obs_basket_rd: R + 'obstacles/obs_basket_rd.png',
-  obs_basket_sq: R + 'obstacles/obs_basket_sq.png',
   obs_books: R + 'obstacles/obs_books.png',
   obs_stool: R + 'obstacles/obs_stool.png',
 };
