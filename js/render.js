@@ -232,38 +232,53 @@ function footprint(img) {
   // 발 코어는 **다리 구간(대걸레 머리 제외)** 중심에 — 걸레 머리가 밑에서 넓게
   // 잡혀 무게중심이 걸레 쪽으로 쏠리는 걸 막는다.
   const leg = band(0.58, 0.82) || band(0.60, 1.0) || { cx: S / 2, sd: S * 0.15, mn: S * 0.25, mx: S * 0.75 };
-  const span = band(0.60, 1.0) || leg;          // 전체 접지범위(발~대걸레 머리)
+  const Cx = leg.cx;
+
+  // --- 발/걸레의 세로 위치 검출 ---
+  // 발과 대걸레 머리는 화면상 높이(y)가 다르다(걸레가 발보다 아래로 뻗음).
+  // 아래에서 위로 스캔: 몸 중심(Cx)에서 크게 벗어난 바닥 행 = 대걸레 머리,
+  // 중심 근처의 넓은 행 = 발.
+  const rowCenter = (y) => {
+    let mn = S, mx = -1;
+    for (let x = 0; x < S; x++) if (data[(y * S + x) * 4 + 3] > 70) { if (x < mn) mn = x; if (x > mx) mx = x; }
+    return mx < mn ? null : { c: (mn + mx) / 2, w: mx - mn + 1 };
+  };
+  let feetY = null, mopYs = [], mopXs = [];
+  for (let y = S - 1; y >= Math.floor(S * 0.72); y--) {
+    const r = rowCenter(y);
+    if (!r) continue;
+    if (Math.abs(r.c - Cx) > S * 0.15 && y > S * 0.86) {   // 바닥 근처에서 크게 벗어남 = 걸레
+      mopYs.push(y); mopXs.push(r.c);
+    } else if (feetY === null && r.w > S * 0.28) {          // 아래에서 처음 만나는 넓은 몸통 행 = 발
+      feetY = y;
+    }
+  }
+  if (feetY === null) feetY = Math.floor(S * 0.9);
+  const hasMop = mopYs.length >= 2;
+
   const fp = {
-    cx: leg.cx / S,                             // 발/몸 중심(대걸레 제외)
+    cx: Cx / S,                                 // 발/몸 중심(대걸레 제외)
     w: Math.min(Math.max(leg.sd * 3.0 / S, 0.30), 0.7),
-    sMin: span.mn / S,                          // 접지범위 좌
-    sMax: (span.mx + 1) / S,                    // 접지범위 우 (대걸레 머리 포함)
+    feetY: feetY / S,                           // 발 접지 높이(스프라이트 세로 0~1)
+    mopX: hasMop ? (mopXs.reduce((a, b) => a + b, 0) / mopXs.length) / S : null,
+    mopY: hasMop ? (mopYs.reduce((a, b) => a + b, 0) / mopYs.length) / S : null,
   };
   fpCache.set(img, fp);
   return fp;
 }
 
 /**
- * 접지 그림자 — 밑면 폭에 맞춘 둥근 타원.
- * 카메라가 거의 위에서 내려다보므로 그림자는 오브젝트 **바로 밑**에 와야 한다.
- * 아래로 내려 그리거나 납작하게 늘이면 물체가 떠 보인다.
+ * 부드러운 접지 타원 하나 — 주어진 화면 좌표(cx,cy)에 얹는다.
+ * 라디얼 그라데이션 = 기기 상관없이 부드러운 가장자리
+ * (ctx.filter 블러는 일부 모바일 브라우저에서 무시돼 딱딱하게 나온다).
  */
-function contactShadow(ctx, baseY, feetX, feetW, sMin, sMax, opts = {}) {
-  const depthMul = opts.depthMul ?? 1;           // 그림자 세로 크기 배수(둥근 오브젝트↑)
-  const lift = opts.lift ?? 0.04;                // 접지선보다 위로 당기는 정도(ry 대비)
-  const coreOut = opts.coreOut ?? 0.18;          // 발밑 코어 바깥 진하기(옅고 넓게)
-  const coreIn = opts.coreIn ?? 0.30;            // 발밑 코어 중심 진하기(진한 점 방지)
-  const mopA = opts.mopA ?? 0.10;                // 대걸레 밑 그림자 진하기(아주 옅게)
-  // 세로 반경(그림자 깊이)은 **발 폭 기준으로 고정** — 접지범위가 넓어도(대걸레)
-  // 그림자가 세로로 커지지 않게. 카메라가 거의 위라 발끝 바로 아래에 얹는다.
-  const ry = feetW * 0.58 * 0.44 * depthMul;
-  const cy = baseY - ry * lift;
-  // 라디얼 그라데이션 = 기기 상관없이 확실히 부드러운 가장자리.
-  // (ctx.filter 블러는 일부 모바일 브라우저에서 무시돼 딱딱하게 나온다)
-  const blob = (cx, rx, a0, a1) => {
+function shadowOval(ctx, cx, cy, footW, coreOut, coreIn, depthMul) {
+  const rx0 = footW * 0.58;
+  const ry = rx0 * 0.44 * depthMul;
+  const blob = (rx, a0, a1) => {
     ctx.save();
     ctx.translate(cx, cy);
-    ctx.scale(1, ry / rx);                        // 세로를 눌러 얕은 타원 블롭으로
+    ctx.scale(1, ry / rx);                        // 세로를 눌러 얕은 타원으로
     const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
     g.addColorStop(0,   `rgba(50,36,24,${a0})`);
     g.addColorStop(0.6, `rgba(50,36,24,${a1})`);
@@ -274,28 +289,31 @@ function contactShadow(ctx, baseY, feetX, feetW, sMin, sMax, opts = {}) {
     ctx.fill();
     ctx.restore();
   };
-  const spanX = (sMin + sMax) / 2, spanW = Math.max(sMax - sMin, feetW);
-  // 1) 발~대걸레 전체 접지범위를 덮는 넓고 옅은 확산
-  blob(spanX, spanW * 0.60, 0.10, 0.04);
-  // 2) 대걸레 머리쪽(발에서 먼 끝)에 아주 옅은 그림자 — 걸레도 바닥에 닿지만 약하게
-  const mopX = (Math.abs(sMax - feetX) > Math.abs(feetX - sMin)) ? sMax : sMin;
-  if (Math.abs(mopX - feetX) > feetW * 0.35) {
-    const mopInset = feetX + (mopX - feetX) * 0.80;
-    blob(mopInset, feetW * 0.44, mopA, mopA * 0.5);
-  }
-  // 3) 발밑 그림자 — 진한 점이 아니라 **넓고 고르게** 퍼지는 부드러운 타원
-  //    (좁고 진하면 걸레 밑 검은 덩어리처럼 보인다)
-  blob(feetX, feetW * 0.82, coreOut, coreOut * 0.55);
-  blob(feetX, feetW * 0.54, coreIn, coreIn * 0.6);
+  blob(rx0 * 1.15, coreOut, coreOut * 0.55);      // 넓고 옅은 확산
+  blob(rx0 * 0.72, coreIn, coreIn * 0.6);         // 안쪽 코어
 }
 
-/** 스프라이트 밑면에 맞춘 접지 그림자 (캐릭터 등 외부에서도 사용) */
-export function drawContactShadow(ctx, img, spriteLeft, spriteW, baseY, opts) {
+/** 스프라이트 밑면에 맞춘 접지 그림자 — 발 높이와 걸레 높이에 각각 얹는다 */
+export function drawContactShadow(ctx, img, spriteLeft, spriteW, baseY, opts = {}) {
   const fp = footprint(img);
-  const feetX = spriteLeft + fp.cx * spriteW;
-  const sMin = spriteLeft + (fp.sMin ?? 0.2) * spriteW;
-  const sMax = spriteLeft + (fp.sMax ?? 0.8) * spriteW;
-  contactShadow(ctx, baseY, feetX, fp.w * spriteW, sMin, sMax, opts);
+  const depthMul = opts.depthMul ?? 1;
+  const lift = opts.lift ?? 0.04;
+  const coreOut = opts.coreOut ?? 0.13;           // 캐릭터 기본 — 옅게
+  const coreIn = opts.coreIn ?? 0.22;
+  const mopA = opts.mopA ?? 0.10;
+  const ht = spriteW * img.height / img.width;
+  // 스프라이트 세로 비율(0=위,1=아래) → 화면 y. baseY는 스프라이트 밑면.
+  const yAt = (fy) => baseY - ht * (1 - fy) - spriteW * 0.58 * 0.44 * depthMul * lift;
+  const feetW = fp.w * spriteW;
+  // 대걸레가 있는 캐릭터만 발 높이(feetY)로 올려 그린다. 장애물은 밑면=접지이므로
+  // 세로 보정을 끄고(=1.0) 밑면에 둔다(v5의 승인된 모습 유지).
+  const feetYeff = fp.mopX != null ? fp.feetY : 1.0;
+  // 발 그림자 (몸 중심, 발 높이)
+  shadowOval(ctx, spriteLeft + fp.cx * spriteW, yAt(feetYeff), feetW, coreOut, coreIn, depthMul);
+  // 걸레 그림자 (있으면, 걸레 높이·위치에 아주 옅게)
+  if (fp.mopX != null) {
+    shadowOval(ctx, spriteLeft + fp.mopX * spriteW, yAt(fp.mopY), feetW * 0.6, mopA, mopA * 1.3, depthMul);
+  }
 }
 
 /** 오브젝트를 셀에 세운다 — 밑면이 셀 중앙보다 살짝 아래 */
