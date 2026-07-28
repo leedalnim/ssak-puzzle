@@ -214,20 +214,26 @@ function footprint(img) {
   const data = g.getImageData(0, 0, S, S).data;
   const y0 = Math.floor(S * 0.60);             // 다리~발 구간(대걸레 머리보다 위부터)
   const col = new Array(S).fill(0);
+  let minX = S, maxX = -1;                      // 전체 접지범위(발~대걸레 머리까지)
   for (let x = 0; x < S; x++) {
     let c = 0;
     for (let y = y0; y < S; y++) if (data[(y * S + x) * 4 + 3] > 70) c++;
     col[x] = c;
+    if (c > 0) { if (x < minX) minX = x; if (x > maxX) maxX = x; }
   }
   let wsum = 0, xsum = 0;
   for (let x = 0; x < S; x++) { const w = col[x] * col[x]; wsum += w; xsum += w * x; }
-  if (wsum === 0) { const fp = { cx: 0.5, w: 0.6 }; fpCache.set(img, fp); return fp; }
-  const mx = xsum / wsum;                       // 가중 무게중심(px)
+  if (wsum === 0) { const fp = { cx: 0.5, w: 0.6, sMin: 0.2, sMax: 0.8 }; fpCache.set(img, fp); return fp; }
+  const mx = xsum / wsum;                       // 가중 무게중심(px) = 발 위치
   let x2 = 0;
   for (let x = 0; x < S; x++) { const w = col[x] * col[x]; x2 += w * (x - mx) * (x - mx); }
   const std = Math.sqrt(x2 / wsum);
-  // 폭은 가중 분산에서 — 얇은 대걸레는 가중치가 작아 폭에 거의 영향 없다
-  const fp = { cx: mx / S, w: Math.min(Math.max(std * 3.0 / S, 0.34), 0.7) };
+  const fp = {
+    cx: mx / S,                                 // 발 중심(대걸레 무시)
+    w: Math.min(Math.max(std * 3.0 / S, 0.34), 0.7),
+    sMin: minX / S,                             // 접지범위 좌
+    sMax: (maxX + 1) / S,                       // 접지범위 우 (대걸레 머리 포함)
+  };
   fpCache.set(img, fp);
   return fp;
 }
@@ -237,39 +243,48 @@ function footprint(img) {
  * 카메라가 거의 위에서 내려다보므로 그림자는 오브젝트 **바로 밑**에 와야 한다.
  * 아래로 내려 그리거나 납작하게 늘이면 물체가 떠 보인다.
  */
-function contactShadow(ctx, cx, baseY, footW) {
-  const rx = footW * 0.58;
-  const ry = rx * 0.44;                         // 슬라이버가 아니라 둥글게
-  // 중심을 바닥선보다 아주 조금만 올린다.
-  //  - 너무 내리면 그림자가 오브젝트 아래로 떨어져 보이고,
-  //  - 너무 올리면 오브젝트 뒤에 완전히 가려 발밑에 아무것도 안 보인다.
-  const cy = baseY - ry * 0.04;                  // 발끝 바로 아래에 접지
+function contactShadow(ctx, baseY, feetX, feetW, sMin, sMax) {
+  // 세로 반경(그림자 깊이)은 **발 폭 기준으로 고정** — 접지범위가 넓어도(대걸레)
+  // 그림자가 세로로 커지지 않게. 카메라가 거의 위라 발끝 바로 아래에 얹는다.
+  const ry = feetW * 0.58 * 0.44;
+  const cy = baseY - ry * 0.04;
   // 라디얼 그라데이션 = 기기 상관없이 확실히 부드러운 가장자리.
   // (ctx.filter 블러는 일부 모바일 브라우저에서 무시돼 딱딱하게 나온다)
-  const blob = (radScale, a0, a1) => {
+  const blob = (cx, rx, a0, a1) => {
     ctx.save();
     ctx.translate(cx, cy);
-    ctx.scale(1, ry / rx);                        // 원을 눌러 타원 블롭으로
-    const R = rx * radScale;
-    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, R);
-    g.addColorStop(0,    `rgba(50,36,24,${a0})`);
-    g.addColorStop(0.6,  `rgba(50,36,24,${a1})`);
-    g.addColorStop(1,    'rgba(50,36,24,0)');
+    ctx.scale(1, ry / rx);                        // 세로를 눌러 얕은 타원 블롭으로
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+    g.addColorStop(0,   `rgba(50,36,24,${a0})`);
+    g.addColorStop(0.6, `rgba(50,36,24,${a1})`);
+    g.addColorStop(1,   'rgba(50,36,24,0)');
     ctx.fillStyle = g;
     ctx.beginPath();
-    ctx.arc(0, 0, R, 0, Math.PI * 2);
+    ctx.arc(0, 0, rx, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   };
-  blob(1.28, 0.16, 0.06);                         // 넓게 퍼지는 바깥 확산
-  blob(0.80, 0.30, 0.14);                         // 중간 톤
-  blob(0.44, 0.44, 0.24);                         // 발밑을 채우는 진한 코어
+  const spanX = (sMin + sMax) / 2, spanW = Math.max(sMax - sMin, feetW);
+  // 1) 발~대걸레 전체 접지범위를 덮는 넓고 옅은 확산
+  blob(spanX, spanW * 0.60, 0.15, 0.06);
+  // 2) 대걸레 머리쪽(발에서 먼 끝)에 중간 그림자 — 걸레도 바닥에 닿으니까
+  const mopX = (Math.abs(sMax - feetX) > Math.abs(feetX - sMin)) ? sMax : sMin;
+  if (Math.abs(mopX - feetX) > feetW * 0.35) {
+    const mopInset = feetX + (mopX - feetX) * 0.80;
+    blob(mopInset, feetW * 0.42, 0.30, 0.16);
+  }
+  // 3) 발밑을 채우는 진한 코어
+  blob(feetX, feetW * 0.56, 0.30, 0.16);
+  blob(feetX, feetW * 0.34, 0.46, 0.26);
 }
 
 /** 스프라이트 밑면에 맞춘 접지 그림자 (캐릭터 등 외부에서도 사용) */
 export function drawContactShadow(ctx, img, spriteLeft, spriteW, baseY) {
   const fp = footprint(img);
-  contactShadow(ctx, spriteLeft + fp.cx * spriteW, baseY, fp.w * spriteW);
+  const feetX = spriteLeft + fp.cx * spriteW;
+  const sMin = spriteLeft + (fp.sMin ?? 0.2) * spriteW;
+  const sMax = spriteLeft + (fp.sMax ?? 0.8) * spriteW;
+  contactShadow(ctx, baseY, feetX, fp.w * spriteW, sMin, sMax);
 }
 
 /** 오브젝트를 셀에 세운다 — 밑면이 셀 중앙보다 살짝 아래 */
