@@ -11,7 +11,7 @@ import { IMG } from './assets.js';
 export const VW = 1024, VH = 2219;                 // 배경 원본 해상도 = 캔버스 좌표계(세로형)
 
 // 보드 사다리꼴 (세로형 배경의 빈 바닥에 맞춤)
-const TOPW = 700, BOTW = 812, Y0 = 1120, Y1 = 2010;
+const TOPW = 700, BOTW = 812, Y0 = 990, Y1 = 1870;
 const CX = VW / 2;
 const QUAD = [
   [CX - TOPW / 2, Y0], [CX + TOPW / 2, Y0],
