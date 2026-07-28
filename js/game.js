@@ -5,7 +5,7 @@ import { initInput, DIRS } from './input.js';
 import * as Audio from './audio.js';
 import {
   VW, VH, boardCanvas, invalidateBoard, cellCenter, hitCell,
-  drawObject, drawBoardShadow, drawContactShadow,
+  drawObject, drawBoardShadow, drawContactShadow, footprintCx,
 } from './render.js';
 
 const MOVE_MS = 130;
@@ -265,15 +265,15 @@ export class Game {
   _drawHero(ctx) {
     const h = this.hero;
     const frame = h.moving ? 1 + (Math.floor(h.t * 3) % 2) : 0;
-    // 측면은 **방향이 일관된 char_right_1·2(둘 다 오른쪽)만** 쓴다.
-    // char_right_0은 왼쪽을 보고, 뒤집으면 정렬이 어긋나 걸을 때 몸이 흔들리므로 제외.
-    // 정지=char_right_1, 걷기=1↔2 교대. 모두 오른쪽 원본이라 뒤집기 보정이 없고,
-    // 왼쪽 이동만 통째로 좌우반전한다 → 좌/우 이동 모두 프레임 방향이 완전히 일관.
-    const SIDE = ['char_right_1', 'char_right_2'];
+    // 시트의 파일명과 실제 방향이 어긋나 있다(픽셀로 확인한 결과):
+    //   오른쪽을 보는 프레임 = char_left_0 · char_left_2 · char_right_1
+    //   왼쪽을 보는 프레임   = char_left_1 · char_right_0 · char_right_2
+    // 그래서 **오른쪽 프레임만** 골라 한 벌로 쓰고, 왼쪽 이동은 통째로 반전한다.
+    const SIDE_IDLE = 'char_left_2';                        // 직립(정지)
+    const SIDE_WALK = ['char_left_0', 'char_right_1'];      // 성큼성큼(걷기)
     const horiz = h.dir === 'left' || h.dir === 'right';
-    const sideIdx = h.moving ? (Math.floor(h.t * 3) % 2) : 0;
     const img = horiz
-      ? (IMG[SIDE[sideIdx]] || IMG.char_down_0)
+      ? (IMG[h.moving ? SIDE_WALK[Math.floor(h.t * 3) % 2] : SIDE_IDLE] || IMG.char_down_0)
       : (IMG[`char_${h.dir}_${frame}`] || IMG.char_down_0);
     if (!img) return;
     const flip = horiz && h.dir === 'left';
@@ -288,16 +288,20 @@ export class Game {
 
     const ht = Math.max(cellH * CHAR_SCALE, CHAR_MIN_H), w = img.width * ht / img.height;
     const baseY = cy + cellH * 0.10;
+    // 프레임마다 스프라이트 폭이 달라(대걸레 위치 차이) 단순 가운데 정렬하면 몸이 좌우로 튄다.
+    // → **몸 중심(footprintCx)** 이 항상 셀 중앙(cx)에 오도록 맞춘다.
+    const bodyCx = footprintCx(img);
+    const spriteLeft = flip ? cx - w * (1 - bodyCx) : cx - w * bodyCx;
     // 그림자는 발 위치(고정)에, 캐릭터만 살짝 떠오르게 해야 점프감이 산다
-    drawContactShadow(ctx, img, cx - w / 2, w, baseY);
+    drawContactShadow(ctx, img, spriteLeft, w, baseY, { mirror: flip });
     if (flip) {
       ctx.save();
       ctx.translate(cx, 0);
       ctx.scale(-1, 1);
-      ctx.drawImage(img, -w / 2, baseY - ht - hop, w, ht);
+      ctx.drawImage(img, -w * bodyCx, baseY - ht - hop, w, ht);
       ctx.restore();
     } else {
-      ctx.drawImage(img, cx - w / 2, baseY - ht - hop, w, ht);
+      ctx.drawImage(img, spriteLeft, baseY - ht - hop, w, ht);
     }
   }
 }

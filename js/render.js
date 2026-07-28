@@ -11,7 +11,9 @@ import { IMG } from './assets.js';
 export const VW = 1024, VH = 2219;                 // 배경 원본 해상도 = 캔버스 좌표계(세로형)
 
 // 보드 사다리꼴 (세로형 배경의 빈 바닥에 맞춤)
-const TOPW = 700, BOTW = 812, Y0 = 990, Y1 = 1870;
+// 화면에서 상단 HUD와 하단 툴바 사이에 오도록 배치 — 값이 크면 보드가 아래로 내려가
+// 툴바에 겹쳐 "너무 아래" 로 보인다.
+const TOPW = 700, BOTW = 812, Y0 = 720, Y1 = 1600;
 const CX = VW / 2;
 const QUAD = [
   [CX - TOPW / 2, Y0], [CX + TOPW / 2, Y0],
@@ -293,9 +295,16 @@ function shadowOval(ctx, cx, cy, footW, coreOut, coreIn, depthMul) {
   blob(rx0 * 0.72, coreIn, coreIn * 0.6);         // 안쪽 코어
 }
 
+/** 스프라이트 안에서의 몸 중심(0~1) — 프레임 간 좌우 정렬을 맞추는 데 쓴다 */
+export function footprintCx(img) { return footprint(img).cx; }
+
 /** 스프라이트 밑면에 맞춘 접지 그림자 — 발 높이와 걸레 높이에 각각 얹는다 */
 export function drawContactShadow(ctx, img, spriteLeft, spriteW, baseY, opts = {}) {
-  const fp = footprint(img);
+  const fp0 = footprint(img);
+  // 좌우 반전해 그린 경우 밑면 좌표도 함께 뒤집어야 그림자가 발밑에 온다
+  const fp = opts.mirror
+    ? { ...fp0, cx: 1 - fp0.cx, mopX: fp0.mopX == null ? null : 1 - fp0.mopX }
+    : fp0;
   const depthMul = opts.depthMul ?? 1;
   const lift = opts.lift ?? 0.04;
   const coreOut = opts.coreOut ?? 0.13;           // 캐릭터 기본 — 옅게
