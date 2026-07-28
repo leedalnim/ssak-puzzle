@@ -265,15 +265,10 @@ export class Game {
   _drawHero(ctx) {
     const h = this.hero;
     const frame = h.moving ? 1 + (Math.floor(h.t * 3) % 2) : 0;
-    // 시트의 파일명과 실제 방향이 어긋나 있다(픽셀로 확인한 결과):
-    //   오른쪽을 보는 프레임 = char_left_0 · char_left_2 · char_right_1
-    //   왼쪽을 보는 프레임   = char_left_1 · char_right_0 · char_right_2
-    // 그래서 **오른쪽 프레임만** 골라 한 벌로 쓰고, 왼쪽 이동은 통째로 반전한다.
-    const SIDE_IDLE = 'char_left_2';                        // 직립(정지)
-    const SIDE_WALK = ['char_left_0', 'char_right_1'];      // 성큼성큼(걷기)
+    // 측면 스프라이트(char_side_*)는 모두 **오른쪽**을 본다. 왼쪽 이동은 좌우 반전.
     const horiz = h.dir === 'left' || h.dir === 'right';
     const img = horiz
-      ? (IMG[h.moving ? SIDE_WALK[Math.floor(h.t * 3) % 2] : SIDE_IDLE] || IMG.char_down_0)
+      ? (IMG[h.moving ? `char_side_${1 + (Math.floor(h.t * 3) % 2)}` : 'char_side_0'] || IMG.char_down_0)
       : (IMG[`char_${h.dir}_${frame}`] || IMG.char_down_0);
     if (!img) return;
     const flip = horiz && h.dir === 'left';

@@ -12,8 +12,11 @@ const MANIFEST = {
   // 캐릭터: 4방향 × 3프레임 (right는 left 좌우반전본이 파일로 존재)
   char_down_0: R + 'char/char_down_0.png', char_down_1: R + 'char/char_down_1.png', char_down_2: R + 'char/char_down_2.png',
   char_up_0: R + 'char/char_up_0.png', char_up_1: R + 'char/char_up_1.png', char_up_2: R + 'char/char_up_2.png',
-  char_left_0: R + 'char/char_left_0.png', char_left_1: R + 'char/char_left_1.png', char_left_2: R + 'char/char_left_2.png',
-  char_right_0: R + 'char/char_right_0.png', char_right_1: R + 'char/char_right_1.png', char_right_2: R + 'char/char_right_2.png',
+  // 측면은 **오른쪽을 보는 3포즈**만 둔다(왼쪽은 코드에서 좌우 반전).
+  // 원본 시트의 char_left_*/char_right_* 는 서로 완전한 거울상이라 절반이 중복이었다.
+  char_side_0: R + 'char/char_side_0.png',   // 직립(정지)
+  char_side_1: R + 'char/char_side_1.png',   // 성큼 A(걷기)
+  char_side_2: R + 'char/char_side_2.png',   // 성큼 B(걷기)
 
   // 장애물
   obs_boxes: R + 'obstacles/obs_boxes.png',
