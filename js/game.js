@@ -229,10 +229,11 @@ export class Game {
     }
   }
 
-  /** 렌더용 그리드 — 장애물 칸만 원래 더러움 값으로 되돌린 사본 */
+  /** 렌더용 그리드 — 장애물이 놓인 칸은 **깨끗한 타일(0)** 로 그린다.
+   *  (물건에 가려 안 보이는 자리라 때가 있으면 지저분해 보인다) */
   _dispGrid() {
     const d = this.dur.map(r => r.slice());
-    for (const o of this.obstacles) d[o.y][o.x] = this.obstDisp[o.x + ',' + o.y] ?? 0;
+    for (const o of this.obstacles) d[o.y][o.x] = 0;
     return d;
   }
 

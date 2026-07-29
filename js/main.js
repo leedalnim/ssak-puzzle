@@ -35,6 +35,21 @@ function starsFor(st, elapsed) {
   return 1;
 }
 
+/** 클리어 팝업 — 별을 하나씩 차례로 '탁' 박아 넣는다 */
+let starTimers = [];
+function playStars(n) {
+  starTimers.forEach(clearTimeout); starTimers = [];
+  const imgs = [...$('clearStars').children];
+  imgs.forEach(el => { el.classList.remove('on'); el.classList.add('off'); });
+  imgs.forEach((el, i) => {
+    if (i >= n) return;
+    starTimers.push(setTimeout(() => {
+      el.classList.remove('off'); el.classList.add('on');
+      Audio.sfxStar(i);
+    }, 260 + i * 300));
+  });
+}
+
 const screens = ['screenTitle', 'screenStages', 'screenIntro', 'screenClear',
                  'screenFail', 'screenHelp', 'screenPause', 'screenLoad'];
 
@@ -47,7 +62,6 @@ function show(id) {
   const inGame = id === null || id === 'screenHelp' || id === 'screenPause';
   $('hud').classList.toggle('hidden', !inGame);
   $('toolbar').classList.toggle('hidden', !inGame);
-  $('progressWrap').classList.toggle('hidden', !inGame);
 }
 
 function fmtTime(sec) {
@@ -64,7 +78,6 @@ function syncScale() {
 // ----------------------------- 게임 훅 -----------------------------
 function makeGame() {
   game = new Game($('game'), {
-    onProgress: (p) => { $('progressBar').style.width = `${Math.round(p * 100)}%`; },
     onTiles: (left) => { $('hudTiles').textContent = String(left); },
     onUndoState: (can) => { $('btnUndo').disabled = !can; },
     onTimer: (left, total, elapsed) => {
@@ -112,7 +125,7 @@ function onStageClear(elapsed) {
   Toss.track('stage_clear', { stage: st.id, elapsed, stars: s });
   $('clearStory').textContent = st.clear || '';
   $('clearTime').textContent = elapsed != null ? `⏱ ${fmtTime(elapsed)}` : '';
-  $('clearUnlock').textContent = st.unlock ? `🎁 ${st.unlock} 해금!` : '';
+  playStars(s);
   $('btnNext').textContent = current + 1 < stages.length ? '다음 스테이지' : '처음으로';
   show('screenClear');
 }

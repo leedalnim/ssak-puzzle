@@ -64,18 +64,36 @@ function tone(freq, dur, type = 'sine', vol = 0.3, slideTo = null) {
   osc.start(); osc.stop(c.currentTime + dur + 0.02);
 }
 
-// 한 칸 청소 — combo가 올라갈수록 피치 상승(쾌감)
+// 한 칸 청소 — '쓱' 마찰음만. (예전엔 삼각파 톤이 겹쳐 '픽' 소리가 났다)
 export function sfxClean(combo = 0) {
-  const pitch = 1 + Math.min(combo, 12) * 0.05;
-  swipeNoise(pitch, 0.12, 0.3);
-  tone(420 * pitch, 0.08, 'triangle', 0.08);
+  const pitch = 1 + Math.min(combo, 12) * 0.04;
+  swipeNoise(pitch, 0.14, 0.28);
 }
 
-// 때가 완전히 벗겨져 반짝! (타일이 깨끗해짐)
+// 때가 완전히 벗겨져 반짝! — 짧고 날카로운 '픽' 대신 부드러운 종소리
 export function sfxSparkle(combo = 0) {
-  const base = 880 * (1 + Math.min(combo, 12) * 0.04);
-  tone(base, 0.12, 'sine', 0.12);
-  setTimeout(() => tone(base * 1.5, 0.12, 'sine', 0.1), 50);
+  const base = 1046 * (1 + Math.min(combo, 12) * 0.03);   // C6
+  bell(base, 0.34, 0.075);
+  setTimeout(() => bell(base * 1.5, 0.40, 0.055), 70);    // 완전5도 — 듣기 편한 화음
+}
+
+/** 부드러운 종소리 — 천천히 붙었다 길게 사라진다 */
+function bell(freq, dur, vol) {
+  const c = ensure(); if (!c || muted) return;
+  const osc = c.createOscillator(); const g = c.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(freq, c.currentTime);
+  g.gain.setValueAtTime(0.0001, c.currentTime);
+  g.gain.exponentialRampToValueAtTime(vol, c.currentTime + 0.035);   // 부드러운 어택
+  g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);  // 긴 여운
+  osc.connect(g); g.connect(master);
+  osc.start(); osc.stop(c.currentTime + dur + 0.02);
+}
+
+/** 클리어 팝업에서 별이 하나씩 박힐 때 — 음이 올라가며 상쾌하게 */
+export function sfxStar(i = 0) {
+  const scale = [1318, 1568, 2093];            // E6 · G6 · C7
+  bell(scale[Math.min(i, 2)], 0.45, 0.09);
 }
 
 export function sfxMoveBlocked() { tone(160, 0.08, 'square', 0.12, 120); }

@@ -172,20 +172,17 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 }
 .tool:has(button:disabled) > span { opacity: .45; }
 
-/* ================================ 진행 게이지 ============================== */
-#progressWrap {
-  position: fixed;
-  left: 50%; transform: translateX(-50%);
-  bottom: calc(var(--safe-b) + 210px * var(--k));
-  width: 46%; height: calc(14px * var(--k));
-  background: rgba(120, 94, 62, .22);
-  border-radius: 99px; overflow: hidden; z-index: 4;
-}
-#progressBar {
-  height: 100%; width: 0%;
-  background: linear-gradient(90deg, var(--sage), #cbbf86, #e8c98a);
-  border-radius: 99px;
-  transition: width .28s cubic-bezier(.22, 1, .36, 1);
+/* ============================ 클리어 별점 애니메이션 ======================= */
+.clear-stars { display: flex; justify-content: center; gap: 10px; margin: 2px 0 6px; height: 46px; }
+.clear-stars img { width: 46px; height: 46px; }
+/* 아직 안 박힌 별 — 크게 벌어진 채 투명 */
+.clear-stars img.off { opacity: 0; transform: scale(2.2) rotate(-25deg); }
+/* 박히는 순간 — 위에서 '탁' 내려앉으며 살짝 튕긴다 */
+.clear-stars img.on { opacity: 1; animation: starPop .42s cubic-bezier(.2, 1.5, .4, 1) both; }
+@keyframes starPop {
+  0%   { opacity: 0; transform: scale(2.2) rotate(-25deg); }
+  60%  { opacity: 1; transform: scale(.86) rotate(4deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
 }
 
 /* ================================== 화면 ================================== */
@@ -285,18 +282,28 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 /* ===== 스테이지 선택 (페이저 + 레벨 그리드) ===== */
 .stage-screen { justify-content: flex-start; gap: 10px;
   padding: calc(var(--safe-t) + 12px) 0 calc(var(--safe-b) + 22px); }
+/* 뒤로 버튼과 제목 알약을 한 줄에 — 서로 세로 중앙 정렬 */
+.stage-head {
+  width: 100%; display: flex; align-items: center; gap: 12px;
+  padding: 0 16px; margin-bottom: 4px;
+}
 .stage-back {
-  position: absolute; top: calc(var(--safe-t) + 14px); left: 14px; z-index: 6;
+  flex: 0 0 auto;
   width: 46px; height: 46px; border-radius: 50%; padding: 0;
   background: rgba(253, 247, 234, .9); border: 3px solid var(--wood); color: var(--ink);
   cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
-.stage-back svg { width: 24px; height: 24px; }
+.stage-back svg { width: 24px; height: 24px; display: block; }
+/* 알약 안에서 글자가 정확히 가운데 오도록 flex 중앙 정렬(폰트 baseline 보정) */
 .title-pill {
+  flex: 1; min-width: 0; height: 52px;
+  display: flex; align-items: center; justify-content: center;
+  /* 뒤로 버튼(46px + gap 12px)만큼 오른쪽에 여백을 둬 알약이 화면 정중앙에 오게 한다 */
+  margin-right: 58px;
   font-size: 28px; font-weight: 800; color: var(--ink); letter-spacing: 1px;
   background: linear-gradient(180deg, #fbf1d8, #efe0bd);
   border: 5px solid var(--wood); border-radius: 999px;
-  padding: 6px 44px; box-shadow: 0 5px 0 var(--wood-dark); margin: 2px 0 4px;
+  box-shadow: 0 5px 0 var(--wood-dark);
 }
 .area-viewport { width: 100%; flex: 1; overflow: hidden; min-height: 0; }
 .area-track { display: flex; height: 100%; transition: transform .28s ease; }

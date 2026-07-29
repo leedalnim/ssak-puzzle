@@ -37,7 +37,6 @@
         <div class="tool"><button id="btnRestart" class="icon-btn btn-restart" aria-label="다시하기"></button><span>다시하기</span></div>
       </div>
 
-      <div id="progressWrap" class="hidden"><div id="progressBar"></div></div>
     </div>
 
     <!-- 타이틀 -->
@@ -55,10 +54,12 @@
 
     <!-- 스테이지 선택 -->
     <section id="screenStages" class="screen hidden stage-screen">
-      <button id="btnStagesBack" class="stage-back" aria-label="뒤로">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
-      </button>
-      <div class="title-pill">스테이지</div>
+      <div class="stage-head">
+        <button id="btnStagesBack" class="stage-back" aria-label="뒤로">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <div class="title-pill">스테이지</div>
+      </div>
       <div class="area-viewport"><div class="area-track" id="areaTrack"></div></div>
       <div class="pager">
         <button class="pg-arrow" id="pgPrev" aria-label="이전">
@@ -85,8 +86,11 @@
       <div class="modal-card">
         <div class="clear-emoji">✨</div>
         <h2 id="clearTitle">깨끗해졌다!</h2>
+        <div class="clear-stars" id="clearStars">
+          <img src="assets/room/ui/stage/star.png" alt=""><img src="assets/room/ui/stage/star.png" alt=""><img src="assets/room/ui/stage/star.png" alt="">
+        </div>
         <p id="clearStory" class="clear-story"></p>
-        <div class="clear-stats"><span id="clearTime"></span><span id="clearUnlock"></span></div>
+        <div class="clear-stats"><span id="clearTime"></span></div>
         <button id="btnNext" class="big-btn">다음 스테이지</button>
         <button class="ghost-btn" data-back>스테이지 목록</button>
       </div>
