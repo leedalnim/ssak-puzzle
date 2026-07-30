@@ -133,8 +133,7 @@ function onStageFail(reason) {
   Toss.track('stage_fail', { stage: stages[current].id, reason });
   $('failReason').textContent = reason === 'time'
     ? '시간이 다 됐어요.\n조금만 더 빠르게!'
-    : '갈 곳이 없어요.\n한 수 무르거나 처음부터 해볼까요?';
-  $('btnUndoFromFail').classList.toggle('hidden', !game.canUndo());
+    : '갈 곳이 없어요.\n처음부터 다시 해볼까요?';
   show('screenFail');
 }
 
@@ -257,7 +256,6 @@ function wireUI() {
   $('btnRetry').addEventListener('click', () => { Audio.sfxUI(); show(null); game.reset(); });
   // 클리어 팝업의 원형 '다시 하기'
   $('btnRetryClear').addEventListener('click', () => { Audio.sfxUI(); show(null); game.reset(); });
-  $('btnUndoFromFail').addEventListener('click', () => { Audio.sfxUI(); show(null); game.undo(); });
 
   // 인게임 컨트롤
   $('btnUndo').addEventListener('click', () => game.undo());
