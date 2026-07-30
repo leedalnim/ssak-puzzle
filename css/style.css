@@ -251,16 +251,22 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
   text-shadow: 0 2px 0 rgba(255, 252, 244, .9);
 }
 
-/* 인게임 '되돌리기'와 같은 클레이 알약 에셋(화살표를 지운 btn_pill)을 배경으로 쓴다.
-   에셋 비율(742:344)을 유지해야 모서리가 찌그러지지 않는다. */
+/* 인게임 '되돌리기'와 같은 클레이 알약 룩.
+   통짜 이미지를 늘리면 비율(742:344)이 고정돼 글자에 비해 세로가 과하게 커진다.
+   → **좌우 캡은 비율 유지, 가운데만 가로로 늘리는 3-슬라이스**로 조립해
+     높이를 글자에 맞게 자유롭게 잡는다. (캡 폭 = 높이 × 0.436) */
 .big-btn {
+  --bh: 62px;                       /* 버튼 높이 */
+  --cap: calc(var(--bh) * 0.436);   /* 캡의 렌더 폭 */
   font-family: inherit; font-size: 22px; font-weight: 800; color: #5c4222;
-  background: url(../assets/room/ui/btn_pill.png) center / 100% 100% no-repeat;
   border: none; cursor: pointer;
-  min-width: 260px; aspect-ratio: 742 / 344; max-width: 78%;
+  height: var(--bh); min-width: 210px; max-width: 88%;
   display: flex; align-items: center; justify-content: center;
-  /* 에셋 아래쪽 나무 두께만큼 글자를 위로 올려 시각적 중앙에 맞춘다 */
-  padding: 0 40px 5%;
+  padding: 0 calc(var(--cap) + 14px) 4%;   /* 캡 안쪽으로 글자가 들어오게 */
+  background:
+    url(../assets/room/ui/btn_cap_l.png) left center / auto 100% no-repeat,
+    url(../assets/room/ui/btn_cap_r.png) right center / auto 100% no-repeat,
+    url(../assets/room/ui/btn_mid.png) center center / calc(100% - var(--cap) * 2 + 1px) 100% no-repeat;
   transition: transform .08s ease;
 }
 .big-btn:active { transform: translateY(4px); }
