@@ -172,9 +172,55 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 }
 .tool:has(button:disabled) > span { opacity: .45; }
 
-/* ============================ 클리어 별점 애니메이션 ======================= */
-.clear-stars { display: flex; justify-content: center; gap: 10px; margin: 2px 0 6px; height: 46px; }
-.clear-stars img { width: 46px; height: 46px; }
+/* ============================== 클리어 팝업 =============================== */
+/* 클레이 에셋으로 조립 — 카드 프레임 / 별 / 캐릭터+고양이 / 결과바 / 버튼 */
+.clear-card {
+  position: relative; width: min(86vw, 380px);
+  display: flex; flex-direction: column; align-items: center;
+  /* 프레임 에셋(546×988)을 늘려 카드 배경으로 — 둥근 모서리가 커도 자연스럽다 */
+  border-image: url(../assets/room/ui/clear/popup-frame-blank.png) 120 fill stretch;
+  border-width: 26px; border-style: solid;
+  padding: 4px 18px 16px;
+}
+.clear-title {
+  font-size: 38px; font-weight: 800; color: #5c4222; margin: 0 0 2px;
+  text-shadow: 0 2px 0 rgba(255, 252, 244, .9);
+}
+.clear-hero { position: relative; width: 100%; height: 34vh; max-height: 250px; margin: 2px 0 6px; }
+.clear-hero img { position: absolute; bottom: 0; height: 100%; width: auto; }
+.clear-hero .ch-girl { left: 50%; transform: translateX(-38%); }
+.clear-hero .ch-cat { left: 50%; transform: translateX(-142%); height: 48%; }
+/* 결과바 — 시간 | 닦은 칸 */
+.clear-bar {
+  position: relative; display: flex; align-items: center; justify-content: center; gap: 4px;
+  width: 100%; height: 54px; margin-bottom: 12px;
+  border-image: url(../assets/room/ui/clear/result-bar-blank.png) 70 fill stretch;
+  border-width: 16px; border-style: solid;
+}
+.cb-cell { flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
+  font-size: 21px; font-weight: 800; color: #6b4e2e; }
+.cb-cell img { width: 25px; height: 25px; }
+.cb-div { height: 34px; width: auto; }
+/* 하단 버튼 — 원형 다시하기 + 초록 다음 */
+.clear-actions { display: flex; align-items: center; gap: 14px; width: 100%; }
+.circ-btn {
+  flex: 0 0 auto; width: 58px; height: 58px; border: none; padding: 0; cursor: pointer;
+  background: url(../assets/room/ui/clear/restart-button-complete.png) center / 100% 100% no-repeat;
+}
+.next-btn {
+  flex: 1; height: 58px; border: none; cursor: pointer;
+  font-family: inherit; font-size: 23px; font-weight: 800; color: #3f5c2c;
+  /* 초록 알약 에셋(539×195) — 화살표가 이미 들어 있어 글자는 왼쪽으로 */
+  background: url(../assets/room/ui/clear/next-button-arrow.png) center / 100% 100% no-repeat;
+  padding: 0 26% 3px 0;
+  transition: transform .08s ease;
+}
+.circ-btn:active, .next-btn:active { transform: translateY(3px); }
+.clear-list { margin-top: 12px; }
+
+/* ---- 별점 애니메이션 ---- */
+.clear-stars { display: flex; justify-content: center; gap: 8px; margin: 2px 0 0; height: 52px; }
+.clear-stars img { width: 52px; height: 52px; }
 /* 아직 안 박힌 별 — 크게 벌어진 채 투명 */
 .clear-stars img.off { opacity: 0; transform: scale(2.2) rotate(-25deg); }
 /* 박히는 순간 — 위에서 '탁' 내려앉으며 살짝 튕긴다 */

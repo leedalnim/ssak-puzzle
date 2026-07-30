@@ -83,15 +83,28 @@
 
     <!-- 클리어 -->
     <section id="screenClear" class="screen modal hidden">
-      <div class="modal-card">
-        <h2 id="clearTitle">깨끗해졌다!</h2>
+      <div class="clear-card">
+        <h2 id="clearTitle" class="clear-title">클리어!</h2>
         <div class="clear-stars" id="clearStars">
-          <img src="assets/room/ui/stage/star.png" alt=""><img src="assets/room/ui/stage/star.png" alt=""><img src="assets/room/ui/stage/star.png" alt="">
+          <img src="assets/room/ui/clear/gold-star-single.png" alt="">
+          <img src="assets/room/ui/clear/gold-star-single.png" alt="">
+          <img src="assets/room/ui/clear/gold-star-single.png" alt="">
+        </div>
+        <div class="clear-hero">
+          <img class="ch-cat" src="assets/room/ui/clear/tuxedo-cat-sitting.png" alt="">
+          <img class="ch-girl" src="assets/room/ui/clear/girl-celebration-with-mop.png" alt="">
         </div>
         <p id="clearStory" class="clear-story"></p>
-        <div class="clear-stats"><span id="clearTime"></span></div>
-        <button id="btnNext" class="big-btn">다음 스테이지</button>
-        <button class="ghost-btn" data-back>스테이지 목록</button>
+        <div class="clear-bar">
+          <div class="cb-cell"><img src="assets/room/ui/clear/icon-clock.png" alt=""><span id="clearTime">0:00</span></div>
+          <img class="cb-div" src="assets/room/ui/clear/divider-vertical.png" alt="">
+          <div class="cb-cell"><img src="assets/room/ui/clear/icon-cleaned-tile.png" alt=""><span id="clearTiles">0</span></div>
+        </div>
+        <div class="clear-actions">
+          <button id="btnRetryClear" class="circ-btn" aria-label="다시 하기"></button>
+          <button id="btnNext" class="next-btn">다음</button>
+        </div>
+        <button class="ghost-btn clear-list" data-back>스테이지 목록</button>
       </div>
     </section>
 

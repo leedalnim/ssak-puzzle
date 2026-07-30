@@ -124,9 +124,13 @@ function onStageClear(elapsed) {
   if (s > (stars[st.id] || 0)) { stars[st.id] = s; saveStars(); }
   Toss.track('stage_clear', { stage: st.id, elapsed, stars: s });
   $('clearStory').textContent = st.clear || '';
-  $('clearTime').textContent = elapsed != null ? `⏱ ${fmtTime(elapsed)}` : '';
+  $('clearTime').textContent = elapsed != null ? fmtTime(elapsed) : '-';
+  // 닦아낸 칸 수 = 장애물을 뺀 전체 칸
+  $('clearTiles').textContent = String(
+    st.grid.length * st.grid.length - (st.obstacles?.length || 0));
   playStars(s);
-  $('btnNext').textContent = current + 1 < stages.length ? '다음 스테이지' : '처음으로';
+  // 초록 알약에 화살표가 이미 있어 라벨은 짧게 (길면 두 줄로 깨진다)
+  $('btnNext').textContent = current + 1 < stages.length ? '다음' : '처음으로';
   show('screenClear');
 }
 
@@ -256,6 +260,8 @@ function wireUI() {
     if (current + 1 < stages.length) startStage(current + 1); else show('screenTitle');
   });
   $('btnRetry').addEventListener('click', () => { Audio.sfxUI(); show(null); game.reset(); });
+  // 클리어 팝업의 원형 '다시 하기'
+  $('btnRetryClear').addEventListener('click', () => { Audio.sfxUI(); show(null); game.reset(); });
   $('btnUndoFromFail').addEventListener('click', () => { Audio.sfxUI(); show(null); game.undo(); });
 
   // 인게임 컨트롤
