@@ -262,7 +262,9 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
   border: none; cursor: pointer;
   height: var(--bh); min-width: 210px; max-width: 88%;
   display: flex; align-items: center; justify-content: center;
-  padding: 0 calc(var(--cap) + 14px) 4%;   /* 캡 안쪽으로 글자가 들어오게 */
+  /* ⚠️ 세로 패딩에 %를 쓰면 CSS 규칙상 **폭** 기준이라 버튼마다 글자가 다르게 밀린다.
+     크림 면의 중심이 박스 중심보다 위(≈2%)에 있으므로 높이 비례(px)로만 보정한다. */
+  padding: 0 calc(var(--cap) + 14px) calc(var(--bh) * 0.04);
   background:
     url(../assets/room/ui/btn_cap_l.png) left center / auto 100% no-repeat,
     url(../assets/room/ui/btn_cap_r.png) right center / auto 100% no-repeat,
@@ -304,16 +306,21 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
   cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
 .stage-back svg { width: 24px; height: 24px; display: block; }
-/* 알약 안에서 글자가 정확히 가운데 오도록 flex 중앙 정렬(폰트 baseline 보정) */
+/* 제목 알약 — 버튼과 같은 클레이 에셋을 3-슬라이스로 조립(룩 통일) */
 .title-pill {
-  flex: 1; min-width: 0; height: 52px;
+  --bh: 62px;
+  --cap: calc(var(--bh) * 0.436);
+  flex: 1; min-width: 0; height: var(--bh);
   display: flex; align-items: center; justify-content: center;
   /* 뒤로 버튼(46px + gap 12px)만큼 오른쪽에 여백을 둬 알약이 화면 정중앙에 오게 한다 */
   margin-right: 58px;
   font-size: 28px; font-weight: 800; color: var(--ink); letter-spacing: 1px;
-  background: linear-gradient(180deg, #fbf1d8, #efe0bd);
-  border: 5px solid var(--wood); border-radius: 999px;
-  box-shadow: 0 5px 0 var(--wood-dark);
+  /* 버튼과 동일한 세로 중앙 보정 */
+  padding: 0 calc(var(--cap) + 10px) calc(var(--bh) * 0.04);
+  background:
+    url(../assets/room/ui/btn_cap_l.png) left center / auto 100% no-repeat,
+    url(../assets/room/ui/btn_cap_r.png) right center / auto 100% no-repeat,
+    url(../assets/room/ui/btn_mid.png) center center / calc(100% - var(--cap) * 2 + 1px) 100% no-repeat;
 }
 .area-viewport { width: 100%; flex: 1; overflow: hidden; min-height: 0; }
 .area-track { display: flex; height: 100%; transition: transform .28s ease; }
