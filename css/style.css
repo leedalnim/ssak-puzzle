@@ -186,10 +186,25 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
   font-size: 38px; font-weight: 800; color: #5c4222; margin: 0 0 2px;
   text-shadow: 0 2px 0 rgba(255, 252, 244, .9);
 }
-.clear-hero { position: relative; width: 100%; height: 34vh; max-height: 250px; margin: 2px 0 6px; }
-.clear-hero img { position: absolute; bottom: 0; height: 100%; width: auto; }
-.clear-hero .ch-girl { left: 50%; transform: translateX(-38%); }
-.clear-hero .ch-cat { left: 50%; transform: translateX(-142%); height: 48%; }
+/* 캐릭터+고양이 — flex로 묶어 그룹 전체가 카드 정중앙에 오게 한다 */
+.clear-hero {
+  display: flex; align-items: flex-end; justify-content: center; gap: 1%;
+  width: 100%; height: 26vh; max-height: 196px; margin: 4px 0 8px;
+  /* 소녀 오른쪽의 대걸레만큼 시각 무게가 오른쪽으로 쏠려 살짝 보정 */
+  padding-right: 5%;
+}
+.fig { position: relative; height: 100%; }
+.fig img { height: 100%; width: auto; display: block; position: relative; z-index: 1; }
+.fig-cat { height: 46%; }
+/* 발밑 접지 그림자 — 발 중심(≈53%)에 옅은 타원 */
+.fig::after {
+  content: ''; position: absolute; z-index: 0; left: 53%; bottom: 0;
+  transform: translate(-50%, 32%);          /* 발밑에 붙게 — 많이 내리면 떠 보인다 */
+  width: 66%; height: 15%; border-radius: 50%;
+  background: radial-gradient(closest-side,
+    rgba(92, 66, 40, .38), rgba(92, 66, 40, .17) 55%, rgba(92, 66, 40, 0) 100%);
+}
+.fig-cat::after { width: 82%; height: 17%; transform: translate(-50%, 28%); }
 /* 하단 버튼 — 원형 다시하기 + 크림 알약(다음 스테이지) */
 .clear-actions { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 4px; }
 .circ-btn {
