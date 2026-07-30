@@ -190,32 +190,17 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 .clear-hero img { position: absolute; bottom: 0; height: 100%; width: auto; }
 .clear-hero .ch-girl { left: 50%; transform: translateX(-38%); }
 .clear-hero .ch-cat { left: 50%; transform: translateX(-142%); height: 48%; }
-/* 결과바 — 시간 | 닦은 칸 */
-.clear-bar {
-  position: relative; display: flex; align-items: center; justify-content: center; gap: 4px;
-  width: 100%; height: 54px; margin-bottom: 12px;
-  border-image: url(../assets/room/ui/clear/result-bar-blank.png) 70 fill stretch;
-  border-width: 16px; border-style: solid;
-}
-.cb-cell { flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
-  font-size: 21px; font-weight: 800; color: #6b4e2e; }
-.cb-cell img { width: 25px; height: 25px; }
-.cb-div { height: 34px; width: auto; }
-/* 하단 버튼 — 원형 다시하기 + 초록 다음 */
-.clear-actions { display: flex; align-items: center; gap: 14px; width: 100%; }
+/* 하단 버튼 — 원형 다시하기 + 크림 알약(다음 스테이지) */
+.clear-actions { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 4px; }
 .circ-btn {
-  flex: 0 0 auto; width: 58px; height: 58px; border: none; padding: 0; cursor: pointer;
+  flex: 0 0 auto; width: 56px; height: 56px; border: none; padding: 0; cursor: pointer;
   background: url(../assets/room/ui/clear/restart-button-complete.png) center / 100% 100% no-repeat;
-}
-.next-btn {
-  flex: 1; height: 58px; border: none; cursor: pointer;
-  font-family: inherit; font-size: 23px; font-weight: 800; color: #3f5c2c;
-  /* 초록 알약 에셋(539×195) — 화살표가 이미 들어 있어 글자는 왼쪽으로 */
-  background: url(../assets/room/ui/clear/next-button-arrow.png) center / 100% 100% no-repeat;
-  padding: 0 26% 3px 0;
   transition: transform .08s ease;
 }
-.circ-btn:active, .next-btn:active { transform: translateY(3px); }
+.circ-btn:active { transform: translateY(3px); }
+/* 다른 화면의 알약 버튼과 같은 룩 — 좁은 칸에 들어가므로 글자·여백만 살짝 조인다 */
+.next-pill { flex: 1; min-width: 0; max-width: none; font-size: 19px;
+  padding: 0 calc(var(--cap) + 4px) calc(var(--bh) * 0.04); }
 .clear-list { margin-top: 12px; }
 
 /* ---- 별점 애니메이션 ---- */
