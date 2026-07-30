@@ -188,11 +188,13 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 }
 /* 캐릭터+고양이 — flex로 묶어 그룹 전체가 카드 정중앙에 오게 한다 */
 .clear-hero {
-  display: flex; align-items: flex-end; justify-content: center; gap: 1%;
+  display: flex; align-items: flex-end; justify-content: center; gap: 0;
   width: 100%; height: 26vh; max-height: 196px; margin: 4px 0 8px;
   /* 소녀 오른쪽의 대걸레만큼 시각 무게가 오른쪽으로 쏠려 살짝 보정 */
   padding-right: 5%;
 }
+/* 고양이를 소녀 쪽으로 당겨 둘이 붙어 보이게 */
+.fig-cat { margin-right: -5%; }
 .fig { position: relative; height: 100%; }
 .fig img { height: 100%; width: auto; display: block; position: relative; z-index: 1; }
 .fig-cat { height: 46%; }
@@ -205,6 +207,12 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
     rgba(92, 66, 40, .38), rgba(92, 66, 40, .17) 55%, rgba(92, 66, 40, 0) 100%);
 }
 .fig-cat::after { width: 82%; height: 17%; transform: translate(-50%, 28%); }
+
+/* 실패 팝업 — 같은 구조에 에셋 비율만 다르다(고양이가 상대적으로 큼) */
+.fail-hero { padding-right: 2%; }
+.fail-hero .fig-cat { height: 58%; margin-right: -7%; }
+.fail-hero .fig-girl::after { left: 58%; }   /* 접지 중심 측정값 */
+.fail-hero .fig-cat::after { left: 47%; width: 74%; }
 /* 하단 버튼 — 원형 다시하기 + 크림 알약(다음 스테이지) */
 .clear-actions { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 4px; }
 .circ-btn {
