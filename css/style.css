@@ -304,15 +304,23 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 }
 .big-btn:active { transform: translateY(4px); }
 
+/* 보조 버튼(스테이지 목록·스테이지 선택 등) — 진한 허니 클레이 알약.
+   메인 버튼(크림)과 색으로 위계를 나눈다. 캡 비율 = 90/190 */
 .ghost-btn {
-  font-family: inherit; font-size: 16px; font-weight: 700; color: #7a5c3a;
-  /* 일러스트 위에 놓여도 읽히도록 반투명 배경을 깐다 */
-  background: rgba(253, 247, 234, .8);
-  border: 3px solid rgba(160, 130, 90, .5);
-  padding: 9px 24px; border-radius: 999px; cursor: pointer;
-  backdrop-filter: blur(3px);
+  --gh: 48px;
+  --gcap: calc(var(--gh) * 0.474);
+  font-family: inherit; font-size: 17px; font-weight: 800; color: #5b3f1c;
+  border: none; cursor: pointer;
+  height: var(--gh); min-width: 150px;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 calc(var(--gcap) + 10px) calc(var(--gh) * 0.04);
+  background:
+    url(../assets/room/ui/btn/honey_l.png) left center / auto 100% no-repeat,
+    url(../assets/room/ui/btn/honey_r.png) right center / auto 100% no-repeat,
+    url(../assets/room/ui/btn/honey_m.png) center center / calc(100% - var(--gcap) * 2 + 1px) 100% no-repeat;
+  transition: transform .08s ease;
 }
-.ghost-btn:active { border-color: var(--wood); color: var(--ink); }
+.ghost-btn:active { transform: translateY(3px); }
 
 .rating {
   position: absolute; bottom: calc(var(--safe-b) + 16px);
