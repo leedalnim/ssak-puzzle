@@ -208,6 +208,14 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 }
 .fig-cat::after { width: 82%; height: 17%; transform: translate(-50%, 28%); }
 
+/* 아이콘이 들어가는 알약 버튼 — 아이콘+글자를 한 덩어리로 가운데 정렬 */
+.big-btn.with-icon { gap: 10px; }
+.btn-ico { width: 26px; height: 26px; display: block; }
+
+/* 실패 팝업의 보조 버튼 두 개 — 나란히, 좁으면 자동 줄바꿈 */
+.fail-subs { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
+.fail-subs .ghost-btn { min-width: 0; font-size: 15px; padding: 0 calc(var(--gcap) + 4px) calc(var(--gh) * 0.04); }
+
 /* 실패 팝업 — 같은 구조에 에셋 비율만 다르다(고양이가 상대적으로 큼) */
 .fail-hero { padding-right: 2%; }
 .fail-hero .fig-cat { height: 58%; margin-right: -7%; }
