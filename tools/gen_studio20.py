@@ -67,25 +67,39 @@ def replay_ok(grid, obstacles, start, path):
     return left == 0, ('클리어' if left == 0 else f'{left}회 남음')
 
 
-def obstacles_for(n, count):
-    """격자 크기에 맞춰 모서리 위주로 장애물 배치 (사용 에셋: basket_rd·plant·books)."""
-    pool = [
-        {'x': n - 1, 'y': 0, 'type': 'basket_rd'},
-        {'x': 0, 'y': n - 1, 'type': 'plant'},
-        {'x': n // 2, 'y': n // 2, 'type': 'books'},
-    ]
-    return pool[:count]
+TYPES = ['basket_rd', 'plant', 'books']
+
+# 장애물 배치 후보 — 시작칸(0,0)은 절대 막지 않고, 보드가 끊기지 않는 자리만.
+# 판마다 다른 조합을 써서 같은 5×5라도 매번 다른 문제로 느껴지게 한다.
+SPOTS = {
+    1: [[(4, 0)], [(0, 4)], [(4, 4)], [(2, 2)]],
+    2: [[(4, 0), (0, 4)], [(4, 4), (2, 2)], [(4, 0), (4, 4)], [(0, 4), (2, 2)]],
+    3: [[(4, 0), (0, 4), (2, 2)], [(4, 0), (4, 4), (0, 4)],
+        [(4, 0), (2, 2), (4, 4)], [(0, 4), (2, 2), (2, 0)]],
+    4: [[(4, 0), (0, 4), (2, 2), (4, 4)], [(4, 0), (2, 0), (0, 4), (2, 2)],
+        [(0, 4), (4, 4), (2, 2), (4, 0)], [(4, 0), (4, 4), (2, 2), (0, 4)]],
+}
 
 
-# 20판 난이도 스케줄: (격자, 최대더러움, 장애물수, 제한시간[0=무제한])
-def schedule(i):  # i: 1..20
-    if i <= 4:      # 튜토리얼
-        return 5, 2, (0 if i <= 2 else 1), 0
-    if i <= 9:      # 초급
-        return (5 if i <= 6 else 6), (2 if i <= 6 else 3), 1, 0
-    if i <= 14:     # 중급
-        return 6, 3, 2, (0 if i <= 11 else 210)
-    return 7, (3 if i <= 17 else 4), 3, 200  # 고급
+def obstacles_for(count, i):
+    if count == 0:
+        return []
+    variant = SPOTS[count][(i - 1) % len(SPOTS[count])]
+    return [{'x': x, 'y': y, 'type': TYPES[k % len(TYPES)]}
+            for k, (x, y) in enumerate(variant)]
+
+
+# 20판 난이도 스케줄 — **격자는 5×5 고정**.
+# 난이도는 (1) 때 단계가 깊어지고 (2) 장애물이 늘고 (3) 뒤로 갈수록 제한시간이 붙는다.
+# 격자 확대는 다음 장소(편의점 등)에서 쓴다.
+def schedule(i):  # i: 1..20 → (격자, 최대더러움, 장애물수, 제한시간[0=무제한])
+    if i <= 3:   return 5, 2, 0, 0          # 조작 익히기
+    if i <= 6:   return 5, 2, 1, 0          # 장애물 등장
+    if i <= 9:   return 5, 3, 1, 0          # 때가 깊어짐
+    if i <= 12:  return 5, 3, 2, 0          # 장애물 둘
+    if i <= 15:  return 5, 3, 2, 200        # 시간 압박 시작
+    if i <= 18:  return 5, 4, 3, 190        # 장애물 셋 + 더 깊은 때
+    return 5, 4, 4, 175                     # 마지막 관문
 
 # 스토리(자취방) — 일부 판에만
 STORY = {
@@ -103,7 +117,7 @@ if __name__ == '__main__':
     stages, solutions = [], {}
     for i in range(1, 21):
         n, max_dur, ocount, time_limit = schedule(i)
-        obstacles = obstacles_for(n, ocount)
+        obstacles = obstacles_for(ocount, i)
         grid, path = build(n, obstacles, max_dur, seed=i * 37 + 3)
         ok, msg = replay_ok(grid, obstacles, {'x': 0, 'y': 0}, path)
         print(f"  [{i:2d}] 자취방 {n}x{n} d{max_dur} obs{ocount} t{time_limit} — {msg}", file=sys.stderr)
