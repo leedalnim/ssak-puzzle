@@ -35,6 +35,21 @@ function starsFor(st, elapsed) {
   return 1;
 }
 
+/** 클리어 팝업 — 처음 깬 판에 해금 아이템이 있으면 "얻었다"를 보여준다.
+ *  (이름은 stages.json 의 unlock 과 ITEMS 의 name 이 같아야 매칭된다) */
+let rewardTimer = null;
+function showReward(name) {
+  const box = $('clearReward');
+  clearTimeout(rewardTimer);
+  const item = name && ITEMS.find(i => i.name === name);
+  if (!item) { box.classList.add('hidden'); return; }
+  $('rewardImg').src = `${KIT}${item.img}.png`;
+  $('rewardName').textContent = item.name;
+  box.classList.add('hidden');
+  // 별이 다 박힌 뒤에 등장시켜 연출이 겹치지 않게 한다
+  rewardTimer = setTimeout(() => { box.classList.remove('hidden'); Audio.sfxSparkle(6); }, 1150);
+}
+
 /** 클리어 팝업 — 별을 하나씩 차례로 '탁' 박아 넣는다 */
 let starTimers = [];
 function playStars(n) {
@@ -148,11 +163,13 @@ function beginStage(idx) {
 
 function onStageClear(elapsed) {
   const st = stages[current];
+  const isFirstClear = st.id > clearedMax;      // saveProgress 전에 판정해야 한다
   saveProgress(st.id);
   const s = starsFor(st, elapsed);
   if (s > (stars[st.id] || 0)) { stars[st.id] = s; saveStars(); }
   Toss.track('stage_clear', { stage: st.id, elapsed, stars: s });
   $('clearStory').textContent = st.clear || '';
+  showReward(isFirstClear ? st.unlock : null);
   playStars(s);
   $('btnNext').textContent = current + 1 < stages.length ? '다음 스테이지' : '처음으로';
   refreshBadges();
