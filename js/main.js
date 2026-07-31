@@ -51,7 +51,36 @@ function playStars(n) {
 }
 
 const screens = ['screenTitle', 'screenStages', 'screenIntro', 'screenClear',
-                 'screenFail', 'screenHelp', 'screenPause', 'screenLoad'];
+                 'screenFail', 'screenHelp', 'screenPause', 'screenLoad',
+                 'screenCollection', 'screenAchieve'];
+
+const KIT = 'assets/room/ui/kit/';
+
+// 수집품 12종 — 앞 4개는 스테이지 해금 아이템(stages.json의 unlock과 이름이 같다),
+// 나머지는 아직 준비 중인 실루엣 자리.
+const ITEMS = [
+  { name: '구겨진 잠옷', img: 'it_pajama' },
+  { name: '노란 고무장갑', img: 'it_gloves' },
+  { name: '작은 화분', img: 'it_plant' },
+  { name: '새 운동화', img: 'it_sneakers' },
+  { name: '머그컵', img: 'sil_mug', sil: true },
+  { name: '탁상 램프', img: 'sil_lamp', sil: true },
+  { name: '분무기', img: 'sil_spray', sil: true },
+  { name: '물뿌리개', img: 'sil_can', sil: true },
+  { name: '티슈 상자', img: 'sil_tissue', sil: true },
+  { name: '유리병', img: 'sil_cushion', sil: true },
+  { name: '쿠션', img: 'sil_cushion', sil: true },
+  { name: '장바구니', img: 'sil_tote', sil: true },
+];
+
+// 도전과제 — progress(cleared, stars)로 진행도를 계산한다
+const ACHIEVEMENTS = [
+  { name: '첫걸음',     icon: 'ach_sprout', goal: 1,  get: p => p.cleared },
+  { name: '반짝 청소',  icon: 'ach_mop',    goal: 5,  get: p => p.cleared },
+  { name: '깔끔한 하루', icon: 'ach_bucket', goal: 10, get: p => p.cleared },
+  { name: '청소 달인',  icon: 'ach_vacuum', goal: 20, get: p => p.cleared },
+  { name: '완벽한 방',  icon: 'ach_shelf',  goal: 10, get: p => p.threeStars },
+];
 
 function loadProgress() { clearedMax = parseInt(localStorage.getItem(PROG_KEY) || '0', 10); }
 function saveProgress(id) { if (id > clearedMax) { clearedMax = id; localStorage.setItem(PROG_KEY, String(id)); } }
@@ -126,6 +155,7 @@ function onStageClear(elapsed) {
   $('clearStory').textContent = st.clear || '';
   playStars(s);
   $('btnNext').textContent = current + 1 < stages.length ? '다음 스테이지' : '처음으로';
+  refreshBadges();
   show('screenClear');
 }
 
@@ -220,6 +250,61 @@ function buildStages() {
   goArea(startArea < 0 ? 0 : startArea);
 }
 
+// ----------------------------- 수집함 · 도전과제 -----------------------------
+/** 지금까지 얻은 수집품 수 = 클리어한 스테이지의 unlock 개수 */
+function ownedCount() {
+  return stages.filter(s => s.id <= clearedMax && s.unlock).length;
+}
+function progressSummary() {
+  return {
+    cleared: clearedMax,
+    threeStars: Object.values(stars).filter(v => v >= 3).length,
+  };
+}
+
+function buildCollection() {
+  const owned = ownedCount();
+  $('collCount').textContent = `${owned} / ${ITEMS.length}`;
+  const grid = $('collGrid');
+  grid.innerHTML = '';
+  ITEMS.forEach((it, i) => {
+    const got = i < owned;                       // 앞에서부터 순서대로 해금
+    const cell = el('div', 'slot ' + (got ? 'got' : 'lock'));
+    cell.innerHTML = `<img class="thing" src="${KIT}${it.img}.png" alt="${it.name}">`
+      + (got ? '' : `<img class="pad" src="${KIT}lock_item.png" alt="">`);
+    cell.title = got ? it.name : '아직 못 얻었어요';
+    grid.appendChild(cell);
+  });
+}
+
+function buildAchievements() {
+  const p = progressSummary();
+  const list = $('achList');
+  list.innerHTML = '';
+  ACHIEVEMENTS.forEach(a => {
+    const cur = Math.min(a.get(p), a.goal);
+    const done = cur >= a.goal;
+    // 과제 아이콘 에셋이 이미 '메달' 형태라 그대로 쓰고, 잠금 상태만 CSS로 흐리게 한다
+    const row = el('div', 'ach-row ' + (done ? 'done' : 'lock'));
+    row.innerHTML =
+      `<img class="ach-medal" src="${KIT}${a.icon}.png" alt="">`
+      + `<div class="ach-mid"><div class="ach-name">${a.name}</div>`
+      + `<div class="ach-bar"><i style="width:${Math.round(cur / a.goal * 100)}%"></i></div></div>`
+      + `<img class="ach-st" src="${KIT}${done ? 'st_star' : 'st_lock'}.png" alt="">`;
+    list.appendChild(row);
+  });
+}
+
+/** 새로 얻은 게 있으면 타이틀 아이콘에 빨간 점 */
+function refreshBadges() {
+  const seenItems = parseInt(localStorage.getItem('ssak_seen_items') || '0', 10);
+  $('badgeCollection').classList.toggle('hidden', ownedCount() <= seenItems);
+  const p = progressSummary();
+  const doneNow = ACHIEVEMENTS.filter(a => a.get(p) >= a.goal).length;
+  const seenAch = parseInt(localStorage.getItem('ssak_seen_ach') || '0', 10);
+  $('badgeAchieve').classList.toggle('hidden', doneNow <= seenAch);
+}
+
 // ----------------------------- 도움말 범례 -----------------------------
 function buildLegend() {
   const el = $('legend');
@@ -244,6 +329,22 @@ function wireUI() {
   // 영역 페이저
   $('pgPrev').addEventListener('click', () => { Audio.sfxUI(); goArea(areaIdx - 1); });
   $('pgNext').addEventListener('click', () => { Audio.sfxUI(); goArea(areaIdx + 1); });
+
+  // 수집함 · 도전과제
+  $('btnCollection').addEventListener('click', () => {
+    Audio.sfxUI(); buildCollection();
+    localStorage.setItem('ssak_seen_items', String(ownedCount()));   // 확인했으니 뱃지 해제
+    show('screenCollection');
+  });
+  $('btnAchieve').addEventListener('click', () => {
+    Audio.sfxUI(); buildAchievements();
+    const p = progressSummary();
+    localStorage.setItem('ssak_seen_ach',
+      String(ACHIEVEMENTS.filter(a => a.get(p) >= a.goal).length));
+    show('screenAchieve');
+  });
+  $('btnCollBack').addEventListener('click', () => { Audio.sfxUI(); refreshBadges(); show('screenTitle'); });
+  $('btnAchBack').addEventListener('click', () => { Audio.sfxUI(); refreshBadges(); show('screenTitle'); });
 
   $('btnIntroNext').addEventListener('click', () => {
     Audio.sfxUI(); if (pendingIntro != null) beginStage(pendingIntro);
@@ -283,6 +384,7 @@ async function boot() {
   makeGame();
   window.__game = game;  // 디버그
   wireUI();
+  refreshBadges();
   show('screenTitle');
 }
 

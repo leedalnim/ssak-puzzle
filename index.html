@@ -48,6 +48,20 @@
       <div class="screen-actions">
         <button id="btnStart" class="big-btn">시작하기</button>
         <button id="btnStages" class="ghost-btn">스테이지 선택</button>
+        <div class="title-subnav">
+          <div class="sn-item">
+            <button id="btnCollection" class="sn-btn" aria-label="수집함">
+              <img src="assets/room/ui/kit/ic_basket.png" alt="">
+              <span class="sn-badge hidden" id="badgeCollection"></span>
+            </button><span>수집함</span>
+          </div>
+          <div class="sn-item">
+            <button id="btnAchieve" class="sn-btn" aria-label="도전과제">
+              <img src="assets/room/ui/kit/ic_trophy.png" alt="">
+              <span class="sn-badge hidden" id="badgeAchieve"></span>
+            </button><span>도전과제</span>
+          </div>
+        </div>
       </div>
       <div class="rating">전체 이용가</div>
     </section>
@@ -70,6 +84,32 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
         </button>
       </div>
+    </section>
+
+    <!-- 수집함 -->
+    <section id="screenCollection" class="screen hidden panel-screen">
+      <div class="stage-head">
+        <button id="btnCollBack" class="stage-back" aria-label="뒤로">
+          <img src="assets/room/ui/kit/chevron.png" alt="">
+        </button>
+        <div class="title-pill">수집함</div>
+      </div>
+      <div class="big-panel">
+        <div class="panel-count" id="collCount">0 / 12</div>
+        <div class="slot-grid" id="collGrid"></div>
+      </div>
+      <img class="panel-cat" src="assets/room/ui/kit/cat_sit.png" alt="">
+    </section>
+
+    <!-- 도전과제 -->
+    <section id="screenAchieve" class="screen hidden panel-screen">
+      <div class="stage-head">
+        <button id="btnAchBack" class="stage-back" aria-label="뒤로">
+          <img src="assets/room/ui/kit/chevron.png" alt="">
+        </button>
+        <div class="title-pill">도전과제</div>
+      </div>
+      <div class="big-panel"><div class="ach-list" id="achList"></div></div>
     </section>
 
     <!-- 인트로 -->
