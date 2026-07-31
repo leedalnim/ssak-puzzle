@@ -63,14 +63,20 @@ html, body {
   position: fixed; inset: 0; display: flex; align-items: flex-start; justify-content: center;
   overflow: hidden; background: #efe3cf;
   padding-top: var(--safe-t);            /* 캔버스 상단을 상태바 아래로 → 천장 안 잘림 */
+
+  /* 게임 전체가 놓이는 **세로 컬럼 폭**.
+     - 폰: 화면 폭을 그대로 써 좌우 여백이 없다.
+     - PC처럼 가로가 넓은 화면: 높이 기준으로 제한해 폰만 한 컬럼으로 만든다.
+       (0.4615 = 1024/2219 배경 비율, ×1.12 = 아래 빈 바닥이 조금 잘리는 것까지 허용) */
+  --stage-w: min(100vw, calc((100vh - var(--safe-t)) * 0.517));
 }
 
-/* 캔버스는 **화면 폭을 꽉 채운다**(좌우 여백 없음). 세로형 배경(1024×2219)이라
-   높이가 화면보다 약간 길면 아래쪽(빈 바닥)만 잘린다. HUD/툴바는 화면 세이프존에 별도 고정. */
+/* 캔버스는 컬럼 폭을 꽉 채운다. 높이가 화면보다 길면 아래쪽(빈 바닥)만 잘린다.
+   HUD/툴바는 화면 세이프존에 별도 고정. */
 #stage {
   position: relative;
-  width: 100vw;
-  height: calc(100vw * 2219 / 1024);
+  width: var(--stage-w);
+  height: calc(var(--stage-w) * 2219 / 1024);
 }
 #game { display: block; width: 100%; height: 100%; touch-action: none; }
 
@@ -100,11 +106,13 @@ html, body {
 button:disabled { opacity: .45; filter: none; cursor: default; }
 
 /* ================================ 상단 HUD ================================ */
+/* HUD/툴바는 화면에 고정하되 **게임 컬럼 안**에 맞춘다.
+   (뷰포트 기준으로 두면 PC에서 시계·칸수가 화면 양 끝으로 날아간다) */
 #hud {
   position: fixed;
   top: calc(var(--safe-t) + 22px * var(--k));
-  left: calc(34px * var(--k));
-  right: calc(34px * var(--k));
+  left: calc(50% - var(--stage-w) / 2 + 34px * var(--k));
+  right: calc(50% - var(--stage-w) / 2 + 34px * var(--k));
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -248,14 +256,18 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 }
 
 /* ================================== 화면 ================================== */
+/* 화면도 캔버스와 **같은 세로 컬럼**에 가둔다.
+   (뷰포트 전체로 펼치면 PC에서 버튼·격자가 비정상적으로 커진다) */
 .screen {
-  position: absolute; inset: 0;
+  position: absolute; top: 0; bottom: 0;
+  left: 50%; transform: translateX(-50%); width: var(--stage-w);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 16px; padding: calc(var(--safe-t) + 28px) 26px calc(var(--safe-b) + 28px);
   z-index: 10; text-align: center;
   background: radial-gradient(120% 90% at 50% 20%, #fdf7e8, #ecdfc6 75%);
 }
-.modal { background: rgba(60, 44, 28, .48); backdrop-filter: blur(7px); }
+/* 팝업의 어두운 배경만 화면 전체를 덮는다 (카드 자체는 최대 380px라 안 커진다) */
+.modal { width: 100vw; background: rgba(60, 44, 28, .48); backdrop-filter: blur(7px); }
 
 /* 일러스트를 배경으로 쓰는 화면(타이틀·인트로) */
 .art-screen {
@@ -396,7 +408,9 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 .area-track { display: flex; height: 100%; transition: transform .28s ease; }
 .area-page {
   flex: 0 0 100%; width: 100%; height: 100%; min-height: 0;
-  display: flex; flex-direction: column; padding: 0 16px; gap: 12px;
+  display: flex; flex-direction: column; gap: 12px;
+  /* 뷰포트가 overflow:hidden이라 아래쪽 여백이 없으면 패널의 입체 그림자(6px)가 잘린다 */
+  padding: 0 16px 10px;
 }
 .area-header {
   position: relative; flex: 0 0 15vh; min-height: 92px; border-radius: 22px;
