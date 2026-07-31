@@ -1,4 +1,4 @@
-# 🎮 슥삭퍼즐 (Ssak-Ssak Puzzle)
+# 🎮 쓱싹퍼즐 (Ssak-Ssak Puzzle)
 
 한붓 그리기 × 청소 퍼즐. 무기력하게 쓰레기집에 살던 청년이 방 한 칸을 닦는 것을
 계기로, 다양한 알바에 도전하며 다시 세상 밖으로 나아가는 이야기.
@@ -29,7 +29,7 @@ js/
   main.js             부트스트랩 + 화면 상태기계 + 진행 저장
   game.js             퍼즐 로직 + 캔버스 렌더러(트윈/파티클/성장 그라데이션)
   assets.js           PNG 스프라이트 로더
-  audio.js            WebAudio 절차적 효과음(슥삭/콤보/클리어)
+  audio.js            WebAudio 절차적 효과음(쓱싹/콤보/클리어)
   particles.js        먼지·반짝임·색종이 파티클
   input.js            키보드 / 스와이프 / 인접 터치
   toss-sdk.js         앱인토스 SDK 래퍼(스텁) — 출시 시 교체

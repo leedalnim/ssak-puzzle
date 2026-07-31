@@ -1,5 +1,5 @@
 // 절차적 사운드 — 오디오 파일 없이 WebAudio로 "손맛" 효과음 생성.
-// 한 칸 청소할 때의 찰진 "슥-", 콤보로 음정이 살짝 올라감.
+// 한 칸 청소할 때의 찰진 "쓱-", 콤보로 음정이 살짝 올라감.
 // (앱인토스 이식 시 ElevenLabs 등 실제 음원으로 교체 가능한 구조)
 
 let ctx = null;
@@ -26,7 +26,7 @@ export function unlockAudio() {
 export function setMuted(m) { muted = m; if (master) master.gain.value = m ? 0 : 0.5; }
 export function isMuted() { return muted; }
 
-// 짧은 노이즈 버스트 = 걸레가 바닥 쓰는 "슥" 소리
+// 짧은 노이즈 버스트 = 걸레가 바닥 쓰는 "쓱" 소리
 function swipeNoise(pitch = 1, dur = 0.13, vol = 0.35) {
   const c = ensure(); if (!c || muted) return;
   const n = Math.floor(c.sampleRate * dur);

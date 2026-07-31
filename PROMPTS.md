@@ -509,7 +509,7 @@ instantly readable at tiny sizes.
 
 ---
 
-## 2. 타이틀 로고 "슥삭퍼즐"
+## 2. 타이틀 로고 "쓱싹퍼즐"
 
 현재는 웹폰트 텍스트라 밋밋하다. 이미지 로고로 교체 예정.
 
@@ -517,7 +517,7 @@ instantly readable at tiny sizes.
 Using the attached image as the exact style reference, create a game logo
 in the same soft 3D clay style, same warm cream and sage palette.
 
-TEXT: the Korean word "슥삭퍼즐" written in chunky rounded 3D clay letters —
+TEXT: the Korean word "쓱싹퍼즐" written in chunky rounded 3D clay letters —
 soft matte clay material, gently beveled edges, a warm wood-brown color with
 a lighter cream highlight on the top of each letter.
 
@@ -526,12 +526,12 @@ their baseline. Add two or three small sparkle marks around the letters.
 
 BACKGROUND: a single flat solid magenta (#FF00FF) background.
 
-CRITICAL: the Korean characters must be spelled EXACTLY "슥삭퍼즐" —
+CRITICAL: the Korean characters must be spelled EXACTLY "쓱싹퍼즐" —
 four syllable blocks, in that order. Render them clearly and legibly.
 
 STRICTLY NO other text, NO English, NO border frame, NO shadows on the background.
 ```
 
 > ⚠️ AI 이미지 모델은 **한글 자소를 자주 틀린다.** 받은 뒤 글자가 정확히
-> `슥 / 삭 / 퍼 / 즐` 인지 반드시 확인할 것. 틀리면 재생성하거나,
+> `쓱 / 싹 / 퍼 / 즐` 인지 반드시 확인할 것. 틀리면 재생성하거나,
 > 폰트로 조판한 텍스트를 클레이 스타일로 변환 요청하는 편이 확실하다.
