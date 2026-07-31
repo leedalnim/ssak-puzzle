@@ -535,3 +535,139 @@ STRICTLY NO other text, NO English, NO border frame, NO shadows on the backgroun
 > ⚠️ AI 이미지 모델은 **한글 자소를 자주 틀린다.** 받은 뒤 글자가 정확히
 > `쓱 / 싹 / 퍼 / 즐` 인지 반드시 확인할 것. 틀리면 재생성하거나,
 > 폰트로 조판한 텍스트를 클레이 스타일로 변환 요청하는 편이 확실하다.
+
+
+---
+
+# 📦 2차 기능 목업 프롬프트 (첨부 이미지 불필요)
+
+## ① 타이틀 화면 — 보관함·업적 진입점 추가
+
+```
+A cozy mobile game title screen mockup, portrait 9:19.5.
+
+STYLE: soft 3D clay-render, miniature toy diorama look. Matte clay materials,
+rounded beveled edges, gentle soft shadows, soft global illumination.
+PALETTE: cream and ivory base, light natural beige wood (NOT orange), sage green
+accents, warm daylight. Cozy and tactile. NOT pixel art, NOT flat vector, NOT dark.
+
+SCENE: a warm cream room wall with a light wooden floor. A cute chibi girl
+(2.5 heads tall, brown messy bun, white t-shirt, sage-green overalls, white
+sneakers) stands holding a wooden mop. A black-and-white tuxedo cat sits beside
+her. A few soft sparkle marks float around.
+
+UI, top to bottom:
+- A short Korean tagline in small bold brown text
+- A chunky 3D clay Korean logo in warm wood-brown with cream highlights
+- A wide CREAM clay pill button (primary)
+- A slightly smaller HONEY-BROWN clay pill button (secondary)
+- AT THE VERY BOTTOM: TWO small round clay icon buttons side by side, clearly
+  smaller than the pills — cream clay circles with a light wood rim.
+    left  : a woven basket icon, with a tiny red dot badge on its top-right
+    right : a golden trophy icon
+  Each has a small Korean caption underneath.
+
+The two pill buttons must still dominate; the round icons are secondary.
+No other UI, no extra text.
+```
+
+---
+
+## ② 수집품 보관함 ⭐ 가장 중요
+
+```
+A cozy mobile game "collection box" screen mockup, portrait 9:19.5.
+
+STYLE: soft 3D clay-render, miniature toy diorama look. Matte clay materials,
+rounded beveled edges, gentle soft shadows. PALETTE: cream and ivory, light
+natural beige wood (NOT orange), sage green accents, warm daylight.
+Cozy and tactile. NOT pixel art, NOT flat vector, NOT dark.
+
+LAYOUT, top to bottom:
+- Header row: a small round cream clay button with a back chevron on the left,
+  and a wide cream clay pill holding a short Korean title. Both vertically
+  centered in the same row.
+- A large rounded panel filling most of the screen: cream clay face with a thick
+  light-wood frame and a soft drop shadow.
+- A small honey-brown pill at the top of the panel showing "4 / 12".
+- Inside the panel: a grid of 3 columns x 4 rows of square slots. Each slot is a
+  soft cream clay square with a subtle inset shadow and rounded corners.
+    - FOUR slots are FILLED with cute 3D clay objects, each with a soft golden
+      glow behind it: a crumpled pajama, yellow rubber gloves, a small potted
+      plant, a pair of new white sneakers.
+    - The REMAINING slots are EMPTY: a faint grey silhouette of an unknown item
+      with a small padlock, dimmed and desaturated.
+- A black-and-white tuxedo cat sits at the bottom-right corner, looking up at
+  the collection, as a small mascot touch.
+
+Warm, cozy, tactile. No other text.
+```
+
+---
+
+## ③ 업적 화면
+
+```
+A cozy mobile game "achievements" screen mockup, portrait 9:19.5.
+
+STYLE: soft 3D clay-render, miniature toy diorama look. Matte clay materials,
+rounded beveled edges, gentle soft shadows. PALETTE: cream and ivory, light
+natural beige wood (NOT orange), sage green accents, warm daylight.
+Cozy and tactile. NOT pixel art, NOT flat vector, NOT dark, NOT neon.
+
+LAYOUT, top to bottom:
+- Header row: a small round cream clay button with a back chevron on the left,
+  and a wide cream clay pill holding a short Korean title, vertically centered
+  together.
+- A large rounded cream panel with a light-wood frame.
+- Inside it, a vertical list of FIVE achievement rows. Each row is a rounded
+  cream clay bar containing:
+    left   : a circular clay medal icon
+    middle : a short Korean achievement name, with a thin rounded progress bar
+             underneath (sage green fill)
+    right  : a small golden star, or a padlock
+- The TOP TWO rows are UNLOCKED: gold medal, full progress bar, warm golden glow.
+- The BOTTOM THREE are LOCKED: grey medal, partially filled bar, dimmed.
+
+Warm and tactile, not gamey-neon. No other text.
+```
+
+---
+
+## ④ 로고 재생성 — 쓱싹퍼즐
+
+```
+A chunky 3D clay game logo of the Korean word "쓱싹퍼즐", on a solid magenta
+background.
+
+STYLE: soft matte clay letters with gently beveled rounded edges, warm
+wood-brown color with a lighter cream highlight along the top of each letter,
+soft ambient shadow. Cute, cozy, tactile — like modeling clay.
+Add two or three small clay sparkle marks around the letters (cream and sage).
+
+The four letters sit on one horizontal line with a playful, slightly bouncy
+baseline.
+
+CRITICAL SPELLING: the text must read EXACTLY "쓱싹퍼즐" — four syllable blocks
+in this order: 쓱 / 싹 / 퍼 / 즐. The first two syllables begin with the DOUBLE
+consonant ㅆ (ssang-siot), not a single ㅅ. Render the Hangul clearly and correctly.
+
+BACKGROUND: a single flat solid magenta (#FF00FF) background, nothing else.
+
+STRICTLY NO other text, NO English, NO border frame, NO shadows cast on the
+background.
+```
+
+---
+
+## ✅ 받은 뒤 확인할 것
+
+- **로고**: 첫 두 글자가 **ㅆ(쌍시옷)** 인지 — `쓱싹` ⭕ / `슥삭`·`쑥싹` ❌
+- **보관함**: 빈 칸이 흐릿한 잠금 상태로 구분되는지
+- 셋 다 **크림 / 라이트우드 / 세이지** 팔레트가 게임과 맞는지
+
+## 📎 전달 방법
+
+zip으로 압축해 첨부해 주세요. ②번(보관함)이 우선순위 1위 —
+해금 아이템 4종(구겨진 잠옷·노란 고무장갑·작은 화분·새 운동화)이
+이미 `stages.json`에 들어 있어서 목업만 나오면 바로 구현 가능합니다.
