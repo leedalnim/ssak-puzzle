@@ -295,7 +295,8 @@ export class Game {
     const h = cellH * 0.62, w = img.width * h / img.height;
     const bob = it.got ? 0 : Math.sin(this.tAll * 3) * cellH * 0.04;
     const rise = it.got ? (1 - it.pop) * cellH * 0.9 : 0;   // pop 1→0 동안 위로
-    const baseY = y + cellH * 0.06 - bob - rise;
+    // 밑면 기준선을 셀 중앙보다 아래로 내려, 물건이 칸 한가운데 놓인 것처럼 보이게 한다
+    const baseY = y + cellH * 0.32 - bob - rise;
     ctx.save();
     ctx.globalAlpha = it.got ? Math.max(0, it.pop) : 1;
     // 뒤에 은은한 금빛 — 바닥에서 눈에 띄게
@@ -307,7 +308,7 @@ export class Game {
     // 물건이 떠오를수록(bob·rise) 그림자는 작고 옅어진다.
     const lift = (bob + rise) / (cellH * 0.9);
     const sh = 1 - Math.min(0.55, lift * 0.6);
-    const shY = y + cellH * 0.06;                       // 그림자는 바닥에 고정
+    const shY = y + cellH * 0.32;                       // 그림자는 바닥에 고정
     drawContactShadow(ctx, img, x - w / 2, w, shY,
       { depthMul: 1.15 * sh, lift: 0.12, coreOut: 0.20 * sh, coreIn: 0.30 * sh });
     ctx.drawImage(img, x - w / 2, baseY - h, w, h);
