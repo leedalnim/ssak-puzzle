@@ -43,7 +43,7 @@ function showReward(name) {
   clearTimeout(rewardTimer);
   const item = name && ITEMS.find(i => i.name === name);
   if (!item) { box.classList.add('hidden'); return; }
-  $('rewardImg').src = `${KIT}${item.img}.png`;
+  $('rewardImg').src = `${KIT}it_${item.img}.png`;
   $('rewardName').textContent = item.name;
   box.classList.add('hidden');
   // 별이 다 박힌 뒤에 등장시켜 연출이 겹치지 않게 한다
@@ -71,21 +71,21 @@ const screens = ['screenTitle', 'screenStages', 'screenIntro', 'screenClear',
 
 const KIT = 'assets/room/ui/kit/';
 
-// 수집품 12종 — 앞 4개는 스테이지 해금 아이템(stages.json의 unlock과 이름이 같다),
-// 나머지는 아직 준비 중인 실루엣 자리.
+// 수집품 — 아이템마다 컬러(it_*)와 회색(sil_*) 두 벌이 있다.
+// 얻으면 컬러, 아직이면 회색 실루엣으로 보여준다.
+// 앞 4개는 스테이지 해금 아이템(stages.json 의 unlock 과 이름이 같아야 매칭된다).
 const ITEMS = [
-  { name: '구겨진 잠옷', img: 'it_pajama' },
-  { name: '노란 고무장갑', img: 'it_gloves' },
-  { name: '작은 화분', img: 'it_plant' },
-  { name: '새 운동화', img: 'it_sneakers' },
-  { name: '머그컵', img: 'sil_mug', sil: true },
-  { name: '탁상 램프', img: 'sil_lamp', sil: true },
-  { name: '분무기', img: 'sil_spray', sil: true },
-  { name: '물뿌리개', img: 'sil_can', sil: true },
-  { name: '티슈 상자', img: 'sil_tissue', sil: true },
-  { name: '유리병', img: 'sil_cushion', sil: true },
-  { name: '쿠션', img: 'sil_cushion', sil: true },
-  { name: '장바구니', img: 'sil_tote', sil: true },
+  { name: '구겨진 잠옷', img: 'pajama' },
+  { name: '노란 고무장갑', img: 'gloves' },
+  { name: '작은 화분', img: 'plant' },
+  { name: '새 운동화', img: 'sneakers' },
+  { name: '머그컵', img: 'mug' },
+  { name: '탁상 램프', img: 'lamp' },
+  { name: '분무기', img: 'spray' },
+  { name: '물뿌리개', img: 'can' },
+  { name: '티슈 상자', img: 'tissue' },
+  { name: '쿠션', img: 'cushion' },
+  { name: '장바구니', img: 'basket' },
 ];
 
 // 도전과제 — progress(cleared, stars)로 진행도를 계산한다
@@ -130,7 +130,8 @@ function makeGame() {
       const item = st?.item && ITEMS.find(i => i.name === st.item.name);
       box.classList.toggle('hidden', got === null || !item);
       if (!item) return;
-      box.querySelector('img').src = `${KIT}${item.img}.png`;
+      // 아직이면 회색, 주우면 컬러
+      box.querySelector('img').src = `${KIT}${got ? 'it' : 'sil'}_${item.img}.png`;
       box.classList.toggle('got', !!got);
     },
     onUndoState: (can) => { $('btnUndo').disabled = !can; },
@@ -297,8 +298,9 @@ function buildCollection() {
   ITEMS.forEach((it, i) => {
     const got = i < owned;                       // 앞에서부터 순서대로 해금
     const cell = el('div', 'slot ' + (got ? 'got' : 'lock'));
-    cell.innerHTML = `<img class="thing" src="${KIT}${it.img}.png" alt="${it.name}">`
-      + (got ? '' : `<img class="pad" src="${KIT}lock_item.png" alt="">`);
+    // 얻은 건 컬러(it_), 아직이면 회색(sil_)
+    cell.innerHTML = `<img class="thing" src="${KIT}${got ? 'it' : 'sil'}_${it.img}.png" alt="${it.name}">`
+      + (got ? '' : `<img class="pad" src="${KIT}sil_padlock.png" alt="">`);
     cell.title = got ? it.name : '아직 못 얻었어요';
     grid.appendChild(cell);
   });

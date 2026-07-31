@@ -151,8 +151,8 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
   filter: drop-shadow(0 calc(6px * var(--k)) calc(10px * var(--k)) rgba(110, 84, 56, .35));
 }
 .hud-item img { max-width: 66%; max-height: 66%; width: auto; height: auto; object-fit: contain;
-  opacity: .35; filter: grayscale(1) brightness(1.1); transition: opacity .3s ease, filter .3s ease; }
-.hud-item.got img { opacity: 1; filter: none; }
+  transition: opacity .3s ease; opacity: .9; }
+.hud-item.got img { opacity: 1; }
 .hud-item.got { animation: itemPop .45s cubic-bezier(.2, 1.5, .4, 1); }
 @keyframes itemPop { 0% { transform: scale(1); } 45% { transform: scale(1.22); } 100% { transform: scale(1); } }
 
@@ -259,7 +259,8 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
   content: ''; position: absolute; width: 78%; height: 78%; border-radius: 50%;
   background: radial-gradient(closest-side, rgba(255, 205, 105, .55), rgba(255, 205, 105, 0));
 }
-.slot.lock > img.thing { opacity: .5; filter: grayscale(.35); }
+/* 잠긴 칸은 회색 에셋(sil_*)을 쓰므로 별도 필터 없이 살짝만 낮춘다 */
+.slot.lock > img.thing { opacity: .85; }
 .slot > img.pad { position: absolute; max-width: 30%; max-height: 34%; width: auto; height: auto; }
 
 /* ---- 도전과제 목록 ---- */

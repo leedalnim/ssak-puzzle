@@ -29,7 +29,7 @@ const MANIFEST = {
   'item_구겨진 잠옷': R + 'ui/kit/it_pajama.png',
   'item_노란 고무장갑': R + 'ui/kit/it_gloves.png',
   'item_작은 화분': R + 'ui/kit/it_plant.png',
-  'item_새 운동화': R + 'ui/kit/it_sneakers.png',
+  'item_새 운동화': R + 'ui/kit/it_sneakers.png',   // 모두 무손실 원본 컷
 };
 
 export const IMG = {};
