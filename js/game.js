@@ -303,6 +303,13 @@ export class Game {
     g.addColorStop(0, 'rgba(255,214,120,.55)'); g.addColorStop(1, 'rgba(255,214,120,0)');
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.arc(x, baseY - h * 0.45, h * 0.75, 0, Math.PI * 2); ctx.fill();
+    // 접지 그림자 — 밝은 물건(운동화·화분)이 바닥에 묻히지 않게 하고 떠 있는 느낌도 준다.
+    // 물건이 떠오를수록(bob·rise) 그림자는 작고 옅어진다.
+    const lift = (bob + rise) / (cellH * 0.9);
+    const sh = 1 - Math.min(0.55, lift * 0.6);
+    const shY = y + cellH * 0.06;                       // 그림자는 바닥에 고정
+    drawContactShadow(ctx, img, x - w / 2, w, shY,
+      { depthMul: 1.15 * sh, lift: 0.12, coreOut: 0.20 * sh, coreIn: 0.30 * sh });
     ctx.drawImage(img, x - w / 2, baseY - h, w, h);
     ctx.restore();
   }
