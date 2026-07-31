@@ -54,6 +54,8 @@ export class Game {
       this.dur[o.y][o.x] = 0;
     }
     this.totalDirt = this.dur.flat().reduce((s, v) => s + v, 0);
+    // 바닥에 떨어진 수집품 — 그 칸을 지나가면 줍는다(퍼즐 규칙에는 영향 없음)
+    this.item = stage.item ? { ...stage.item, got: false, pop: 0 } : null;
 
     this.hero = {
       gx: stage.start.x, gy: stage.start.y, px: stage.start.x, py: stage.start.y,
@@ -71,6 +73,7 @@ export class Game {
     this.shake = 0;
     invalidateBoard();
     this._emitProgress();
+    this.hooks.onItem?.(this.item ? this.item.got : null);   // null = 이 판엔 아이템 없음
     if (this.hooks.onTimer) this.hooks.onTimer(this.timeLeft, this.time, this.elapsed);
   }
 
@@ -112,7 +115,10 @@ export class Game {
   }
 
   _snapshot() {
-    return { dur: this.dur.map(r => r.slice()), gx: this.hero.gx, gy: this.hero.gy, combo: this.combo };
+    return {
+      dur: this.dur.map(r => r.slice()), gx: this.hero.gx, gy: this.hero.gy, combo: this.combo,
+      itemGot: this.item ? this.item.got : false,   // 되돌리면 아이템도 바닥으로 돌아온다
+    };
   }
 
   tryMove(dir) {
@@ -130,6 +136,7 @@ export class Game {
     this.hero.gx = nx; this.hero.gy = ny; this.hero.moving = true; this.hero.t = 0;
     this.combo += 1;
     this._clean(nx, ny);
+    this._pickUp(nx, ny);
     this._emitProgress();
     if (this.remainingDirt() === 0) this._win();
     else if (this._stuck()) this._fail('stuck');
@@ -146,6 +153,17 @@ export class Game {
   }
 
   _bump(d) { this.hero.bumpX = d.x * 6; this.hero.bumpY = d.y * 6; this.hero.bumpT = 0.12; }
+
+  /** 아이템 칸을 밟으면 줍는다 — 톡 튀어오르는 연출(pop)을 켠다 */
+  _pickUp(x, y) {
+    const it = this.item;
+    if (!it || it.got || it.x !== x || it.y !== y) return;
+    it.got = true; it.pop = 1;                  // 1 → 0 으로 줄며 튀어오른다
+    Audio.sfxSparkle(8);
+    const { x: cx, y: cy } = cellCenter(x, y, this.cols, this.rows);
+    this.particles.sparkle(cx, cy, 16);
+    this.hooks.onItem?.(true);
+  }
 
   onTap(px, py) {
     if (this.state !== 'playing') return;
@@ -166,6 +184,7 @@ export class Game {
     this.dur = s.dur;
     this.hero.gx = s.gx; this.hero.gy = s.gy; this.hero.px = s.gx; this.hero.py = s.gy;
     this.combo = 0;
+    if (this.item) { this.item.got = s.itemGot; this.item.pop = 0; this.hooks.onItem?.(s.itemGot); }
     invalidateBoard();
     Audio.sfxUI();
     this._emitProgress();
@@ -213,6 +232,10 @@ export class Game {
 
   _update(dt, clockDt) {
     const h = this.hero;
+    this.tAll = (this.tAll || 0) + dt;                       // 아이템 둥실거림용 시계
+    if (this.item?.got && this.item.pop > 0) {
+      this.item.pop = Math.max(0, this.item.pop - dt * 2);   // 0.5초에 걸쳐 사라짐
+    }
     if (h?.moving) {
       h.t += dt * 1000 / MOVE_MS;
       if (h.t >= 1) { h.t = 1; h.moving = false; h.px = h.gx; h.py = h.gy; }
@@ -252,10 +275,35 @@ export class Game {
 
     // 뒤쪽(위쪽) 오브젝트부터 그려야 앞이 뒤를 가린다
     const drawables = this.obstacles.map(o => ({ r: o.y, draw: () => this._drawObstacle(ctx, o) }));
+    // 아직 안 주웠거나, 주운 직후 튀어오르는 중이면 그린다
+    if (this.item && (!this.item.got || this.item.pop > 0)) {
+      drawables.push({ r: this.item.y - 0.01, draw: () => this._drawItem(ctx) });
+    }
     drawables.push({ r: this.hero.py, draw: () => this._drawHero(ctx) });
     drawables.sort((a, b) => a.r - b.r).forEach(d => d.draw());
 
     this.particles.draw(ctx);
+    ctx.restore();
+  }
+
+  /** 바닥에 떨어진 수집품 — 평소엔 살짝 둥실, 주우면 튀어오르며 사라진다 */
+  _drawItem(ctx) {
+    const it = this.item;
+    const img = IMG['item_' + it.name];
+    if (!img) return;
+    const { x, y, cellH } = cellCenter(it.x, it.y, this.cols, this.rows);
+    const h = cellH * 0.62, w = img.width * h / img.height;
+    const bob = it.got ? 0 : Math.sin(this.tAll * 3) * cellH * 0.04;
+    const rise = it.got ? (1 - it.pop) * cellH * 0.9 : 0;   // pop 1→0 동안 위로
+    const baseY = y + cellH * 0.06 - bob - rise;
+    ctx.save();
+    ctx.globalAlpha = it.got ? Math.max(0, it.pop) : 1;
+    // 뒤에 은은한 금빛 — 바닥에서 눈에 띄게
+    const g = ctx.createRadialGradient(x, baseY - h * 0.45, 0, x, baseY - h * 0.45, h * 0.75);
+    g.addColorStop(0, 'rgba(255,214,120,.55)'); g.addColorStop(1, 'rgba(255,214,120,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x, baseY - h * 0.45, h * 0.75, 0, Math.PI * 2); ctx.fill();
+    ctx.drawImage(img, x - w / 2, baseY - h, w, h);
     ctx.restore();
   }
 

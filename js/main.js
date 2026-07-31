@@ -123,6 +123,16 @@ function syncScale() {
 function makeGame() {
   game = new Game($('game'), {
     onTiles: (left) => { $('hudTiles').textContent = String(left); },
+    // got === null 이면 이 판엔 수집품이 없다
+    onItem: (got) => {
+      const box = $('hudItem');
+      const st = stages[current];
+      const item = st?.item && ITEMS.find(i => i.name === st.item.name);
+      box.classList.toggle('hidden', got === null || !item);
+      if (!item) return;
+      box.querySelector('img').src = `${KIT}${item.img}.png`;
+      box.classList.toggle('got', !!got);
+    },
     onUndoState: (can) => { $('btnUndo').disabled = !can; },
     onTimer: (left, total, elapsed) => {
       const el = $('hudTimer');

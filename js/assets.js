@@ -24,6 +24,12 @@ const MANIFEST = {
   obs_basket_rd: R + 'obstacles/obs_basket_rd.png',
   obs_books: R + 'obstacles/obs_books.png',
   obs_stool: R + 'obstacles/obs_stool.png',
+
+  // 바닥에 떨어진 수집품 — 키가 stages.json 의 item.name 과 같아야 한다
+  'item_구겨진 잠옷': R + 'ui/kit/it_pajama.png',
+  'item_노란 고무장갑': R + 'ui/kit/it_gloves.png',
+  'item_작은 화분': R + 'ui/kit/it_plant.png',
+  'item_새 운동화': R + 'ui/kit/it_sneakers.png',
 };
 
 export const IMG = {};

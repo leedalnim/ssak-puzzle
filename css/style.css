@@ -143,6 +143,19 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 
 .btn-pause   { height: calc(110px * var(--k)); aspect-ratio: 258 / 271; background-image: url(../assets/room/ui/btn_pause.png); }
 
+/* 이 판에서 주울 수집품 — 아직이면 실루엣, 주우면 원래 색으로 밝아진다 */
+.hud-item {
+  height: calc(110px * var(--k)); aspect-ratio: 1;
+  background: url(../assets/room/ui/kit/slot.png) center / 100% 100% no-repeat;
+  display: flex; align-items: center; justify-content: center;
+  filter: drop-shadow(0 calc(6px * var(--k)) calc(10px * var(--k)) rgba(110, 84, 56, .35));
+}
+.hud-item img { max-width: 66%; max-height: 66%; width: auto; height: auto; object-fit: contain;
+  opacity: .35; filter: grayscale(1) brightness(1.1); transition: opacity .3s ease, filter .3s ease; }
+.hud-item.got img { opacity: 1; filter: none; }
+.hud-item.got { animation: itemPop .45s cubic-bezier(.2, 1.5, .4, 1); }
+@keyframes itemPop { 0% { transform: scale(1); } 45% { transform: scale(1.22); } 100% { transform: scale(1); } }
+
 /* ================================ 하단 툴바 ================================ */
 #toolbar {
   position: fixed;

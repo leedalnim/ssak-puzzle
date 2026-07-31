@@ -113,6 +113,22 @@ STORY = {
     20: ('방 한 칸, 끝', '마지막 한 칸.', '방이 반짝인다.\n그러고 보니… 나, 조금 움직이고 있구나.', '새 운동화'),
 }
 
+def item_spot(n, obstacles, path, i):
+    """수집품이 놓일 칸 — 시작칸·장애물을 피하고, 경로에서 **늦게** 밟는 칸으로 고른다.
+       (바로 먹어버리면 '찾았다'는 맛이 없다)"""
+    obs = {(o['x'], o['y']) for o in obstacles}
+    first = {}
+    for k, c in enumerate(path):
+        if c not in first:
+            first[c] = k                       # 각 칸을 처음 밟는 시점
+    cand = [c for c in first if c not in obs and c != (0, 0)]
+    if not cand:
+        return None
+    cand.sort(key=lambda c: -first[c])          # 늦게 밟는 순
+    x, y = cand[i % max(1, min(4, len(cand)))]  # 상위 몇 개 중 판마다 다르게
+    return {'x': x, 'y': y}
+
+
 if __name__ == '__main__':
     stages, solutions = [], {}
     for i in range(1, 21):
@@ -125,11 +141,17 @@ if __name__ == '__main__':
             raise RuntimeError(f'스테이지 {i} 검증 실패: {msg}')
         theme, intro, clear, unlock = STORY.get(i, (f'{i}번째 칸', '', '', ''))
         solutions[i] = [list(p) for p in path]
-        stages.append({
+        st = {
             'id': i, 'act': 1, 'place': '자취방', 'sub': i, 'theme': theme, 'bg': 'studio',
             'grid': grid, 'start': {'x': 0, 'y': 0}, 'time': time_limit,
             'intro': intro, 'clear': clear, 'unlock': unlock, 'obstacles': obstacles,
-        })
+        }
+        # 해금 아이템이 있는 판은 바닥에 그 물건을 떨어뜨려 둔다(지나가면 줍는다)
+        if unlock:
+            spot = item_spot(n, obstacles, path, i)
+            if spot:
+                st['item'] = {'name': unlock, **spot}
+        stages.append(st)
     with open('stages/solutions.json', 'w', encoding='utf-8') as f:
         json.dump(solutions, f, ensure_ascii=False)
     json.dump(stages, sys.stdout, ensure_ascii=False, indent=2)
