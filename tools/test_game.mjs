@@ -28,9 +28,11 @@ for (const st of stages) {
   g.loadStage(st);
   const sol = sols[String(st.id)];
   if (!sol) { console.log(`#${st.id} 해답 없음`); fail++; continue; }
-  for (const dir of sol) {
+  // solutions.json 은 '밟는 칸 좌표'의 나열이라 이웃 간 차이를 방향으로 바꿔 재생한다
+  for (let i = 1; i < sol.length; i++) {
+    const [px, py] = sol[i - 1], [x, y] = sol[i];
     g.hero.moving = false; g.hero.t = 1;   // 트윈 즉시 완료 처리
-    g.tryMove(dir);
+    g.tryMove(x > px ? 'right' : x < px ? 'left' : y > py ? 'down' : 'up');
   }
   const ok = g.state === 'clear' && g.remainingDirt() === 0;
   console.log(`${ok ? '✓' : '✗'} #${st.id} ${st.theme}: state=${g.state}, 남은때=${g.remainingDirt()}`);

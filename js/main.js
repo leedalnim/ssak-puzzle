@@ -36,6 +36,7 @@ function starsFor(st, elapsed) {
 }
 
 /** 클리어 팝업 — 처음 깬 판에 해금 아이템이 있으면 "얻었다"를 보여준다.
+ *  물건은 조각을 need 개 모아야 열리므로, 아직이면 실루엣 + 진행 상황을 보여준다.
  *  (이름은 stages.json 의 unlock 과 ITEMS 의 name 이 같아야 매칭된다) */
 let rewardTimer = null;
 function showReward(name) {
@@ -43,8 +44,13 @@ function showReward(name) {
   clearTimeout(rewardTimer);
   const item = name && ITEMS.find(i => i.name === name);
   if (!item) { box.classList.add('hidden'); return; }
-  $('rewardImg').src = `${KIT}it_${item.img}.png`;
-  $('rewardName').textContent = item.name;
+  const have = Math.min(ownedTally()[item.name] || 0, item.need);
+  const done = have >= item.need;
+  $('rewardImg').src = `${KIT}${done ? 'it' : 'sil'}_${item.img}.png`;
+  $('rewardName').textContent = done ? item.name : `${item.name} 조각`;
+  $('rewardSub').textContent = done
+    ? '수집함에 담겼어요'
+    : `조각 ${have}/${item.need} — 다 모으면 열려요`;
   box.classList.add('hidden');
   // 별이 다 박힌 뒤에 등장시켜 연출이 겹치지 않게 한다
   rewardTimer = setTimeout(() => { box.classList.remove('hidden'); Audio.sfxSparkle(6); }, 1150);
@@ -75,18 +81,20 @@ const KIT = 'assets/room/ui/kit/';
 // 얻으면 컬러, 아직이면 회색 실루엣으로 보여준다.
 // 앞 4개는 스테이지 해금 아이템(stages.json 의 unlock 과 이름이 같아야 매칭된다).
 // area = 어느 장소에서 나오는 물건인지(수집함 탭 분류). desc = 얻었을 때 읽는 한 줄.
+// need = 해금에 필요한 조각 수. 20판에서 조각이 20개 나오므로
+// 9종×2 + 2종×1 = 20 으로 맞춰, 20판을 다 깨면 11종이 정확히 전부 열린다.
 const ITEMS = [
-  { name: '구겨진 잠옷', img: 'pajama', area: 1, desc: '며칠을 입고 잔 잠옷이다냥. 드디어 벗어 던졌다냥!' },
-  { name: '노란 고무장갑', img: 'gloves', area: 1, desc: '찌든 얼룩과 맞설 첫 장비다냥.' },
-  { name: '작은 화분', img: 'plant', area: 1, desc: '창가에 두니 방이 좀 살아났다냥.' },
-  { name: '새 운동화', img: 'sneakers', area: 1, desc: '이제 밖으로 나갈 준비 완료다냥!' },
-  { name: '머그컵', img: 'mug', area: 1, desc: '씻어 두니 커피가 당긴다냥.' },
-  { name: '탁상 램프', img: 'lamp', area: 1, desc: '밤에도 방이 아늑해졌다냥.' },
-  { name: '분무기', img: 'spray', area: 1, desc: '한 번 뿌리면 얼룩이 쓱 진다냥.' },
-  { name: '물뿌리개', img: 'can', area: 1, desc: '물 주는 게 하루 일과가 됐다냥.' },
-  { name: '티슈 상자', img: 'tissue', area: 1, desc: '손 닿는 곳에 두니 편하다냥.' },
-  { name: '쿠션', img: 'cushion', area: 1, desc: '앉을 자리가 생겼다는 뜻이다냥.' },
-  { name: '장바구니', img: 'basket', area: 1, desc: '장 보러 나갈 결심이다냥!' },
+  { name: '구겨진 잠옷', img: 'pajama', area: 1, need: 1, desc: '며칠을 입고 잔 잠옷이다냥. 드디어 벗어 던졌다냥!' },
+  { name: '노란 고무장갑', img: 'gloves', area: 1, need: 2, desc: '찌든 얼룩과 맞설 첫 장비다냥.' },
+  { name: '작은 화분', img: 'plant', area: 1, need: 2, desc: '창가에 두니 방이 좀 살아났다냥.' },
+  { name: '새 운동화', img: 'sneakers', area: 1, need: 1, desc: '이제 밖으로 나갈 준비 완료다냥!' },
+  { name: '머그컵', img: 'mug', area: 1, need: 2, desc: '씻어 두니 커피가 당긴다냥.' },
+  { name: '탁상 램프', img: 'lamp', area: 1, need: 2, desc: '밤에도 방이 아늑해졌다냥.' },
+  { name: '분무기', img: 'spray', area: 1, need: 2, desc: '한 번 뿌리면 얼룩이 쓱 진다냥.' },
+  { name: '물뿌리개', img: 'can', area: 1, need: 2, desc: '물 주는 게 하루 일과가 됐다냥.' },
+  { name: '티슈 상자', img: 'tissue', area: 1, need: 2, desc: '손 닿는 곳에 두니 편하다냥.' },
+  { name: '쿠션', img: 'cushion', area: 1, need: 2, desc: '앉을 자리가 생겼다는 뜻이다냥.' },
+  { name: '장바구니', img: 'basket', area: 1, need: 2, desc: '장 보러 나갈 결심이다냥!' },
 ];
 
 // 도전과제 — progress(cleared, stars)로 진행도를 계산한다
@@ -318,7 +326,7 @@ function buildStages() {
 function ownedCount() {
   return stages.filter(s => s.id <= clearedMax && s.unlock).length;
 }
-/** 클리어한 판들의 unlock 을 모아 물건별 개수를 센다 (같은 물건은 ×2로 쌓인다) */
+/** 클리어한 판들의 unlock 을 모아 물건별 **조각 수**를 센다 (need 개를 채우면 해금) */
 function ownedTally() {
   const t = {};
   stages.filter(s => s.id <= clearedMax && s.unlock)
@@ -351,9 +359,11 @@ function buildCollection() {
 
   // ---- 목록 ----
   const tally = ownedTally();
-  const list = ITEMS.map(it => ({ ...it, count: tally[it.name] || 0 }))
-                    .filter(it => collTab === 0 || it.area === collTab);
-  const gotN = list.filter(i => i.count > 0).length;
+  const list = ITEMS.map(it => {
+    const count = Math.min(tally[it.name] || 0, it.need);
+    return { ...it, count, done: count >= it.need };
+  }).filter(it => collTab === 0 || it.area === collTab);
+  const gotN = list.filter(i => i.done).length;
   $('collCount').textContent = `${gotN} / ${list.length}`;
 
   const grid = $('collGrid');
@@ -362,17 +372,17 @@ function buildCollection() {
     grid.appendChild(el('div', 'coll-empty', '이 장소는 준비 중이다냥'));
   }
   list.forEach(it => {
-    const got = it.count > 0;
-    const cell = el('button', 'slot ' + (got ? 'got' : 'lock'));
-    // 얻은 건 컬러(it_), 아직이면 회색(sil_). 2개 이상이면 개수 뱃지를 붙인다.
-    cell.innerHTML = `<img class="thing" src="${KIT}${got ? 'it' : 'sil'}_${it.img}.png" alt="${it.name}">`
-      + (got ? (it.count > 1 ? `<span class="cnt">×${it.count}</span>` : '')
-             : `<img class="pad" src="${KIT}sil_padlock.png" alt="">`);
+    // 조각을 다 모아야 컬러로 해금된다. 그 전에는 회색 + 진행바(n/필요)
+    const cell = el('button', 'slot ' + (it.done ? 'got' : 'lock'));
+    cell.innerHTML = `<img class="thing" src="${KIT}${it.done ? 'it' : 'sil'}_${it.img}.png" alt="${it.name}">`
+      + (it.done ? ''
+                 : `<span class="pcs"><i style="width:${Math.round(it.count / it.need * 100)}%"></i>`
+                   + `<b>${it.count}/${it.need}</b></span>`);
     cell.addEventListener('click', () => { Audio.sfxUI(); showItemInfo(it); });
     grid.appendChild(cell);
   });
-  // 첫 진입엔 가장 최근에 얻은 물건을 보여준다
-  const last = [...list].reverse().find(i => i.count > 0);
+  // 첫 진입엔 가장 최근에 해금한 물건을 보여준다
+  const last = [...list].reverse().find(i => i.done);
   showItemInfo(last || null);
 }
 
@@ -382,9 +392,15 @@ function showItemInfo(it) {
     $('itemDesc').textContent = '뭘 모았는지 알려주겠다냥.';
     return;
   }
-  const got = it.count > 0;
-  $('itemName').textContent = got ? (it.count > 1 ? `${it.name} ×${it.count}` : it.name) : '???';
-  $('itemDesc').textContent = got ? it.desc : '청소하다 보면 나온다냥.';
+  if (it.done) {
+    $('itemName').textContent = it.name;
+    $('itemDesc').textContent = it.desc;
+  } else {
+    $('itemName').textContent = '???';
+    $('itemDesc').textContent = it.count
+      ? `조각을 ${it.need - it.count}개 더 모으면 열린다냥. (${it.count}/${it.need})`
+      : '청소하다 보면 나온다냥.';
+  }
 }
 
 function buildAchievements() {
