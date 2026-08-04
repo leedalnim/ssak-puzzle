@@ -230,17 +230,21 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 /* .screen 기본 규칙보다 뒤에 오지 않으므로 클래스 두 개로 우선순위를 올린다 */
 .screen.panel-screen {
   justify-content: flex-start; gap: 10px;
-  padding: calc(var(--safe-t) + 12px) 0 calc(var(--safe-b) + 20px);
+  /* 고양이가 패널 아래로 걸쳐 나오므로 하단 여백을 넉넉히 */
+  padding: calc(var(--safe-t) + 12px) 0 calc(var(--safe-b) + 12px);
 }
 .big-panel {
+  /* 고양이가 패널 밖으로 나오는 양 — 이만큼 패널을 위로 띄워 잘리지 않게 한다 */
+  --cat-out: 16px;
   position: relative; flex: 1; min-height: 0; width: calc(100% - 32px);
+  margin-bottom: var(--cat-out);
   display: flex; flex-direction: column; align-items: center; gap: 10px;
   /* 큰 패널 에셋을 9-slice로 늘려 어떤 높이에서도 테두리가 유지되게 */
   /* 모서리 곡선이 실제로 끝나는 지점(상71 하69 좌77 우97)을 slice 로 준다.
      이보다 작게 주면 곡선 구간이 늘어나 모서리가 찌그러진다. */
   border-image: url(../assets/room/ui/kit/panel_big.png) 71 97 69 77 fill stretch;
   border-width: 26px 34px 25px 28px; border-style: solid;
-  padding: 10px 6px 12px; overflow: hidden;
+  padding: 10px 6px 12px;
 }
 /* 알약을 통짜로 늘리면 좌우 끝이 찌그러진다 → 9-slice 로 모서리를 고정한다 */
 .panel-count {
@@ -266,36 +270,36 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 
 /* ---- 고양이가 말풍선으로 물건 이야기를 해준다 ---- */
 /* 말풍선은 고양이 머리 높이에 오도록 위로 올리고, 폭은 글에 맞게만 잡는다 */
-.cat-talk {
-  flex: 0 0 auto; width: calc(100% - 24px);
-  /* 음수 margin — 고양이 머리가 위 패널에 살짝 걸치게 해서 화면에 붙어 있는 느낌을 준다 */
-  margin-top: -34px; z-index: 12;
-  display: flex; align-items: flex-start; justify-content: flex-end; gap: 6px;
-}
-.talk-cat { flex: 0 0 auto; width: 118px; height: auto; margin-top: 2px; }
+/* 말풍선은 패널 안 맨 아래, 고양이는 패널 **밖 아래**에 걸쳐 앉는다 */
 .bubble {
-  position: relative; max-width: 74%; min-height: 56px;
-  display: flex; flex-direction: column; justify-content: center; gap: 3px;
-  padding: 10px 16px 11px; text-align: left;
+  position: relative; flex: 0 0 auto; align-self: flex-end;
+  max-width: 76%; margin: 6px 112px 30px 0;
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 9px 15px 10px; text-align: left;
   background: linear-gradient(180deg, #fdf6e6, #f6e9cd);
-  border: 3px solid var(--wood); border-radius: 20px;
-  box-shadow: 0 4px 0 rgba(150, 118, 78, .45);
+  border: 3px solid var(--wood); border-radius: 18px;
+  box-shadow: 0 3px 0 rgba(150, 118, 78, .4);
 }
-/* 오른쪽 아래를 향한 꼬리 — 고양이 쪽을 가리킨다 */
+/* 꼬리 — 오른쪽 아래(고양이 쪽)를 가리킨다 */
 .bubble::after {
-  content: ''; position: absolute; right: -13px; bottom: 12px;
-  width: 0; height: 0;
+  content: ''; position: absolute; right: -13px; bottom: 10px; width: 0; height: 0;
   border-left: 14px solid var(--wood);
   border-top: 9px solid transparent; border-bottom: 9px solid transparent;
 }
 .bubble::before {
-  content: ''; position: absolute; right: -8px; bottom: 15px; z-index: 1;
-  width: 0; height: 0;
+  content: ''; position: absolute; right: -8px; bottom: 13px; z-index: 1; width: 0; height: 0;
   border-left: 10px solid #f8eed7;
   border-top: 6px solid transparent; border-bottom: 6px solid transparent;
 }
-.bubble b { font-size: 15.5px; font-weight: 800; color: #5c4222; }
-.bubble span { font-size: 12.5px; font-weight: 700; color: #8a6a3c; line-height: 1.4; }
+.bubble b { font-size: 14.5px; font-weight: 800; color: #5c4222; }
+.bubble span { font-size: 12px; font-weight: 700; color: #8a6a3c; line-height: 1.35; }
+
+/* 패널 오른쪽 아래에 앉아 몸통 아래쪽만 패널 밖으로 나온다 */
+.talk-cat {
+  position: absolute; right: 10px; bottom: calc(-1 * var(--cat-out));
+  width: 126px; height: auto; z-index: 12; pointer-events: none;
+}
+
 .coll-empty { grid-column: 1 / -1; padding: 30px 0; font-size: 14px;
   font-weight: 700; color: #9a8a72; text-align: center; }
 
