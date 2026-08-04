@@ -25,7 +25,8 @@
           <div class="panel panel-time"><span id="hudTimer">0:00</span></div>
         </div>
         <div class="hud-right">
-          <div class="hud-item hidden" id="hudItem"><img src="" alt=""></div>
+          <!-- 이 판에 흩뿌려진 조각들 — 주울 때마다 하나씩 컬러로 바뀐다 -->
+          <div class="hud-items hidden" id="hudItems"></div>
           <div class="panel panel-tiles"><span id="hudTiles">0</span></div>
           <button id="btnPause" class="icon-btn btn-pause" aria-label="일시정지"></button>
         </div>
@@ -99,7 +100,7 @@
       </div>
       <div class="coll-tabs" id="collTabs"></div>
       <div class="big-panel">
-        <div class="panel-count" id="collCount">0 / 12</div>
+        <div class="panel-count" id="collCount">0 / 11</div>
         <div class="slot-grid" id="collGrid"></div>
         <!-- 고양이 말풍선은 패널 안 맨 아래, 고양이는 패널 밖 아래에 걸친다 -->
         <div class="bubble" id="itemInfo">
@@ -143,10 +144,8 @@
           <span class="fig fig-girl"><img src="assets/room/ui/clear/girl-celebration-with-mop.png" alt=""></span>
         </div>
         <p id="clearStory" class="clear-story"></p>
-        <div class="reward hidden" id="clearReward">
-          <div class="rw-slot"><img id="rewardImg" src="" alt=""></div>
-          <div class="rw-txt"><b id="rewardName"></b><span id="rewardSub">수집함에 담겼어요</span></div>
-        </div>
+        <!-- 이번 판에서 얻은 조각들 (+ 별 3개 보너스) — JS가 채운다 -->
+        <div class="reward hidden" id="clearReward"></div>
         <div class="clear-actions">
           <button id="btnRetryClear" class="circ-btn" aria-label="다시 하기"></button>
           <button id="btnNext" class="big-btn next-pill">다음 스테이지</button>

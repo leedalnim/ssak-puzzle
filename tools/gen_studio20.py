@@ -113,50 +113,93 @@ STORY = {
     20: ('방 한 칸, 끝', '마지막 한 칸.', '방이 반짝인다.\n그러고 보니… 나, 조금 움직이고 있구나.'),
 }
 
-# 판마다 하나씩 수집품 **조각**이 나온다. 종류는 11가지라 뒤쪽 판에서 다시 나오고,
-# 조각이 필요 수(js/main.js 의 need)만큼 모이면 수집함에서 해금된다.
-# 잠옷·운동화는 1조각, 나머지 9종은 2조각 → 1 + 9×2 + 1 = 20판과 정확히 맞는다.
-# 이야기 순서대로 — 잠옷으로 시작해 운동화(=밖으로 나갈 준비)로 끝난다.
-UNLOCKS = [
-    '구겨진 잠옷',   # 1
-    '머그컵',        # 2
-    '티슈 상자',     # 3
-    '노란 고무장갑', # 4
-    '분무기',        # 5
-    '쿠션',          # 6
-    '탁상 램프',     # 7
-    '작은 화분',     # 8
-    '물뿌리개',      # 9
-    '장바구니',      # 10
-    '새 운동화',     # 11  ← 11종 한 바퀴
-    '머그컵',        # 12  ↓ 여기부터는 같은 물건이 하나 더
-    '노란 고무장갑', # 13
-    '티슈 상자',     # 14
-    '작은 화분',     # 15
-    '분무기',        # 16
-    '쿠션',          # 17
-    '탁상 램프',     # 18
-    '물뿌리개',      # 19
-    '장바구니',      # 20
+# ------------------------------- 수집품 조각 배치 -------------------------------
+# 물건은 **조각**을 모아야 해금된다. 조각 수는 물건마다 1~5개.
+# 한 판에 여러 개가 흩뿌려지고, 뒤로 갈수록 개수가 늘어난다.
+# 한붓그리기라 모든 칸을 반드시 밟으므로 **놓칠 수 있는 조각은 없다**.
+NEEDS = {
+    '구겨진 잠옷': 1,
+    '머그컵': 2, '티슈 상자': 2,
+    '노란 고무장갑': 3, '분무기': 3, '쿠션': 3,
+    '탁상 램프': 4, '작은 화분': 4, '물뿌리개': 4,
+    '장바구니': 5, '새 운동화': 5,
+}   # 합계 36조각
+
+# 판마다 떨어지는 조각 — 이야기 순서(잠옷 → 운동화)대로 해금되도록 짠 표.
+# 개수 곡선: 1~8판 1개, 9~15판 2개, 16~19판 3개, 마지막 20판은 2개.
+# 8 + 14 + 12 + 2 = 36 으로 NEEDS 합계와 정확히 맞아, 20판을 다 깨면 11종이 전부 열린다.
+# 해금 시점: 1·3·5·8·11·13·14·16·19·20·20판.
+DROPS = [
+    ['구겨진 잠옷'],                              # 1  ← 잠옷 해금
+    ['머그컵'],                                   # 2
+    ['머그컵'],                                   # 3  ← 머그컵
+    ['티슈 상자'],                                # 4
+    ['티슈 상자'],                                # 5  ← 티슈 상자
+    ['노란 고무장갑'],                            # 6
+    ['노란 고무장갑'],                            # 7
+    ['노란 고무장갑'],                            # 8  ← 고무장갑
+    ['분무기', '탁상 램프'],                      # 9
+    ['분무기', '탁상 램프'],                      # 10
+    ['분무기', '쿠션'],                           # 11 ← 분무기
+    ['쿠션', '탁상 램프'],                        # 12
+    ['쿠션', '작은 화분'],                        # 13 ← 쿠션
+    ['탁상 램프', '작은 화분'],                   # 14 ← 탁상 램프
+    ['작은 화분', '물뿌리개'],                    # 15
+    ['작은 화분', '장바구니', '새 운동화'],       # 16 ← 작은 화분
+    ['물뿌리개', '장바구니', '새 운동화'],        # 17
+    ['물뿌리개', '장바구니', '새 운동화'],        # 18
+    ['물뿌리개', '장바구니', '새 운동화'],        # 19 ← 물뿌리개
+    ['장바구니', '새 운동화'],                    # 20 ← 장바구니 · 새 운동화
 ]
 
-def item_spot(n, obstacles, path, i):
-    """수집품이 놓일 칸 — 시작칸·장애물을 피하고, 경로에서 **늦게** 밟는 칸으로 고른다.
-       (바로 먹어버리면 '찾았다'는 맛이 없다)"""
+
+def check_drops():
+    """배치표가 NEEDS 와 정확히 맞는지 — 어긋나면 영영 못 여는 물건이 생긴다."""
+    got = {}
+    for i, names in enumerate(DROPS, 1):
+        if len(set(names)) != len(names):
+            raise RuntimeError(f'{i}판에 같은 물건이 두 번 들어갔다')
+        for nm in names:
+            if nm not in NEEDS:
+                raise RuntimeError(f'{i}판: 모르는 물건 {nm}')
+            got[nm] = got.get(nm, 0) + 1
+    if got != NEEDS:
+        diff = {k: (got.get(k, 0), v) for k, v in NEEDS.items() if got.get(k, 0) != v}
+        raise RuntimeError(f'조각 수 불일치(실제, 필요): {diff}')
+    return sum(NEEDS.values())
+
+
+def item_spots(n, obstacles, path, i, count):
+    """수집품이 놓일 칸들 — 시작칸·장애물을 피하고, 경로에서 **늦게** 밟는 칸을 고른다.
+       (바로 먹어버리면 '찾았다'는 맛이 없다)
+       여러 개일 때는 서로 붙지 않도록 한 칸 이상 띄운다."""
     obs = {(o['x'], o['y']) for o in obstacles}
     first = {}
     for k, c in enumerate(path):
         if c not in first:
             first[c] = k                       # 각 칸을 처음 밟는 시점
     cand = [c for c in first if c not in obs and c != (0, 0)]
-    if not cand:
-        return None
     cand.sort(key=lambda c: -first[c])          # 늦게 밟는 순
-    x, y = cand[i % max(1, min(4, len(cand)))]  # 상위 몇 개 중 판마다 다르게
-    return {'x': x, 'y': y}
+    if not cand:
+        return []
+    # 판마다 다른 자리에서 시작해 같은 구석에만 몰리지 않게 한다
+    off = i % max(1, min(4, len(cand)))
+    cand = cand[off:] + cand[:off]
+    picked = []
+    for gap in (2, 1, 0):                       # 되도록 띄우되, 안 되면 조건을 푼다
+        for c in cand:
+            if len(picked) >= count:
+                break
+            if all(max(abs(c[0] - p[0]), abs(c[1] - p[1])) >= gap for p in picked):
+                picked.append(c)
+        if len(picked) >= count:
+            break
+    return [{'x': x, 'y': y} for x, y in picked[:count]]
 
 
 if __name__ == '__main__':
+    total_pieces = check_drops()
+    print(f"  조각 배치표 OK — {len(NEEDS)}종 / 총 {total_pieces}조각", file=sys.stderr)
     stages, solutions = [], {}
     for i in range(1, 21):
         n, max_dur, ocount, time_limit = schedule(i)
@@ -167,19 +210,22 @@ if __name__ == '__main__':
         if not ok:
             raise RuntimeError(f'스테이지 {i} 검증 실패: {msg}')
         theme, intro, clear = STORY.get(i, (f'{i}번째 칸', '', ''))
-        unlock = UNLOCKS[i - 1]          # 모든 판에서 수집품이 하나씩 나온다
+        drops = DROPS[i - 1]             # 이 판에 흩뿌려지는 조각들
         solutions[i] = [list(p) for p in path]
         st = {
             'id': i, 'act': 1, 'place': '자취방', 'sub': i, 'theme': theme, 'bg': 'studio',
             'grid': grid, 'start': {'x': 0, 'y': 0}, 'time': time_limit,
-            'intro': intro, 'clear': clear, 'unlock': unlock, 'obstacles': obstacles,
+            'intro': intro, 'clear': clear, 'unlocks': drops, 'obstacles': obstacles,
         }
-        # 해금 아이템이 있는 판은 바닥에 그 물건을 떨어뜨려 둔다(지나가면 줍는다)
-        if unlock:
-            spot = item_spot(n, obstacles, path, i)
-            if spot:
-                st['item'] = {'name': unlock, **spot}
+        # 조각은 바닥에 흩뿌려 둔다(지나가면 줍는다). 자리가 모자라면 그만큼만.
+        spots = item_spots(n, obstacles, path, i, len(drops))
+        if len(spots) < len(drops):
+            raise RuntimeError(f'스테이지 {i}: 조각 {len(drops)}개를 놓을 자리가 없다')
+        st['items'] = [{'name': nm, **sp} for nm, sp in zip(drops, spots)]
         stages.append(st)
     with open('stages/solutions.json', 'w', encoding='utf-8') as f:
         json.dump(solutions, f, ensure_ascii=False)
+    # 해금에 필요한 조각 수는 여기(NEEDS)가 원본 — 게임은 이 파일을 읽어 쓴다
+    with open('stages/items.json', 'w', encoding='utf-8') as f:
+        json.dump(NEEDS, f, ensure_ascii=False, indent=2)
     json.dump(stages, sys.stdout, ensure_ascii=False, indent=2)

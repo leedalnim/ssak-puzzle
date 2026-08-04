@@ -143,17 +143,18 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 
 .btn-pause   { height: calc(110px * var(--k)); aspect-ratio: 258 / 271; background-image: url(../assets/room/ui/btn_pause.png); }
 
-/* 이 판에서 주울 수집품 — 아직이면 실루엣, 주우면 원래 색으로 밝아진다 */
-.hud-item {
-  height: calc(110px * var(--k)); aspect-ratio: 1;
+/* 이 판에 흩뿌려진 조각들 — 아직이면 실루엣, 주우면 원래 색으로 밝아진다 */
+.hud-items { display: flex; gap: calc(8px * var(--k)); }
+.hud-slot {
+  height: calc(96px * var(--k)); aspect-ratio: 1;
   background: url(../assets/room/ui/kit/slot.png) center / 100% 100% no-repeat;
   display: flex; align-items: center; justify-content: center;
   filter: drop-shadow(0 calc(6px * var(--k)) calc(10px * var(--k)) rgba(110, 84, 56, .35));
 }
-.hud-item img { max-width: 66%; max-height: 66%; width: auto; height: auto; object-fit: contain;
+.hud-slot img { max-width: 66%; max-height: 66%; width: auto; height: auto; object-fit: contain;
   transition: opacity .3s ease; opacity: .9; }
-.hud-item.got img { opacity: 1; }
-.hud-item.got { animation: itemPop .45s cubic-bezier(.2, 1.5, .4, 1); }
+.hud-slot.got img { opacity: 1; }
+.hud-slot.got { animation: itemPop .45s cubic-bezier(.2, 1.5, .4, 1); }
 @keyframes itemPop { 0% { transform: scale(1); } 45% { transform: scale(1.22); } 100% { transform: scale(1); } }
 
 /* 주운 물건이 HUD 수집 표시로 날아가는 연출 — JS가 좌표를 넣는다 */
@@ -444,26 +445,45 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
   padding: 0 calc(var(--cap) + 4px) calc(var(--bh) * 0.04); }
 .clear-list { margin-top: 12px; }
 
-/* ---- 획득한 수집품 ---- 버튼처럼 보이지 않게 '수집함 칸'에 담긴 모습으로 */
+/* ---- 이번 판에서 얻은 조각들 ---- 버튼처럼 보이지 않게 '수집함 칸'에 담긴 모습으로 */
 .reward {
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
   margin: 0 0 8px;
   animation: rewardIn .5s cubic-bezier(.2, 1.4, .4, 1) both;
 }
+.rw-row { display: flex; justify-content: center; align-items: flex-start; gap: 10px; }
+/* 별 3개 보너스 줄 — 왜 하나 더 받았는지 한눈에 알 수 있게 꼬리표를 단다 */
+.rw-bonus { align-items: center; gap: 8px;
+  padding: 5px 10px 5px 12px; border-radius: 999px;
+  background: rgba(255, 226, 160, .5); border: 1.5px solid rgba(201, 154, 78, .5); }
+.rw-tag { font-size: 11.5px; font-weight: 800; color: #a3711c; white-space: nowrap; }
+/* 보너스는 한 줄로 눕혀 꼬리표 옆에 붙인다 */
+.rw-bonus .rw-chip { flex-direction: row; align-items: center; gap: 6px; max-width: none; }
+.rw-bonus .rw-slot { width: 46px; height: 46px; }
+.rw-bonus .rw-chip b { font-size: 12px; }
+.rw-bonus .rw-star { width: 18px; height: 18px; top: -4px; right: -4px; }
+.rw-chip { display: flex; flex-direction: column; align-items: center; gap: 2px; max-width: 88px; }
 .rw-slot {
-  position: relative; width: 76px; height: 76px;
+  position: relative; width: 64px; height: 64px;
   display: flex; align-items: center; justify-content: center;
   background: url(../assets/room/ui/kit/slot.png) center / 100% 100% no-repeat;
 }
-/* 칸 뒤에서 은은하게 번지는 금빛 */
-.rw-slot::before {
+/* 조각을 다 모아 완성된 칸만 뒤에서 금빛이 번진다 */
+.rw-chip.done .rw-slot::before {
   content: ''; position: absolute; width: 84%; height: 84%; border-radius: 50%;
   background: radial-gradient(closest-side, rgba(255, 205, 105, .65), rgba(255, 205, 105, 0));
 }
 .reward img { position: relative; max-width: 62%; max-height: 62%; object-fit: contain; }
-.rw-txt { display: flex; flex-direction: column; align-items: center; line-height: 1.3; }
-.rw-txt b { font-size: 16px; font-weight: 800; color: #5c4020; }
-.rw-txt span { font-size: 12px; font-weight: 700; color: #8a6a3c; }
+/* 별 3개 보너스로 받은 조각 표시 */
+.rw-star {
+  position: absolute; top: -5px; right: -5px; width: 22px; height: 22px; z-index: 2;
+  background: url(../assets/room/ui/clear/gold-star-single.png) center / contain no-repeat;
+  filter: drop-shadow(0 1px 2px rgba(120, 86, 40, .5));
+}
+.rw-chip b { font-size: 12.5px; font-weight: 800; color: #5c4020; line-height: 1.2;
+  text-align: center; }
+.rw-chip span { font-size: 11px; font-weight: 700; color: #8a6a3c; }
+.rw-chip.done span { color: #c98a1e; }
 @keyframes rewardIn {
   0%   { opacity: 0; transform: translateY(-14px) scale(.7); }
   100% { opacity: 1; transform: none; }

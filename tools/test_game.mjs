@@ -34,8 +34,12 @@ for (const st of stages) {
     g.hero.moving = false; g.hero.t = 1;   // 트윈 즉시 완료 처리
     g.tryMove(x > px ? 'right' : x < px ? 'left' : y > py ? 'down' : 'up');
   }
-  const ok = g.state === 'clear' && g.remainingDirt() === 0;
-  console.log(`${ok ? '✓' : '✗'} #${st.id} ${st.theme}: state=${g.state}, 남은때=${g.remainingDirt()}`);
+  // 클리어 + **조각을 하나도 놓치지 않았는지**까지 본다.
+  // 한붓그리기라 모든 칸을 밟으므로 원래 놓칠 수 없지만, 배치가 벽 위로 가면 깨진다.
+  const missed = g.items.filter(it => !it.got).map(it => it.name);
+  const ok = g.state === 'clear' && g.remainingDirt() === 0 && !missed.length;
+  console.log(`${ok ? '✓' : '✗'} #${st.id} ${st.theme}: state=${g.state}, 남은때=${g.remainingDirt()}`
+    + `, 조각 ${g.items.length - missed.length}/${g.items.length}${missed.length ? ' ← 못 주움: ' + missed : ''}`);
   ok ? pass++ : fail++;
 }
 console.log(`\n결과: ${pass} 통과 / ${fail} 실패`);

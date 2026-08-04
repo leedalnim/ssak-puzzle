@@ -27,6 +27,7 @@ export class Game {
     this.ctx.imageSmoothingQuality = 'high';
     this.hooks = hooks;
     this.particles = new Particles();
+    this.items = [];              // 스테이지를 불러오기 전에도 렌더 루프가 돈다
     this.state = 'idle';
     this.shake = 0;
     this.last = performance.now();
@@ -54,8 +55,9 @@ export class Game {
       this.dur[o.y][o.x] = 0;
     }
     this.totalDirt = this.dur.flat().reduce((s, v) => s + v, 0);
-    // 바닥에 떨어진 수집품 — 그 칸을 지나가면 줍는다(퍼즐 규칙에는 영향 없음)
-    this.item = stage.item ? { ...stage.item, got: false, pop: 0 } : null;
+    // 바닥에 흩뿌려진 수집품 조각 — 그 칸을 지나가면 줍는다(퍼즐 규칙에는 영향 없음).
+    // 한붓그리기라 모든 칸을 반드시 밟으므로 놓칠 수 있는 조각은 없다.
+    this.items = (stage.items || []).map(it => ({ ...it, got: false, pop: 0 }));
 
     this.hero = {
       gx: stage.start.x, gy: stage.start.y, px: stage.start.x, py: stage.start.y,
@@ -73,7 +75,7 @@ export class Game {
     this.shake = 0;
     invalidateBoard();
     this._emitProgress();
-    this.hooks.onItem?.(this.item ? this.item.got : null);   // null = 이 판엔 아이템 없음
+    this.hooks.onItems?.(this._itemState());   // 빈 배열 = 이 판엔 조각이 없음
     if (this.hooks.onTimer) this.hooks.onTimer(this.timeLeft, this.time, this.elapsed);
   }
 
@@ -117,7 +119,7 @@ export class Game {
   _snapshot() {
     return {
       dur: this.dur.map(r => r.slice()), gx: this.hero.gx, gy: this.hero.gy, combo: this.combo,
-      itemGot: this.item ? this.item.got : false,   // 되돌리면 아이템도 바닥으로 돌아온다
+      itemGot: this.items.map(it => it.got),        // 되돌리면 조각도 바닥으로 돌아온다
     };
   }
 
@@ -154,10 +156,15 @@ export class Game {
 
   _bump(d) { this.hero.bumpX = d.x * 6; this.hero.bumpY = d.y * 6; this.hero.bumpT = 0.12; }
 
-  /** 아이템 칸을 밟으면 줍는다 — 톡 튀어오르는 연출(pop)을 켠다 */
+  /** UI 로 넘기는 조각 상태 — [{ name, got }, ...] */
+  _itemState() { return this.items.map(it => ({ name: it.name, got: it.got })); }
+
+  /** 조각 칸을 밟으면 줍는다 — 톡 튀어오르는 연출(pop)을 켠다.
+      한 칸에 조각은 하나뿐이라 첫 번째만 찾으면 된다. */
   _pickUp(x, y) {
-    const it = this.item;
-    if (!it || it.got || it.x !== x || it.y !== y) return;
+    const idx = this.items.findIndex(it => !it.got && it.x === x && it.y === y);
+    if (idx < 0) return;
+    const it = this.items[idx];
     it.got = true; it.pop = 1;                  // 1 → 0 으로 줄며 튀어오른다
     Audio.sfxSparkle(8);
     const { x: cx, y: cy } = cellCenter(x, y, this.cols, this.rows);
@@ -165,7 +172,7 @@ export class Game {
     // 캔버스 좌표 → 화면 좌표로 바꿔 넘긴다(날아가는 연출용)
     const r = this.canvas.getBoundingClientRect();
     const k = r.width / VW;
-    this.hooks.onItem?.(true, { x: r.left + cx * k, y: r.top + cy * k });
+    this.hooks.onItems?.(this._itemState(), { index: idx, x: r.left + cx * k, y: r.top + cy * k });
   }
 
   onTap(px, py) {
@@ -187,7 +194,8 @@ export class Game {
     this.dur = s.dur;
     this.hero.gx = s.gx; this.hero.gy = s.gy; this.hero.px = s.gx; this.hero.py = s.gy;
     this.combo = 0;
-    if (this.item) { this.item.got = s.itemGot; this.item.pop = 0; this.hooks.onItem?.(s.itemGot); }
+    this.items.forEach((it, i) => { it.got = !!s.itemGot[i]; it.pop = 0; });
+    this.hooks.onItems?.(this._itemState());
     invalidateBoard();
     Audio.sfxUI();
     this._emitProgress();
@@ -236,8 +244,8 @@ export class Game {
   _update(dt, clockDt) {
     const h = this.hero;
     this.tAll = (this.tAll || 0) + dt;                       // 아이템 둥실거림용 시계
-    if (this.item?.got && this.item.pop > 0) {
-      this.item.pop = Math.max(0, this.item.pop - dt * 2);   // 0.5초에 걸쳐 사라짐
+    for (const it of this.items) {
+      if (it.got && it.pop > 0) it.pop = Math.max(0, it.pop - dt * 2);   // 0.5초에 걸쳐 사라짐
     }
     if (h?.moving) {
       h.t += dt * 1000 / MOVE_MS;
@@ -278,9 +286,9 @@ export class Game {
 
     // 뒤쪽(위쪽) 오브젝트부터 그려야 앞이 뒤를 가린다
     const drawables = this.obstacles.map(o => ({ r: o.y, draw: () => this._drawObstacle(ctx, o) }));
-    // 아직 안 주웠거나, 주운 직후 튀어오르는 중이면 그린다
-    if (this.item && (!this.item.got || this.item.pop > 0)) {
-      drawables.push({ r: this.item.y - 0.01, draw: () => this._drawItem(ctx) });
+    // 아직 안 주웠거나, 주운 직후 튀어오르는 중인 조각만 그린다
+    for (const it of this.items) {
+      if (!it.got || it.pop > 0) drawables.push({ r: it.y - 0.01, draw: () => this._drawItem(ctx, it) });
     }
     drawables.push({ r: this.hero.py, draw: () => this._drawHero(ctx) });
     drawables.sort((a, b) => a.r - b.r).forEach(d => d.draw());
@@ -290,8 +298,7 @@ export class Game {
   }
 
   /** 바닥에 떨어진 수집품 — 평소엔 살짝 둥실, 주우면 튀어오르며 사라진다 */
-  _drawItem(ctx) {
-    const it = this.item;
+  _drawItem(ctx, it) {
     const img = IMG['item_' + it.name];
     if (!img) return;
     const { x, y, cellH } = cellCenter(it.x, it.y, this.cols, this.rows);

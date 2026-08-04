@@ -7,6 +7,7 @@ import { Toss } from './toss-sdk.js';
 const $ = (id) => document.getElementById(id);
 const PROG_KEY = 'ssak_cleared';
 const STAR_KEY = 'ssak_stars';
+const BONUS_KEY = 'ssak_bonus';   // { 스테이지id: 별3개 보너스로 받은 물건 이름 }
 const ST = 'assets/room/ui/stage/';
 
 // 장소(영역) — 자취방만 실제 콘텐츠, 나머지는 곧 공개
@@ -24,9 +25,22 @@ let clearedMax = 0;
 let pendingIntro = null;
 let areaIdx = 0;
 let stars = {};
+let bonus = {};
 
 function loadStars() { try { stars = JSON.parse(localStorage.getItem(STAR_KEY) || '{}'); } catch { stars = {}; } }
 function saveStars() { localStorage.setItem(STAR_KEY, JSON.stringify(stars)); }
+function loadBonus() { try { bonus = JSON.parse(localStorage.getItem(BONUS_KEY) || '{}'); } catch { bonus = {}; } }
+function saveBonus() { localStorage.setItem(BONUS_KEY, JSON.stringify(bonus)); }
+
+/** 별 3개 보너스 조각은 **완성에 가장 가까운** 잠긴 물건에게 준다.
+ *  (남은 조각이 적은 순 → 같으면 이야기 순서. 다 열었으면 줄 게 없다) */
+function bonusPick() {
+  const t = ownedTally();
+  const locked = ITEMS.filter(it => (t[it.name] || 0) < it.need);
+  if (!locked.length) return null;
+  locked.sort((a, b) => (a.need - (t[a.name] || 0)) - (b.need - (t[b.name] || 0)));
+  return locked[0].name;
+}
 /** 클리어 시간 대비 별점(1~3). par = 총 걸레질 횟수(격자 합) 기준 */
 function starsFor(st, elapsed) {
   const par = st.grid.reduce((a, row) => a + row.reduce((b, v) => b + v, 0), 0) * 0.8;
@@ -35,22 +49,35 @@ function starsFor(st, elapsed) {
   return 1;
 }
 
-/** 클리어 팝업 — 처음 깬 판에 해금 아이템이 있으면 "얻었다"를 보여준다.
- *  물건은 조각을 need 개 모아야 열리므로, 아직이면 실루엣 + 진행 상황을 보여준다.
- *  (이름은 stages.json 의 unlock 과 ITEMS 의 name 이 같아야 매칭된다) */
+/** 클리어 팝업 — 이번 판에서 주운 조각들(+별 3개 보너스)을 보여준다.
+ *  조각이 need 개 차면 '완성!', 아니면 실루엣 + n/need.
+ *  (이름은 stages.json 의 unlocks 와 ITEMS 의 name 이 같아야 매칭된다) */
 let rewardTimer = null;
-function showReward(name) {
+function showReward(names, bonusName) {
   const box = $('clearReward');
   clearTimeout(rewardTimer);
-  const item = name && ITEMS.find(i => i.name === name);
-  if (!item) { box.classList.add('hidden'); return; }
-  const have = Math.min(ownedTally()[item.name] || 0, item.need);
-  const done = have >= item.need;
-  $('rewardImg').src = `${KIT}${done ? 'it' : 'sil'}_${item.img}.png`;
-  $('rewardName').textContent = done ? item.name : `${item.name} 조각`;
-  $('rewardSub').textContent = done
-    ? '수집함에 담겼어요'
-    : `조각 ${have}/${item.need} — 다 모으면 열려요`;
+  const tally = ownedTally();
+  const chip = (name, isBonus) => {
+    const it = ITEMS.find(i => i.name === name);
+    if (!it) return '';
+    const have = Math.min(tally[name] || 0, it.need);
+    const done = have >= it.need;
+    return `<div class="rw-chip${done ? ' done' : ''}">`
+      + `<div class="rw-slot">${isBonus ? '<span class="rw-star"></span>' : ''}`
+      +   `<img src="${KIT}${done ? 'it' : 'sil'}_${it.img}.png" alt=""></div>`
+      + `<b>${it.name}</b><span>${done ? '완성!' : `조각 ${have}/${it.need}`}</span></div>`;
+  };
+  const drops = names || [];
+  // 보너스가 이번 판에 떨어진 물건과 같으면 칸을 합쳐 별만 붙인다
+  const merged = bonusName && drops.includes(bonusName);
+  let html = drops.length
+    ? `<div class="rw-row">${drops.map(n => chip(n, merged && n === bonusName)).join('')}</div>` : '';
+  if (bonusName && !merged) {
+    html += `<div class="rw-row rw-bonus"><span class="rw-tag">별 3개 보너스</span>`
+      + `${chip(bonusName, true)}</div>`;
+  }
+  if (!html) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+  box.innerHTML = html;
   box.classList.add('hidden');
   // 별이 다 박힌 뒤에 등장시켜 연출이 겹치지 않게 한다
   rewardTimer = setTimeout(() => { box.classList.remove('hidden'); Audio.sfxSparkle(6); }, 1150);
@@ -78,23 +105,22 @@ const screens = ['screenTitle', 'screenStages', 'screenIntro', 'screenClear',
 const KIT = 'assets/room/ui/kit/';
 
 // 수집품 — 아이템마다 컬러(it_*)와 회색(sil_*) 두 벌이 있다.
-// 얻으면 컬러, 아직이면 회색 실루엣으로 보여준다.
-// 앞 4개는 스테이지 해금 아이템(stages.json 의 unlock 과 이름이 같아야 매칭된다).
-// area = 어느 장소에서 나오는 물건인지(수집함 탭 분류). desc = 얻었을 때 읽는 한 줄.
-// need = 해금에 필요한 조각 수. 20판에서 조각이 20개 나오므로
-// 9종×2 + 2종×1 = 20 으로 맞춰, 20판을 다 깨면 11종이 정확히 전부 열린다.
+// 조각을 need 개 모아야 해금되고, 그 전에는 회색 실루엣으로 보여준다.
+// 순서는 **이야기 순서**(잠옷으로 시작해 운동화로 끝난다) — 수집함 격자도 이 순서로 읽힌다.
+// area = 어느 장소에서 나오는 물건인지(수집함 탭 분류). desc = 해금했을 때 읽는 한 줄.
+// need(해금에 필요한 조각 수, 1~5)는 stages/items.json 이 원본이라 boot 에서 채운다.
 const ITEMS = [
   { name: '구겨진 잠옷', img: 'pajama', area: 1, need: 1, desc: '며칠을 입고 잔 잠옷이다냥. 드디어 벗어 던졌다냥!' },
-  { name: '노란 고무장갑', img: 'gloves', area: 1, need: 2, desc: '찌든 얼룩과 맞설 첫 장비다냥.' },
-  { name: '작은 화분', img: 'plant', area: 1, need: 2, desc: '창가에 두니 방이 좀 살아났다냥.' },
+  { name: '머그컵', img: 'mug', area: 1, need: 1, desc: '씻어 두니 커피가 당긴다냥.' },
+  { name: '티슈 상자', img: 'tissue', area: 1, need: 1, desc: '손 닿는 곳에 두니 편하다냥.' },
+  { name: '노란 고무장갑', img: 'gloves', area: 1, need: 1, desc: '찌든 얼룩과 맞설 첫 장비다냥.' },
+  { name: '분무기', img: 'spray', area: 1, need: 1, desc: '한 번 뿌리면 얼룩이 쓱 진다냥.' },
+  { name: '쿠션', img: 'cushion', area: 1, need: 1, desc: '앉을 자리가 생겼다는 뜻이다냥.' },
+  { name: '탁상 램프', img: 'lamp', area: 1, need: 1, desc: '밤에도 방이 아늑해졌다냥.' },
+  { name: '작은 화분', img: 'plant', area: 1, need: 1, desc: '창가에 두니 방이 좀 살아났다냥.' },
+  { name: '물뿌리개', img: 'can', area: 1, need: 1, desc: '물 주는 게 하루 일과가 됐다냥.' },
+  { name: '장바구니', img: 'basket', area: 1, need: 1, desc: '장 보러 나갈 결심이다냥!' },
   { name: '새 운동화', img: 'sneakers', area: 1, need: 1, desc: '이제 밖으로 나갈 준비 완료다냥!' },
-  { name: '머그컵', img: 'mug', area: 1, need: 2, desc: '씻어 두니 커피가 당긴다냥.' },
-  { name: '탁상 램프', img: 'lamp', area: 1, need: 2, desc: '밤에도 방이 아늑해졌다냥.' },
-  { name: '분무기', img: 'spray', area: 1, need: 2, desc: '한 번 뿌리면 얼룩이 쓱 진다냥.' },
-  { name: '물뿌리개', img: 'can', area: 1, need: 2, desc: '물 주는 게 하루 일과가 됐다냥.' },
-  { name: '티슈 상자', img: 'tissue', area: 1, need: 2, desc: '손 닿는 곳에 두니 편하다냥.' },
-  { name: '쿠션', img: 'cushion', area: 1, need: 2, desc: '앉을 자리가 생겼다는 뜻이다냥.' },
-  { name: '장바구니', img: 'basket', area: 1, need: 2, desc: '장 보러 나갈 결심이다냥!' },
 ];
 
 // 도전과제 — progress(cleared, stars)로 진행도를 계산한다
@@ -130,9 +156,9 @@ function syncScale() {
 
 /** 주운 물건이 바닥에서 상단 수집 표시로 날아간다 */
 let flyTimer = null;
-function flyToHud(item, from, done) {
+function flyToHud(item, from, targetEl, done) {
   const el = $('flyItem');
-  const target = $('hudItem').getBoundingClientRect();
+  const target = targetEl.getBoundingClientRect();
   clearTimeout(flyTimer);
   el.src = `${KIT}it_${item.img}.png`;
   el.className = 'fly-item';                        // hidden 해제
@@ -159,23 +185,28 @@ function flyToHud(item, from, done) {
 function makeGame() {
   game = new Game($('game'), {
     onTiles: (left) => { $('hudTiles').textContent = String(left); },
-    // got === null 이면 이 판엔 수집품이 없다
-    onItem: (got, from) => {
-      const box = $('hudItem');
-      const st = stages[current];
-      const item = st?.item && ITEMS.find(i => i.name === st.item.name);
-      box.classList.toggle('hidden', got === null || !item);
-      if (!item) return;
-      if (got && from) {
-        // 바닥 → HUD 로 날아간 뒤에 표시가 컬러로 바뀐다
-        flyToHud(item, from, () => {
-          box.querySelector('img').src = `${KIT}it_${item.img}.png`;
-          box.classList.add('got');
-        });
-        return;
+    // 이 판에 흩뿌려진 조각들 — 주울 때마다 해당 칸이 컬러로 바뀐다
+    onItems: (list, picked) => {
+      const box = $('hudItems');
+      box.classList.toggle('hidden', !list.length);
+      if (!list.length) { box.innerHTML = ''; return; }
+      if (box.children.length !== list.length) {
+        box.innerHTML = list.map(() => '<span class="hud-slot"><img src="" alt=""></span>').join('');
       }
-      box.querySelector('img').src = `${KIT}${got ? 'it' : 'sil'}_${item.img}.png`;
-      box.classList.toggle('got', !!got);
+      list.forEach((s, i) => {
+        const slot = box.children[i];
+        const img = slot.querySelector('img');
+        const it = ITEMS.find(x => x.name === s.name);
+        if (!it) return;
+        const src = `${KIT}${s.got ? 'it' : 'sil'}_${it.img}.png`;
+        const paint = () => {
+          if (img.dataset.k !== src) { img.src = src; img.dataset.k = src; }
+          slot.classList.toggle('got', s.got);
+        };
+        // 방금 주운 조각은 바닥에서 날아온 뒤에 컬러로 바뀐다
+        if (picked && picked.index === i) flyToHud(it, picked, slot, paint);
+        else paint();
+      });
     },
     onUndoState: (can) => { $('btnUndo').disabled = !can; },
     onTimer: (left, total, elapsed) => {
@@ -221,9 +252,15 @@ function onStageClear(elapsed) {
   saveProgress(st.id);
   const s = starsFor(st, elapsed);
   if (s > (stars[st.id] || 0)) { stars[st.id] = s; saveStars(); }
-  Toss.track('stage_clear', { stage: st.id, elapsed, stars: s });
+  // 별 3개 보너스 — 판마다 한 번만. 나중에 다시 와서 3별을 따도 받을 수 있다.
+  let bonusName = null;
+  if (s >= 3 && !bonus[st.id]) {
+    bonusName = bonusPick();
+    if (bonusName) { bonus[st.id] = bonusName; saveBonus(); }
+  }
+  Toss.track('stage_clear', { stage: st.id, elapsed, stars: s, bonus: bonusName || '' });
   $('clearStory').textContent = st.clear || '';
-  showReward(isFirstClear ? st.unlock : null);
+  showReward(isFirstClear ? st.unlocks : null, bonusName);
   playStars(s);
   $('btnNext').textContent = current + 1 < stages.length ? '다음 스테이지' : '처음으로';
   refreshBadges();
@@ -322,15 +359,17 @@ function buildStages() {
 }
 
 // ----------------------------- 수집함 · 도전과제 -----------------------------
-/** 지금까지 얻은 수집품 수 = 클리어한 스테이지의 unlock 개수 */
+/** 해금한(=조각을 다 모은) 물건 수 — 뱃지·수집함 카운트에 쓴다 */
 function ownedCount() {
-  return stages.filter(s => s.id <= clearedMax && s.unlock).length;
+  const t = ownedTally();
+  return ITEMS.filter(it => (t[it.name] || 0) >= it.need).length;
 }
-/** 클리어한 판들의 unlock 을 모아 물건별 **조각 수**를 센다 (need 개를 채우면 해금) */
+/** 물건별 **조각 수** — 깬 판에서 주운 조각 + 별 3개 보너스 조각 */
 function ownedTally() {
   const t = {};
-  stages.filter(s => s.id <= clearedMax && s.unlock)
-        .forEach(s => { t[s.unlock] = (t[s.unlock] || 0) + 1; });
+  const add = (nm) => { if (nm) t[nm] = (t[nm] || 0) + 1; };
+  stages.filter(s => s.id <= clearedMax).forEach(s => (s.unlocks || []).forEach(add));
+  Object.values(bonus).forEach(add);
   return t;
 }
 function progressSummary() {
@@ -508,9 +547,13 @@ async function boot() {
   syncScale();
   loadProgress();
   loadStars();
+  loadBonus();
   await Toss.init();
   await loadAssets();
   stages = await (await fetch('stages/stages.json')).json();
+  // 해금에 필요한 조각 수는 스테이지 생성기(tools/gen_studio20.py)가 쓴 값을 따른다
+  const needs = await (await fetch('stages/items.json')).json();
+  ITEMS.forEach(it => { it.need = needs[it.name] || 1; });
   makeGame();
   window.__game = game;  // 디버그
   wireUI();
