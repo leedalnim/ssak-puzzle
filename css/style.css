@@ -331,6 +331,14 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 /* 잠긴 칸은 회색 에셋(sil_*)을 쓰므로 별도 필터 없이 살짝만 낮춘다 */
 .slot.lock > img.thing { opacity: .85; }
 .slot > img.pad { position: absolute; max-width: 30%; max-height: 34%; width: auto; height: auto; }
+/* 같은 물건을 두 개 이상 모았을 때 붙는 개수 뱃지 */
+.slot > .cnt {
+  position: absolute; right: 6%; bottom: 6%;
+  font-size: 12px; font-weight: 800; color: #5c4020;
+  background: linear-gradient(180deg, #f2d79a, #e3bb72);
+  border: 2px solid #c79a5c; border-radius: 999px; padding: 1px 7px 2px;
+  box-shadow: 0 2px 0 #a87e46;
+}
 
 /* ---- 도전과제 목록 ---- */
 .ach-list { flex: 1; min-height: 0; width: 100%; overflow-y: auto;

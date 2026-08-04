@@ -29,7 +29,14 @@ const MANIFEST = {
   'item_구겨진 잠옷': R + 'ui/kit/it_pajama.png',
   'item_노란 고무장갑': R + 'ui/kit/it_gloves.png',
   'item_작은 화분': R + 'ui/kit/it_plant.png',
-  'item_새 운동화': R + 'ui/kit/it_sneakers.png',   // 모두 무손실 원본 컷
+  'item_새 운동화': R + 'ui/kit/it_sneakers.png',
+  'item_머그컵': R + 'ui/kit/it_mug.png',
+  'item_탁상 램프': R + 'ui/kit/it_lamp.png',
+  'item_분무기': R + 'ui/kit/it_spray.png',
+  'item_물뿌리개': R + 'ui/kit/it_can.png',
+  'item_티슈 상자': R + 'ui/kit/it_tissue.png',
+  'item_쿠션': R + 'ui/kit/it_cushion.png',
+  'item_장바구니': R + 'ui/kit/it_basket.png',   // 모두 무손실 원본 컷
 };
 
 export const IMG = {};

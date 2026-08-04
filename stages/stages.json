@@ -109,8 +109,13 @@
     "time": 0,
     "intro": "",
     "clear": "쌓아둔 컵라면 그릇을 치웠다.\n손이 제법 움직인다.",
-    "unlock": "",
-    "obstacles": []
+    "unlock": "머그컵",
+    "obstacles": [],
+    "item": {
+      "name": "머그컵",
+      "x": 0,
+      "y": 4
+    }
   },
   {
     "id": 3,
@@ -163,8 +168,13 @@
     "time": 0,
     "intro": "",
     "clear": "",
-    "unlock": "",
-    "obstacles": []
+    "unlock": "티슈 상자",
+    "obstacles": [],
+    "item": {
+      "name": "티슈 상자",
+      "x": 2,
+      "y": 4
+    }
   },
   {
     "id": 4,
@@ -217,14 +227,19 @@
     "time": 0,
     "intro": "",
     "clear": "",
-    "unlock": "",
+    "unlock": "노란 고무장갑",
     "obstacles": [
       {
         "x": 2,
         "y": 2,
         "type": "basket_rd"
       }
-    ]
+    ],
+    "item": {
+      "name": "노란 고무장갑",
+      "x": 3,
+      "y": 4
+    }
   },
   {
     "id": 5,
@@ -277,7 +292,7 @@
     "time": 0,
     "intro": "찌든 얼룩은 한 번에 안 지워진다.\n같은 자리를 여러 번 쓱— 쓱—.",
     "clear": "두 번, 세 번 문지르니 결국 깨끗해진다.",
-    "unlock": "노란 고무장갑",
+    "unlock": "분무기",
     "obstacles": [
       {
         "x": 4,
@@ -286,7 +301,7 @@
       }
     ],
     "item": {
-      "name": "노란 고무장갑",
+      "name": "분무기",
       "x": 1,
       "y": 1
     }
@@ -342,14 +357,19 @@
     "time": 0,
     "intro": "",
     "clear": "",
-    "unlock": "",
+    "unlock": "쿠션",
     "obstacles": [
       {
         "x": 0,
         "y": 4,
         "type": "basket_rd"
       }
-    ]
+    ],
+    "item": {
+      "name": "쿠션",
+      "x": 4,
+      "y": 3
+    }
   },
   {
     "id": 7,
@@ -402,14 +422,19 @@
     "time": 0,
     "intro": "",
     "clear": "",
-    "unlock": "",
+    "unlock": "탁상 램프",
     "obstacles": [
       {
         "x": 4,
         "y": 4,
         "type": "basket_rd"
       }
-    ]
+    ],
+    "item": {
+      "name": "탁상 램프",
+      "x": 0,
+      "y": 4
+    }
   },
   {
     "id": 8,
@@ -462,14 +487,19 @@
     "time": 0,
     "intro": "",
     "clear": "",
-    "unlock": "",
+    "unlock": "작은 화분",
     "obstacles": [
       {
         "x": 2,
         "y": 2,
         "type": "basket_rd"
       }
-    ]
+    ],
+    "item": {
+      "name": "작은 화분",
+      "x": 0,
+      "y": 4
+    }
   },
   {
     "id": 9,
@@ -522,14 +552,19 @@
     "time": 0,
     "intro": "",
     "clear": "",
-    "unlock": "",
+    "unlock": "물뿌리개",
     "obstacles": [
       {
         "x": 4,
         "y": 0,
         "type": "basket_rd"
       }
-    ]
+    ],
+    "item": {
+      "name": "물뿌리개",
+      "x": 4,
+      "y": 2
+    }
   },
   {
     "id": 10,
@@ -582,7 +617,7 @@
     "time": 0,
     "intro": "",
     "clear": "햇살이 드는 창가.\n먼지 한 톨 없이 닦아냈다.",
-    "unlock": "",
+    "unlock": "장바구니",
     "obstacles": [
       {
         "x": 4,
@@ -594,7 +629,12 @@
         "y": 2,
         "type": "plant"
       }
-    ]
+    ],
+    "item": {
+      "name": "장바구니",
+      "x": 3,
+      "y": 2
+    }
   },
   {
     "id": 11,
@@ -647,7 +687,7 @@
     "time": 0,
     "intro": "",
     "clear": "",
-    "unlock": "",
+    "unlock": "새 운동화",
     "obstacles": [
       {
         "x": 4,
@@ -659,7 +699,12 @@
         "y": 4,
         "type": "plant"
       }
-    ]
+    ],
+    "item": {
+      "name": "새 운동화",
+      "x": 3,
+      "y": 1
+    }
   },
   {
     "id": 12,
@@ -712,7 +757,7 @@
     "time": 0,
     "intro": "",
     "clear": "",
-    "unlock": "",
+    "unlock": "머그컵",
     "obstacles": [
       {
         "x": 0,
@@ -724,7 +769,12 @@
         "y": 2,
         "type": "plant"
       }
-    ]
+    ],
+    "item": {
+      "name": "머그컵",
+      "x": 4,
+      "y": 3
+    }
   },
   {
     "id": 13,
@@ -777,7 +827,7 @@
     "time": 200,
     "intro": "",
     "clear": "",
-    "unlock": "",
+    "unlock": "노란 고무장갑",
     "obstacles": [
       {
         "x": 4,
@@ -789,7 +839,12 @@
         "y": 4,
         "type": "plant"
       }
-    ]
+    ],
+    "item": {
+      "name": "노란 고무장갑",
+      "x": 0,
+      "y": 2
+    }
   },
   {
     "id": 14,
@@ -842,7 +897,7 @@
     "time": 200,
     "intro": "",
     "clear": "",
-    "unlock": "",
+    "unlock": "티슈 상자",
     "obstacles": [
       {
         "x": 4,
@@ -854,7 +909,12 @@
         "y": 2,
         "type": "plant"
       }
-    ]
+    ],
+    "item": {
+      "name": "티슈 상자",
+      "x": 4,
+      "y": 2
+    }
   },
   {
     "id": 15,
@@ -977,7 +1037,7 @@
     "time": 190,
     "intro": "",
     "clear": "",
-    "unlock": "",
+    "unlock": "분무기",
     "obstacles": [
       {
         "x": 0,
@@ -994,7 +1054,12 @@
         "y": 0,
         "type": "books"
       }
-    ]
+    ],
+    "item": {
+      "name": "분무기",
+      "x": 2,
+      "y": 3
+    }
   },
   {
     "id": 17,
@@ -1047,7 +1112,7 @@
     "time": 190,
     "intro": "",
     "clear": "",
-    "unlock": "",
+    "unlock": "쿠션",
     "obstacles": [
       {
         "x": 4,
@@ -1064,7 +1129,12 @@
         "y": 2,
         "type": "books"
       }
-    ]
+    ],
+    "item": {
+      "name": "쿠션",
+      "x": 1,
+      "y": 2
+    }
   },
   {
     "id": 18,
@@ -1117,7 +1187,7 @@
     "time": 190,
     "intro": "",
     "clear": "",
-    "unlock": "",
+    "unlock": "탁상 램프",
     "obstacles": [
       {
         "x": 4,
@@ -1134,7 +1204,12 @@
         "y": 4,
         "type": "books"
       }
-    ]
+    ],
+    "item": {
+      "name": "탁상 램프",
+      "x": 3,
+      "y": 0
+    }
   },
   {
     "id": 19,
@@ -1187,7 +1262,7 @@
     "time": 175,
     "intro": "",
     "clear": "",
-    "unlock": "",
+    "unlock": "물뿌리개",
     "obstacles": [
       {
         "x": 0,
@@ -1209,7 +1284,12 @@
         "y": 0,
         "type": "basket_rd"
       }
-    ]
+    ],
+    "item": {
+      "name": "물뿌리개",
+      "x": 1,
+      "y": 3
+    }
   },
   {
     "id": 20,
@@ -1262,7 +1342,7 @@
     "time": 175,
     "intro": "마지막 한 칸.",
     "clear": "방이 반짝인다.\n그러고 보니… 나, 조금 움직이고 있구나.",
-    "unlock": "새 운동화",
+    "unlock": "장바구니",
     "obstacles": [
       {
         "x": 4,
@@ -1286,7 +1366,7 @@
       }
     ],
     "item": {
-      "name": "새 운동화",
+      "name": "장바구니",
       "x": 2,
       "y": 1
     }

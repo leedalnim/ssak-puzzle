@@ -318,6 +318,13 @@ function buildStages() {
 function ownedCount() {
   return stages.filter(s => s.id <= clearedMax && s.unlock).length;
 }
+/** 클리어한 판들의 unlock 을 모아 물건별 개수를 센다 (같은 물건은 ×2로 쌓인다) */
+function ownedTally() {
+  const t = {};
+  stages.filter(s => s.id <= clearedMax && s.unlock)
+        .forEach(s => { t[s.unlock] = (t[s.unlock] || 0) + 1; });
+  return t;
+}
 function progressSummary() {
   return {
     cleared: clearedMax,
@@ -343,26 +350,29 @@ function buildCollection() {
   });
 
   // ---- 목록 ----
-  const list = ITEMS.map((it, i) => ({ ...it, idx: i, got: i < owned }))
+  const tally = ownedTally();
+  const list = ITEMS.map(it => ({ ...it, count: tally[it.name] || 0 }))
                     .filter(it => collTab === 0 || it.area === collTab);
-  const gotN = list.filter(i => i.got).length;
+  const gotN = list.filter(i => i.count > 0).length;
   $('collCount').textContent = `${gotN} / ${list.length}`;
 
   const grid = $('collGrid');
   grid.innerHTML = '';
   if (!list.length) {
-    grid.appendChild(el('div', 'coll-empty', '이 장소는 준비 중이에요'));
+    grid.appendChild(el('div', 'coll-empty', '이 장소는 준비 중이다냥'));
   }
   list.forEach(it => {
-    const cell = el('button', 'slot ' + (it.got ? 'got' : 'lock'));
-    // 얻은 건 컬러(it_), 아직이면 회색(sil_)
-    cell.innerHTML = `<img class="thing" src="${KIT}${it.got ? 'it' : 'sil'}_${it.img}.png" alt="${it.name}">`
-      + (it.got ? '' : `<img class="pad" src="${KIT}sil_padlock.png" alt="">`);
+    const got = it.count > 0;
+    const cell = el('button', 'slot ' + (got ? 'got' : 'lock'));
+    // 얻은 건 컬러(it_), 아직이면 회색(sil_). 2개 이상이면 개수 뱃지를 붙인다.
+    cell.innerHTML = `<img class="thing" src="${KIT}${got ? 'it' : 'sil'}_${it.img}.png" alt="${it.name}">`
+      + (got ? (it.count > 1 ? `<span class="cnt">×${it.count}</span>` : '')
+             : `<img class="pad" src="${KIT}sil_padlock.png" alt="">`);
     cell.addEventListener('click', () => { Audio.sfxUI(); showItemInfo(it); });
     grid.appendChild(cell);
   });
   // 첫 진입엔 가장 최근에 얻은 물건을 보여준다
-  const last = [...list].reverse().find(i => i.got);
+  const last = [...list].reverse().find(i => i.count > 0);
   showItemInfo(last || null);
 }
 
@@ -372,8 +382,9 @@ function showItemInfo(it) {
     $('itemDesc').textContent = '뭘 모았는지 알려주겠다냥.';
     return;
   }
-  $('itemName').textContent = it.got ? it.name : '???';
-  $('itemDesc').textContent = it.got ? it.desc : '청소하다 보면 나온다냥.';
+  const got = it.count > 0;
+  $('itemName').textContent = got ? (it.count > 1 ? `${it.name} ×${it.count}` : it.name) : '???';
+  $('itemDesc').textContent = got ? it.desc : '청소하다 보면 나온다냥.';
 }
 
 function buildAchievements() {
