@@ -265,13 +265,14 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
   border-color: var(--wood); box-shadow: 0 2px 0 var(--wood-dark); }
 
 /* ---- 고양이가 말풍선으로 물건 이야기를 해준다 ---- */
+/* 말풍선은 고양이 머리 높이에 오도록 위로 올리고, 폭은 글에 맞게만 잡는다 */
 .cat-talk {
-  flex: 0 0 auto; width: calc(100% - 24px); margin-top: 8px;
-  display: flex; align-items: flex-end; gap: 6px;
+  flex: 0 0 auto; width: calc(100% - 24px); margin-top: 4px;
+  display: flex; align-items: flex-start; justify-content: flex-end; gap: 6px;
 }
-.talk-cat { flex: 0 0 auto; width: 76px; height: auto; }
+.talk-cat { flex: 0 0 auto; width: 76px; height: auto; margin-top: 18px; }
 .bubble {
-  position: relative; flex: 1; min-width: 0; min-height: 62px;
+  position: relative; max-width: 74%; min-height: 56px;
   display: flex; flex-direction: column; justify-content: center; gap: 3px;
   padding: 10px 16px 11px; text-align: left;
   background: linear-gradient(180deg, #fdf6e6, #f6e9cd);
@@ -280,13 +281,13 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 }
 /* 오른쪽 아래를 향한 꼬리 — 고양이 쪽을 가리킨다 */
 .bubble::after {
-  content: ''; position: absolute; right: -13px; bottom: 14px;
+  content: ''; position: absolute; right: -13px; bottom: 12px;
   width: 0; height: 0;
   border-left: 14px solid var(--wood);
   border-top: 9px solid transparent; border-bottom: 9px solid transparent;
 }
 .bubble::before {
-  content: ''; position: absolute; right: -8px; bottom: 17px; z-index: 1;
+  content: ''; position: absolute; right: -8px; bottom: 15px; z-index: 1;
   width: 0; height: 0;
   border-left: 10px solid #f8eed7;
   border-top: 6px solid transparent; border-bottom: 6px solid transparent;
