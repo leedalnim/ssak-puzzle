@@ -162,7 +162,10 @@ export class Game {
     Audio.sfxSparkle(8);
     const { x: cx, y: cy } = cellCenter(x, y, this.cols, this.rows);
     this.particles.sparkle(cx, cy, 16);
-    this.hooks.onItem?.(true);
+    // 캔버스 좌표 → 화면 좌표로 바꿔 넘긴다(날아가는 연출용)
+    const r = this.canvas.getBoundingClientRect();
+    const k = r.width / VW;
+    this.hooks.onItem?.(true, { x: r.left + cx * k, y: r.top + cy * k });
   }
 
   onTap(px, py) {

@@ -74,27 +74,28 @@ const KIT = 'assets/room/ui/kit/';
 // 수집품 — 아이템마다 컬러(it_*)와 회색(sil_*) 두 벌이 있다.
 // 얻으면 컬러, 아직이면 회색 실루엣으로 보여준다.
 // 앞 4개는 스테이지 해금 아이템(stages.json 의 unlock 과 이름이 같아야 매칭된다).
+// area = 어느 장소에서 나오는 물건인지(수집함 탭 분류). desc = 얻었을 때 읽는 한 줄.
 const ITEMS = [
-  { name: '구겨진 잠옷', img: 'pajama' },
-  { name: '노란 고무장갑', img: 'gloves' },
-  { name: '작은 화분', img: 'plant' },
-  { name: '새 운동화', img: 'sneakers' },
-  { name: '머그컵', img: 'mug' },
-  { name: '탁상 램프', img: 'lamp' },
-  { name: '분무기', img: 'spray' },
-  { name: '물뿌리개', img: 'can' },
-  { name: '티슈 상자', img: 'tissue' },
-  { name: '쿠션', img: 'cushion' },
-  { name: '장바구니', img: 'basket' },
+  { name: '구겨진 잠옷', img: 'pajama', area: 1, desc: '며칠을 입고 잔 잠옷. 이제야 벗어 던졌다.' },
+  { name: '노란 고무장갑', img: 'gloves', area: 1, desc: '찌든 얼룩과 맞설 첫 장비.' },
+  { name: '작은 화분', img: 'plant', area: 1, desc: '창가에 두니 방이 조금 살아났다.' },
+  { name: '새 운동화', img: 'sneakers', area: 1, desc: '이제 밖으로 나갈 준비.' },
+  { name: '머그컵', img: 'mug', area: 1, desc: '쌓아두던 컵. 씻어 두니 커피가 당긴다.' },
+  { name: '탁상 램프', img: 'lamp', area: 1, desc: '밤에도 방이 아늑해졌다.' },
+  { name: '분무기', img: 'spray', area: 1, desc: '한 번 뿌리면 얼룩이 쉽게 진다.' },
+  { name: '물뿌리개', img: 'can', area: 1, desc: '화분에 물 주는 게 하루 일과가 됐다.' },
+  { name: '티슈 상자', img: 'tissue', area: 1, desc: '손 닿는 곳에 두니 편하다.' },
+  { name: '쿠션', img: 'cushion', area: 1, desc: '앉을 자리가 생겼다는 뜻.' },
+  { name: '장바구니', img: 'basket', area: 1, desc: '장 보러 나갈 결심.' },
 ];
 
 // 도전과제 — progress(cleared, stars)로 진행도를 계산한다
 const ACHIEVEMENTS = [
-  { name: '첫걸음',     icon: 'ach_sprout', goal: 1,  get: p => p.cleared },
-  { name: '반짝 청소',  icon: 'ach_mop',    goal: 5,  get: p => p.cleared },
-  { name: '깔끔한 하루', icon: 'ach_bucket', goal: 10, get: p => p.cleared },
-  { name: '청소 달인',  icon: 'ach_vacuum', goal: 20, get: p => p.cleared },
-  { name: '완벽한 방',  icon: 'ach_shelf',  goal: 10, get: p => p.threeStars },
+  { name: '첫걸음',     icon: 'ach_sprout', goal: 1,  unit: '판', how: '스테이지 1판 클리어',   get: p => p.cleared },
+  { name: '반짝 청소',  icon: 'ach_mop',    goal: 5,  unit: '판', how: '스테이지 5판 클리어',   get: p => p.cleared },
+  { name: '깔끔한 하루', icon: 'ach_bucket', goal: 10, unit: '판', how: '스테이지 10판 클리어',  get: p => p.cleared },
+  { name: '청소 달인',  icon: 'ach_vacuum', goal: 20, unit: '판', how: '스테이지 20판 모두 클리어', get: p => p.cleared },
+  { name: '완벽한 방',  icon: 'ach_shelf',  goal: 10, unit: '판', how: '별 3개로 10판 클리어',  get: p => p.threeStars },
 ];
 
 function loadProgress() { clearedMax = parseInt(localStorage.getItem(PROG_KEY) || '0', 10); }
@@ -119,18 +120,52 @@ function syncScale() {
   document.documentElement.style.setProperty('--k', k || 1);
 }
 
+/** 주운 물건이 바닥에서 상단 수집 표시로 날아간다 */
+let flyTimer = null;
+function flyToHud(item, from, done) {
+  const el = $('flyItem');
+  const target = $('hudItem').getBoundingClientRect();
+  clearTimeout(flyTimer);
+  el.src = `${KIT}it_${item.img}.png`;
+  el.className = 'fly-item';                        // hidden 해제
+  // 시작 위치(바닥) — transition 없이 먼저 배치
+  el.style.transition = 'none';
+  el.style.opacity = '1';
+  const s = 120 * parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--k') || 1);
+  el.style.width = el.style.height = `${s}px`;
+  el.style.left = `${from.x - s / 2}px`;
+  el.style.top = `${from.y - s / 2}px`;
+  // 다음 프레임에 목적지로
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    el.style.transition = '';
+    const ts = target.width * 0.62;
+    el.style.width = el.style.height = `${ts}px`;
+    el.style.left = `${target.left + target.width / 2 - ts / 2}px`;
+    el.style.top = `${target.top + target.height / 2 - ts / 2}px`;
+    el.style.opacity = '0';
+  }));
+  flyTimer = setTimeout(() => { el.classList.add('hidden'); done?.(); }, 560);
+}
+
 // ----------------------------- 게임 훅 -----------------------------
 function makeGame() {
   game = new Game($('game'), {
     onTiles: (left) => { $('hudTiles').textContent = String(left); },
     // got === null 이면 이 판엔 수집품이 없다
-    onItem: (got) => {
+    onItem: (got, from) => {
       const box = $('hudItem');
       const st = stages[current];
       const item = st?.item && ITEMS.find(i => i.name === st.item.name);
       box.classList.toggle('hidden', got === null || !item);
       if (!item) return;
-      // 아직이면 회색, 주우면 컬러
+      if (got && from) {
+        // 바닥 → HUD 로 날아간 뒤에 표시가 컬러로 바뀐다
+        flyToHud(item, from, () => {
+          box.querySelector('img').src = `${KIT}it_${item.img}.png`;
+          box.classList.add('got');
+        });
+        return;
+      }
       box.querySelector('img').src = `${KIT}${got ? 'it' : 'sil'}_${item.img}.png`;
       box.classList.toggle('got', !!got);
     },
@@ -290,20 +325,55 @@ function progressSummary() {
   };
 }
 
+let collTab = 0;                                 // 0 = 전체, 그 외 = AREAS 인덱스+1
+
+/** 수집함 — 장소별 탭(전체/자취방/편의점…)으로 걸러 보여준다.
+ *  나중에 장소가 늘어도 AREAS 만 늘리면 탭이 따라 생긴다. */
 function buildCollection() {
   const owned = ownedCount();
-  $('collCount').textContent = `${owned} / ${ITEMS.length}`;
+  // ---- 탭 ----
+  const tabs = $('collTabs');
+  tabs.innerHTML = '';
+  const defs = [{ label: '전체', area: 0 },
+                ...AREAS.map((a, i) => ({ label: a.name, area: i + 1, coming: a.coming }))];
+  defs.forEach(d => {
+    const b = el('button', 'coll-tab' + (collTab === d.area ? ' on' : ''), d.label);
+    b.addEventListener('click', () => { Audio.sfxUI(); collTab = d.area; buildCollection(); });
+    tabs.appendChild(b);
+  });
+
+  // ---- 목록 ----
+  const list = ITEMS.map((it, i) => ({ ...it, idx: i, got: i < owned }))
+                    .filter(it => collTab === 0 || it.area === collTab);
+  const gotN = list.filter(i => i.got).length;
+  $('collCount').textContent = `${gotN} / ${list.length}`;
+
   const grid = $('collGrid');
   grid.innerHTML = '';
-  ITEMS.forEach((it, i) => {
-    const got = i < owned;                       // 앞에서부터 순서대로 해금
-    const cell = el('div', 'slot ' + (got ? 'got' : 'lock'));
+  if (!list.length) {
+    grid.appendChild(el('div', 'coll-empty', '이 장소는 준비 중이에요'));
+  }
+  list.forEach(it => {
+    const cell = el('button', 'slot ' + (it.got ? 'got' : 'lock'));
     // 얻은 건 컬러(it_), 아직이면 회색(sil_)
-    cell.innerHTML = `<img class="thing" src="${KIT}${got ? 'it' : 'sil'}_${it.img}.png" alt="${it.name}">`
-      + (got ? '' : `<img class="pad" src="${KIT}sil_padlock.png" alt="">`);
-    cell.title = got ? it.name : '아직 못 얻었어요';
+    cell.innerHTML = `<img class="thing" src="${KIT}${it.got ? 'it' : 'sil'}_${it.img}.png" alt="${it.name}">`
+      + (it.got ? '' : `<img class="pad" src="${KIT}sil_padlock.png" alt="">`);
+    cell.addEventListener('click', () => { Audio.sfxUI(); showItemInfo(it); });
     grid.appendChild(cell);
   });
+  // 첫 진입엔 가장 최근에 얻은 물건을 보여준다
+  const last = [...list].reverse().find(i => i.got);
+  showItemInfo(last || null);
+}
+
+function showItemInfo(it) {
+  if (!it) {
+    $('itemName').textContent = '물건을 눌러보세요';
+    $('itemDesc').textContent = '모은 물건의 이야기를 볼 수 있어요.';
+    return;
+  }
+  $('itemName').textContent = it.got ? it.name : '???';
+  $('itemDesc').textContent = it.got ? it.desc : '청소하다 보면 발견할 수 있어요.';
 }
 
 function buildAchievements() {
@@ -317,8 +387,12 @@ function buildAchievements() {
     const row = el('div', 'ach-row ' + (done ? 'done' : 'lock'));
     row.innerHTML =
       `<img class="ach-medal" src="${KIT}${a.icon}.png" alt="">`
-      + `<div class="ach-mid"><div class="ach-name">${a.name}</div>`
-      + `<div class="ach-bar"><i style="width:${Math.round(cur / a.goal * 100)}%"></i></div></div>`
+      + `<div class="ach-mid">`
+      +   `<div class="ach-top"><span class="ach-name">${a.name}</span>`
+      +     `<span class="ach-num">${cur} / ${a.goal}${a.unit}</span></div>`
+      +   `<div class="ach-how">${done ? '달성했어요!' : a.how}</div>`
+      +   `<div class="ach-bar"><i style="width:${Math.round(cur / a.goal * 100)}%"></i></div>`
+      + `</div>`
       + `<img class="ach-st" src="${KIT}${done ? 'st_star' : 'st_lock'}.png" alt="">`;
     list.appendChild(row);
   });
