@@ -236,7 +236,7 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
   position: relative; flex: 1; min-height: 0; width: calc(100% - 32px);
   display: flex; flex-direction: column; align-items: center; gap: 10px;
   /* 큰 패널 에셋을 9-slice로 늘려 어떤 높이에서도 테두리가 유지되게 */
-  border-image: url(../assets/room/ui/kit/panel_big.png) 74 fill stretch;
+  border-image: url(../assets/room/ui/kit/panel_big.png) 38 fill stretch;
   border-width: 20px; border-style: solid;
   padding: 12px 10px 14px; overflow: hidden;
 }
@@ -245,8 +245,10 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
   flex: 0 0 auto; min-width: 96px; height: 34px; display: flex;
   align-items: center; justify-content: center; padding: 0 14px 2px;
   font-size: 17px; font-weight: 800; color: #6b4a1e;
-  border-image: url(../assets/room/ui/kit/pill_honey.png) 70 fill stretch;
-  border-width: 15px 34px; border-style: solid;
+  /* 에셋을 늘리면 좌우 끝 곡률이 어긋나 뾰족해진다 → 같은 톤의 CSS 알약으로 그린다 */
+  background: linear-gradient(180deg, #f2d79a, #e3bb72);
+  border: 3px solid #c79a5c; border-radius: 999px;
+  box-shadow: 0 3px 0 #a87e46, inset 0 1px 0 rgba(255, 248, 226, .7);
 }
 
 /* ---- 장소별 분류 탭 ---- */
@@ -306,8 +308,10 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 .ach-row {
   flex: 0 0 auto; min-height: 86px; display: flex; align-items: center; gap: 10px;
   /* 통짜로 늘리면 둥근 좌우 끝이 눌린다 → 9-slice */
-  border-image: url(../assets/room/ui/kit/row_base.png) 78 fill stretch;
-  border-width: 16px 40px; border-style: solid;
+  /* 에셋 568×172, 둥근 끝 좌우 66px·상하 48px → slice 는 실측값 그대로,
+     border-width 는 표시 배율(약 0.42)을 곱해 준다 */
+  border-image: url(../assets/room/ui/kit/row_base.png) 48 66 fill stretch;
+  border-width: 20px 28px; border-style: solid;
   padding: 6px 6px 8px;
 }
 .ach-medal { width: 52px; height: 52px; object-fit: contain; flex: 0 0 auto; }
@@ -316,13 +320,14 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 .ach-name { font-size: 16px; font-weight: 800; color: #5c4222; text-align: left; }
 .ach-num { font-size: 12px; font-weight: 800; color: #8a6a3c; white-space: nowrap; }
 .ach-how { font-size: 11.5px; font-weight: 700; color: #9a8058; text-align: left; }
-.ach-bar { position: relative; height: 14px; width: 100%;
-  border-image: url(../assets/room/ui/kit/bar_track.png) 26 fill stretch;
-  border-width: 7px 20px; border-style: solid; }
-.ach-bar > i { position: absolute; left: -20px; top: -7px; bottom: -7px; display: block;
-  min-width: 40px;
-  border-image: url(../assets/room/ui/kit/bar_fill.png) 26 fill stretch;
-  border-width: 7px 20px; border-style: solid; }
+.ach-bar { position: relative; height: 15px; width: 100%; overflow: hidden;
+  border-radius: 99px; background: rgba(150, 122, 88, .22);
+  box-shadow: inset 0 1px 2px rgba(120, 92, 60, .25); }
+/* 채움은 이미지 대신 단색 그라데이션 — 어떤 길이에서도 안 깨진다 */
+.ach-bar > i { position: absolute; left: 0; top: 0; bottom: 0; display: block;
+  border-radius: 99px; min-width: 6px;
+  background: linear-gradient(180deg, #a8bf8a, #86a466);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45); }
 .ach-st { max-width: 26px; max-height: 30px; width: auto; height: auto; flex: 0 0 auto; }
 .ach-row.done { filter: drop-shadow(0 0 10px rgba(255, 205, 105, .5)); }
 .ach-row.lock .ach-name { color: #8b7757; }
