@@ -76,17 +76,17 @@ const KIT = 'assets/room/ui/kit/';
 // 앞 4개는 스테이지 해금 아이템(stages.json 의 unlock 과 이름이 같아야 매칭된다).
 // area = 어느 장소에서 나오는 물건인지(수집함 탭 분류). desc = 얻었을 때 읽는 한 줄.
 const ITEMS = [
-  { name: '구겨진 잠옷', img: 'pajama', area: 1, desc: '며칠을 입고 잔 잠옷. 이제야 벗어 던졌다.' },
-  { name: '노란 고무장갑', img: 'gloves', area: 1, desc: '찌든 얼룩과 맞설 첫 장비.' },
-  { name: '작은 화분', img: 'plant', area: 1, desc: '창가에 두니 방이 조금 살아났다.' },
-  { name: '새 운동화', img: 'sneakers', area: 1, desc: '이제 밖으로 나갈 준비.' },
-  { name: '머그컵', img: 'mug', area: 1, desc: '쌓아두던 컵. 씻어 두니 커피가 당긴다.' },
-  { name: '탁상 램프', img: 'lamp', area: 1, desc: '밤에도 방이 아늑해졌다.' },
-  { name: '분무기', img: 'spray', area: 1, desc: '한 번 뿌리면 얼룩이 쉽게 진다.' },
-  { name: '물뿌리개', img: 'can', area: 1, desc: '화분에 물 주는 게 하루 일과가 됐다.' },
-  { name: '티슈 상자', img: 'tissue', area: 1, desc: '손 닿는 곳에 두니 편하다.' },
-  { name: '쿠션', img: 'cushion', area: 1, desc: '앉을 자리가 생겼다는 뜻.' },
-  { name: '장바구니', img: 'basket', area: 1, desc: '장 보러 나갈 결심.' },
+  { name: '구겨진 잠옷', img: 'pajama', area: 1, desc: '며칠을 입고 잔 잠옷이다냥. 드디어 벗어 던졌다냥!' },
+  { name: '노란 고무장갑', img: 'gloves', area: 1, desc: '찌든 얼룩과 맞설 첫 장비다냥.' },
+  { name: '작은 화분', img: 'plant', area: 1, desc: '창가에 두니 방이 좀 살아났다냥.' },
+  { name: '새 운동화', img: 'sneakers', area: 1, desc: '이제 밖으로 나갈 준비 완료다냥!' },
+  { name: '머그컵', img: 'mug', area: 1, desc: '씻어 두니 커피가 당긴다냥.' },
+  { name: '탁상 램프', img: 'lamp', area: 1, desc: '밤에도 방이 아늑해졌다냥.' },
+  { name: '분무기', img: 'spray', area: 1, desc: '한 번 뿌리면 얼룩이 쓱 진다냥.' },
+  { name: '물뿌리개', img: 'can', area: 1, desc: '물 주는 게 하루 일과가 됐다냥.' },
+  { name: '티슈 상자', img: 'tissue', area: 1, desc: '손 닿는 곳에 두니 편하다냥.' },
+  { name: '쿠션', img: 'cushion', area: 1, desc: '앉을 자리가 생겼다는 뜻이다냥.' },
+  { name: '장바구니', img: 'basket', area: 1, desc: '장 보러 나갈 결심이다냥!' },
 ];
 
 // 도전과제 — progress(cleared, stars)로 진행도를 계산한다
@@ -368,12 +368,12 @@ function buildCollection() {
 
 function showItemInfo(it) {
   if (!it) {
-    $('itemName').textContent = '물건을 눌러보세요';
-    $('itemDesc').textContent = '모은 물건의 이야기를 볼 수 있어요.';
+    $('itemName').textContent = '물건을 눌러보라냥';
+    $('itemDesc').textContent = '뭘 모았는지 알려주겠다냥.';
     return;
   }
   $('itemName').textContent = it.got ? it.name : '???';
-  $('itemDesc').textContent = it.got ? it.desc : '청소하다 보면 발견할 수 있어요.';
+  $('itemDesc').textContent = it.got ? it.desc : '청소하다 보면 나온다냥.';
 }
 
 function buildAchievements() {
