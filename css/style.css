@@ -151,7 +151,7 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
   display: flex; align-items: center; justify-content: center;
   filter: drop-shadow(0 calc(6px * var(--k)) calc(10px * var(--k)) rgba(110, 84, 56, .35));
 }
-.hud-slot img { max-width: calc(72% * var(--s, 1)); max-height: calc(72% * var(--s, 1));
+.hud-slot img { max-width: calc(64% * var(--s, 1)); max-height: calc(64% * var(--s, 1));
   width: auto; height: auto; object-fit: contain;
   transition: opacity .3s ease; opacity: .9; }
 .hud-slot.got img { opacity: 1; }
@@ -327,9 +327,12 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; padding: 2px;
   align-content: start;
   scrollbar-width: none;
-  /* 더 볼 게 남았을 때 아래쪽이 부드럽게 사라지도록 — 뚝 잘린 것처럼 보이지 않게 */
-  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent 100%);
-  mask-image: linear-gradient(180deg, #000 calc(100% - 22px), transparent 100%);
+}
+/* 아래에 더 있을 때만 끝을 흐리게 — 항상 걸어 두면 있는지도 모르고, 잘린 줄로 보인다.
+   .more-below 는 JS 가 스크롤 위치를 보고 붙였다 뗀다. */
+.slot-grid.more-below {
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 40px), transparent 100%);
+  mask-image: linear-gradient(180deg, #000 calc(100% - 40px), transparent 100%);
 }
 .slot-grid::-webkit-scrollbar { display: none; }
 .slot {
@@ -345,7 +348,7 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 .slot.lock { background-image: url(../assets/room/ui/kit/slot_lock.png); }
 .slot:active { transform: translateY(2px); }
 /* --s = 물건별 기준 배율(JS가 넣는다) — 실제 크기 느낌을 맞춘다 */
-.slot > img.thing { max-width: calc(78% * var(--s, 1)); max-height: calc(78% * var(--s, 1));
+.slot > img.thing { max-width: calc(70% * var(--s, 1)); max-height: calc(70% * var(--s, 1));
   width: auto; height: auto; object-fit: contain; }
 /* 획득한 칸은 뒤에 은은한 금빛 */
 .slot.got::before {
@@ -496,8 +499,8 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
   content: ''; position: absolute; width: 84%; height: 84%; border-radius: 50%;
   background: radial-gradient(closest-side, rgba(255, 205, 105, .65), rgba(255, 205, 105, 0));
 }
-.reward img { position: relative; max-width: calc(68% * var(--s, 1));
-  max-height: calc(68% * var(--s, 1)); object-fit: contain; }
+.reward img { position: relative; max-width: calc(60% * var(--s, 1));
+  max-height: calc(60% * var(--s, 1)); object-fit: contain; }
 /* 별 3개 보너스로 받은 조각 표시 */
 .rw-star {
   position: absolute; top: -5px; right: -5px; width: 22px; height: 22px; z-index: 2;

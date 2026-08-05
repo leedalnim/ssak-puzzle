@@ -426,6 +426,18 @@ function buildCollection() {
   // 첫 진입엔 가장 최근에 해금한 물건을 보여준다
   const last = [...list].reverse().find(i => i.done);
   showItemInfo(last || null);
+  syncGridFade();
+}
+
+/** 아래에 더 볼 게 남았을 때만 격자 끝을 흐리게 한다.
+ *  (항상 흐리면 잘린 줄로 보이고, 아예 없으면 더 있는 줄 모른다) */
+function syncGridFade() {
+  const g = $('collGrid');
+  // buildCollection 은 화면을 보여주기 **전에** 돌 때가 있다(그때는 크기가 전부 0).
+  // 다음 프레임에 재야 실제 레이아웃 값을 얻는다.
+  requestAnimationFrame(() => {
+    g.classList.toggle('more-below', g.scrollHeight - g.scrollTop - g.clientHeight > 4);
+  });
 }
 
 function showItemInfo(it) {
@@ -515,6 +527,8 @@ function wireUI() {
       String(ACHIEVEMENTS.filter(a => a.get(p) >= a.goal).length));
     show('screenAchieve');
   });
+  $('collGrid').addEventListener('scroll', syncGridFade, { passive: true });
+  window.addEventListener('resize', () => { if (!$('screenCollection').classList.contains('hidden')) syncGridFade(); });
   $('btnCollBack').addEventListener('click', () => { Audio.sfxUI(); refreshBadges(); show('screenTitle'); });
   $('btnAchBack').addEventListener('click', () => { Audio.sfxUI(); refreshBadges(); show('screenTitle'); });
 
