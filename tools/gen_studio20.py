@@ -125,10 +125,13 @@ NEEDS = {
     '장바구니': 5, '새 운동화': 5,
 }   # 합계 36조각
 
-# 판마다 떨어지는 조각 — 이야기 순서(잠옷 → 운동화)대로 해금되도록 짠 표.
-# 개수 곡선: 1~8판 1개, 9~15판 2개, 16~19판 3개, 마지막 20판은 2개.
-# 8 + 14 + 12 + 2 = 36 으로 NEEDS 합계와 정확히 맞아, 20판을 다 깨면 11종이 전부 열린다.
-# 해금 시점: 1·3·5·8·11·13·14·16·19·20·20판.
+# 어떤 조각이 몇 개 떨어질지는 **게임이 그때그때 정한다**(js/main.js 의 plannedItems).
+#   판당 개수 = ceil(남은 조각 / 남은 판)  ← 마지막 판까지 골고루 떨어지게
+# 별 3개 보너스는 '조각 하나 미리 당겨 받기'라 총량은 그대로다.
+# 그래서 생성기는 **자리(spots)만 3칸씩** 잡아 주고, 아래 표는 쓰지 않는다.
+#
+# 다만 예전 버전으로 진행하던 사람의 저장값을 옮길 때 쓰므로 그대로 남겨 둔다
+# (unlocks = 그 판까지 받았던 조각 목록).
 DROPS = [
     ['구겨진 잠옷'],                              # 1  ← 잠옷 해금
     ['머그컵'],                                   # 2
@@ -151,6 +154,9 @@ DROPS = [
     ['물뿌리개', '장바구니', '새 운동화'],        # 19 ← 물뿌리개
     ['장바구니', '새 운동화'],                    # 20 ← 장바구니 · 새 운동화
 ]
+
+
+MAX_SPOTS = 3          # 판마다 잡아 두는 조각 자리 수(실제 사용 개수는 게임이 정한다)
 
 
 def check_drops():
@@ -199,7 +205,7 @@ def item_spots(n, obstacles, path, i, count):
 
 if __name__ == '__main__':
     total_pieces = check_drops()
-    print(f"  조각 배치표 OK — {len(NEEDS)}종 / 총 {total_pieces}조각", file=sys.stderr)
+    print(f"  이관용 배치표 OK — {len(NEEDS)}종 / 총 {total_pieces}조각", file=sys.stderr)
     stages, solutions = [], {}
     for i in range(1, 21):
         n, max_dur, ocount, time_limit = schedule(i)
@@ -210,18 +216,18 @@ if __name__ == '__main__':
         if not ok:
             raise RuntimeError(f'스테이지 {i} 검증 실패: {msg}')
         theme, intro, clear = STORY.get(i, (f'{i}번째 칸', '', ''))
-        drops = DROPS[i - 1]             # 이 판에 흩뿌려지는 조각들
         solutions[i] = [list(p) for p in path]
+        # 조각이 놓일 자리를 **항상 3칸** 잡아 둔다. 실제로 몇 개를 쓸지는 게임이 정한다.
+        spots = item_spots(n, obstacles, path, i, MAX_SPOTS)
+        if len(spots) < MAX_SPOTS:
+            raise RuntimeError(f'스테이지 {i}: 조각 자리 {MAX_SPOTS}칸을 못 잡았다')
         st = {
             'id': i, 'act': 1, 'place': '자취방', 'sub': i, 'theme': theme, 'bg': 'studio',
             'grid': grid, 'start': {'x': 0, 'y': 0}, 'time': time_limit,
-            'intro': intro, 'clear': clear, 'unlocks': drops, 'obstacles': obstacles,
+            'intro': intro, 'clear': clear, 'obstacles': obstacles,
+            'spots': spots,
+            'unlocks': DROPS[i - 1],     # 구버전 저장값 이관용(게임 진행에는 안 쓴다)
         }
-        # 조각은 바닥에 흩뿌려 둔다(지나가면 줍는다). 자리가 모자라면 그만큼만.
-        spots = item_spots(n, obstacles, path, i, len(drops))
-        if len(spots) < len(drops):
-            raise RuntimeError(f'스테이지 {i}: 조각 {len(drops)}개를 놓을 자리가 없다')
-        st['items'] = [{'name': nm, **sp} for nm, sp in zip(drops, spots)]
         stages.append(st)
     with open('stages/solutions.json', 'w', encoding='utf-8') as f:
         json.dump(solutions, f, ensure_ascii=False)

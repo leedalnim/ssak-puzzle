@@ -57,6 +57,14 @@ function shortOf(name, extra = 0) {
   const it = ITEMS.find(i => i.name === name);
   return it ? it.need - (pieces[name] || 0) - extra : 0;
 }
+/** 아직 모아야 할 조각 총합 */
+function shortTotal() {
+  return ITEMS.reduce((s, it) => s + Math.max(0, shortOf(it.name)), 0);
+}
+/** 아직 안 깬 판 수(지금 판 포함) */
+function stagesLeft() {
+  return Math.max(1, stages.filter(s => s.id > clearedMax).length);
+}
 
 /** 별 3개 보너스 조각은 **완성에 가장 가까운** 잠긴 물건에게 준다.
  *  (남은 조각이 적은 순 → 같으면 이야기 순서. 다 열었으면 줄 게 없다) */
@@ -267,21 +275,25 @@ function startStage(idx) {
   }
 }
 
-/** 이 판에 실제로 떨어질 조각들.
- *  예정된 물건을 이미 다 모았다면(별 3개 보너스로 먼저 완성한 경우) 그 자리를
- *  **아직 못 모은 물건**으로 바꿔 준다. 헛조각을 줍는 일도, 필요 수보다 많이
- *  쌓이는 일도 없다. 바꿔 줄 물건이 없으면(전부 해금) 그 자리는 비운다. */
+/** 이 판에 떨어질 조각 — 개수와 종류를 그때그때 정한다.
+ *
+ *  개수: ceil(남은 조각 / 남은 판). 남은 판으로 나누니 **마지막 판까지 골고루**
+ *        떨어지고, 필요 수보다 많이 쌓이지도 않는다. 자리는 판마다 3칸까지.
+ *  종류: 완성에 가까운 것부터(남은 조각이 적은 순 → 같으면 이야기 순서).
+ *        덕분에 잠옷 → 머그컵 → … → 운동화 순서가 자연스럽게 지켜진다.
+ *  한 판에 같은 물건이 두 번 나오지는 않는다. */
 function plannedItems(st) {
-  const taken = {};                       // 이번 판에서 이미 배정한 몫
-  const free = (n) => shortOf(n, taken[n] || 0) > 0;
-  const out = [];
-  for (const it of st.items || []) {
-    let name = free(it.name) ? it.name : (ITEMS.find(i => free(i.name)) || {}).name;
-    if (!name) continue;                  // 다 모았으면 이 자리는 비운다
-    taken[name] = (taken[name] || 0) + 1;
-    out.push({ ...it, name });
-  }
-  return out;
+  const spots = st.spots || [];
+  const total = shortTotal();
+  if (!total || !spots.length) return [];
+  // 이미 깬 판을 다시 하면 조각은 안 나온다. (적립은 첫 클리어에만 되므로,
+  //  주웠는데 안 들어오는 헛걸음이 된다. 다시 도는 이유는 별 3개 보너스다)
+  if (st.id <= clearedMax) return [];
+  const want = Math.min(spots.length, Math.max(1, Math.ceil(total / stagesLeft())));
+  const pick = ITEMS.filter(it => shortOf(it.name) > 0)
+                    .sort((a, b) => shortOf(a.name) - shortOf(b.name))
+                    .slice(0, want);
+  return pick.map((it, i) => ({ ...spots[i], name: it.name }));
 }
 
 function beginStage(idx) {
@@ -300,9 +312,11 @@ function onStageClear(elapsed) {
   // 처음 깬 판에서만 조각이 쌓인다. 바닥에서 실제로 주운 것을 그대로 적립한다.
   const got = isFirstClear ? game.items.map(i => i.name) : [];
   got.forEach(addPiece);
-  // 별 3개 보너스 — 판마다 한 번만. 나중에 다시 와서 3별을 따도 받을 수 있다.
+  // 별 3개 보너스 = **조각 하나 미리 당겨 받기**. 총량은 그대로라 뒤가 마르지 않는다.
+  // 남은 조각이 '남은 판 수'보다 많을 때만 준다(= 당겨 올 여유가 있을 때만).
+  // 판마다 한 번만이고, 나중에 다시 와서 3별을 따도 받을 수 있다.
   let bonusName = null;
-  if (s >= 3 && !bonus[st.id]) {
+  if (s >= 3 && !bonus[st.id] && shortTotal() > stages.filter(x => x.id > clearedMax).length) {
     bonusName = bonusPick();
     if (bonusName) { bonus[st.id] = bonusName; saveBonus(); addPiece(bonusName); }
   }

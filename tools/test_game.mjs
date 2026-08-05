@@ -25,7 +25,9 @@ const sols = JSON.parse(fs.readFileSync(new URL('../stages/solutions.json', impo
 let pass = 0, fail = 0;
 for (const st of stages) {
   const g = new Game(makeCanvas(), {});
-  g.loadStage(st);
+  // 실제 게임은 js/main.js 가 자리(spots) 중 필요한 만큼만 골라 넣는다.
+  // 여기서는 **모든 자리**에 조각을 놓고, 하나도 안 놓치는지 본다.
+  g.loadStage({ ...st, items: (st.spots || []).map((sp, k) => ({ ...sp, name: '조각' + k })) });
   const sol = sols[String(st.id)];
   if (!sol) { console.log(`#${st.id} 해답 없음`); fail++; continue; }
   // solutions.json 은 '밟는 칸 좌표'의 나열이라 이웃 간 차이를 방향으로 바꿔 재생한다
