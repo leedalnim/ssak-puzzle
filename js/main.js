@@ -8,6 +8,7 @@ const $ = (id) => document.getElementById(id);
 const PROG_KEY = 'ssak_cleared';
 const STAR_KEY = 'ssak_stars';
 const BONUS_KEY = 'ssak_bonus';   // { 스테이지id: 별3개 보너스로 받은 물건 이름 }
+const PIECE_KEY = 'ssak_pieces';  // { 물건이름: 모은 조각 수 } — 필요 수를 넘지 않는다
 const ST = 'assets/room/ui/stage/';
 
 // 장소(영역) — 자취방만 실제 콘텐츠, 나머지는 곧 공개
@@ -26,19 +27,43 @@ let pendingIntro = null;
 let areaIdx = 0;
 let stars = {};
 let bonus = {};
+let pieces = {};
 
 function loadStars() { try { stars = JSON.parse(localStorage.getItem(STAR_KEY) || '{}'); } catch { stars = {}; } }
 function saveStars() { localStorage.setItem(STAR_KEY, JSON.stringify(stars)); }
 function loadBonus() { try { bonus = JSON.parse(localStorage.getItem(BONUS_KEY) || '{}'); } catch { bonus = {}; } }
 function saveBonus() { localStorage.setItem(BONUS_KEY, JSON.stringify(bonus)); }
+function savePieces() { localStorage.setItem(PIECE_KEY, JSON.stringify(pieces)); }
+
+/** 조각 보유량 — 예전에는 '깬 판 번호'에서 역산했지만, 이제 실제로 주운 것을 센다.
+ *  (보너스로 먼저 완성하면 뒤 판의 조각이 다른 물건으로 바뀌므로 역산이 불가능하다)
+ *  저장된 값이 없는 기존 사용자는 옛 방식으로 한 번 계산해 옮겨 준다. */
+function loadPieces() {
+  try { pieces = JSON.parse(localStorage.getItem(PIECE_KEY) || 'null'); } catch { pieces = null; }
+  if (pieces) return;
+  pieces = {};
+  stages.filter(s => s.id <= clearedMax).forEach(s => (s.unlocks || []).forEach(n => addPiece(n)));
+  Object.values(bonus).forEach(n => addPiece(n));
+  savePieces();
+}
+/** 조각 하나 추가 — **필요 수를 넘겨 쌓이지 않는다** */
+function addPiece(name) {
+  const it = ITEMS.find(i => i.name === name);
+  if (!it) return;
+  pieces[name] = Math.min(it.need, (pieces[name] || 0) + 1);
+}
+/** 이 물건에 아직 더 필요한 조각 수 */
+function shortOf(name, extra = 0) {
+  const it = ITEMS.find(i => i.name === name);
+  return it ? it.need - (pieces[name] || 0) - extra : 0;
+}
 
 /** 별 3개 보너스 조각은 **완성에 가장 가까운** 잠긴 물건에게 준다.
  *  (남은 조각이 적은 순 → 같으면 이야기 순서. 다 열었으면 줄 게 없다) */
 function bonusPick() {
-  const t = ownedTally();
-  const locked = ITEMS.filter(it => (t[it.name] || 0) < it.need);
+  const locked = ITEMS.filter(it => shortOf(it.name) > 0);
   if (!locked.length) return null;
-  locked.sort((a, b) => (a.need - (t[a.name] || 0)) - (b.need - (t[b.name] || 0)));
+  locked.sort((a, b) => shortOf(a.name) - shortOf(b.name));
   return locked[0].name;
 }
 /** 클리어 시간 대비 별점(1~3). par = 총 걸레질 횟수(격자 합) 기준 */
@@ -242,10 +267,28 @@ function startStage(idx) {
   }
 }
 
+/** 이 판에 실제로 떨어질 조각들.
+ *  예정된 물건을 이미 다 모았다면(별 3개 보너스로 먼저 완성한 경우) 그 자리를
+ *  **아직 못 모은 물건**으로 바꿔 준다. 헛조각을 줍는 일도, 필요 수보다 많이
+ *  쌓이는 일도 없다. 바꿔 줄 물건이 없으면(전부 해금) 그 자리는 비운다. */
+function plannedItems(st) {
+  const taken = {};                       // 이번 판에서 이미 배정한 몫
+  const free = (n) => shortOf(n, taken[n] || 0) > 0;
+  const out = [];
+  for (const it of st.items || []) {
+    let name = free(it.name) ? it.name : (ITEMS.find(i => free(i.name)) || {}).name;
+    if (!name) continue;                  // 다 모았으면 이 자리는 비운다
+    taken[name] = (taken[name] || 0) + 1;
+    out.push({ ...it, name });
+  }
+  return out;
+}
+
 function beginStage(idx) {
   show(null);
   syncScale();
-  game.loadStage(stages[idx]);
+  const st = stages[idx];
+  game.loadStage({ ...st, items: plannedItems(st) });
 }
 
 function onStageClear(elapsed) {
@@ -254,15 +297,19 @@ function onStageClear(elapsed) {
   saveProgress(st.id);
   const s = starsFor(st, elapsed);
   if (s > (stars[st.id] || 0)) { stars[st.id] = s; saveStars(); }
+  // 처음 깬 판에서만 조각이 쌓인다. 바닥에서 실제로 주운 것을 그대로 적립한다.
+  const got = isFirstClear ? game.items.map(i => i.name) : [];
+  got.forEach(addPiece);
   // 별 3개 보너스 — 판마다 한 번만. 나중에 다시 와서 3별을 따도 받을 수 있다.
   let bonusName = null;
   if (s >= 3 && !bonus[st.id]) {
     bonusName = bonusPick();
-    if (bonusName) { bonus[st.id] = bonusName; saveBonus(); }
+    if (bonusName) { bonus[st.id] = bonusName; saveBonus(); addPiece(bonusName); }
   }
+  if (got.length || bonusName) savePieces();
   Toss.track('stage_clear', { stage: st.id, elapsed, stars: s, bonus: bonusName || '' });
   $('clearStory').textContent = st.clear || '';
-  showReward(isFirstClear ? st.unlocks : null, bonusName);
+  showReward(isFirstClear ? got : null, bonusName);
   playStars(s);
   $('btnNext').textContent = current + 1 < stages.length ? '다음 스테이지' : '처음으로';
   refreshBadges();
@@ -366,14 +413,8 @@ function ownedCount() {
   const t = ownedTally();
   return ITEMS.filter(it => (t[it.name] || 0) >= it.need).length;
 }
-/** 물건별 **조각 수** — 깬 판에서 주운 조각 + 별 3개 보너스 조각 */
-function ownedTally() {
-  const t = {};
-  const add = (nm) => { if (nm) t[nm] = (t[nm] || 0) + 1; };
-  stages.filter(s => s.id <= clearedMax).forEach(s => (s.unlocks || []).forEach(add));
-  Object.values(bonus).forEach(add);
-  return t;
-}
+/** 물건별 조각 수 — 실제로 모은 값(필요 수를 넘지 않는다) */
+function ownedTally() { return pieces; }
 function progressSummary() {
   return {
     cleared: clearedMax,
@@ -571,6 +612,7 @@ async function boot() {
   // 해금에 필요한 조각 수는 스테이지 생성기(tools/gen_studio20.py)가 쓴 값을 따른다
   const needs = await (await fetch('stages/items.json')).json();
   ITEMS.forEach(it => { it.need = needs[it.name] || 1; });
+  loadPieces();                    // stages 와 need 를 읽은 뒤라야 이관 계산이 맞다
   makeGame();
   window.__game = game;  // 디버그
   wireUI();
