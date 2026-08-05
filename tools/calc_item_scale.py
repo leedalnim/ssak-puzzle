@@ -25,5 +25,11 @@ if __name__ == '__main__':
         w, h = bb[2] - bb[0], bb[3] - bb[1]
         raw[kr] = max(w, h) / math.sqrt(w * h)
     mean = sum(raw.values()) / len(raw)        # 평균을 1로 맞춰 기본 박스 비율을 유지
+    # 면적이 같아도 세로로 길쭉한 물건은 '키'가 커서 혼자 우뚝해 보인다.
+    # 계산값을 그대로 쓰지 않고 아래 셋은 눈으로 보고 더 낮춘 값을 쓴다.
+    TRIM = {'분무기': 0.88, '탁상 램프': 0.94, '물뿌리개': 1.02}
     for kr, _ in ITEMS:
-        print(f"  '{kr}': {raw[kr] / mean:.2f},")
+        calc = raw[kr] / mean
+        use = TRIM.get(kr, calc)
+        note = f"   // 계산값 {calc:.2f} — 눈으로 보고 낮춤" if kr in TRIM else ""
+        print(f"  '{kr}': {use:.2f},{note}")

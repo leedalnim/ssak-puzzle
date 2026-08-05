@@ -151,7 +151,7 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
   display: flex; align-items: center; justify-content: center;
   filter: drop-shadow(0 calc(6px * var(--k)) calc(10px * var(--k)) rgba(110, 84, 56, .35));
 }
-.hud-slot img { max-width: calc(64% * var(--s, 1)); max-height: calc(64% * var(--s, 1));
+.hud-slot img { max-width: calc(70% * var(--s, 1)); max-height: calc(70% * var(--s, 1));
   width: auto; height: auto; object-fit: contain;
   transition: opacity .3s ease; opacity: .9; }
 .hud-slot.got img { opacity: 1; }
@@ -348,7 +348,7 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
 .slot.lock { background-image: url(../assets/room/ui/kit/slot_lock.png); }
 .slot:active { transform: translateY(2px); }
 /* --s = 물건별 기준 배율(JS가 넣는다) — 실제 크기 느낌을 맞춘다 */
-.slot > img.thing { max-width: calc(70% * var(--s, 1)); max-height: calc(70% * var(--s, 1));
+.slot > img.thing { max-width: calc(76% * var(--s, 1)); max-height: calc(76% * var(--s, 1));
   width: auto; height: auto; object-fit: contain; }
 /* 획득한 칸은 뒤에 은은한 금빛 */
 .slot.got::before {
@@ -499,8 +499,8 @@ button:disabled { opacity: .45; filter: none; cursor: default; }
   content: ''; position: absolute; width: 84%; height: 84%; border-radius: 50%;
   background: radial-gradient(closest-side, rgba(255, 205, 105, .65), rgba(255, 205, 105, 0));
 }
-.reward img { position: relative; max-width: calc(60% * var(--s, 1));
-  max-height: calc(60% * var(--s, 1)); object-fit: contain; }
+.reward img { position: relative; max-width: calc(66% * var(--s, 1));
+  max-height: calc(66% * var(--s, 1)); object-fit: contain; }
 /* 별 3개 보너스로 받은 조각 표시 */
 .rw-star {
   position: absolute; top: -5px; right: -5px; width: 22px; height: 22px; z-index: 2;
