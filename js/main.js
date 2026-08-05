@@ -1,5 +1,5 @@
 // 부트스트랩 + UI 상태기계.
-import { loadAssets } from './assets.js';
+import { loadAssets, itemScale } from './assets.js';
 import { Game } from './game.js';
 import * as Audio from './audio.js';
 import { Toss } from './toss-sdk.js';
@@ -64,7 +64,7 @@ function showReward(names, bonusName) {
     const done = have >= it.need;
     return `<div class="rw-chip${done ? ' done' : ''}">`
       + `<div class="rw-slot">${isBonus ? '<span class="rw-star"></span>' : ''}`
-      +   `<img src="${KIT}${done ? 'it' : 'sil'}_${it.img}.png" alt=""></div>`
+      +   `<img style="--s:${itemScale(name)}" src="${KIT}${done ? 'it' : 'sil'}_${it.img}.png" alt=""></div>`
       + `<b>${it.name}</b><span>${done ? '완성!' : `조각 ${have}/${it.need}`}</span></div>`;
   };
   const drops = names || [];
@@ -110,17 +110,17 @@ const KIT = 'assets/room/ui/kit/';
 // area = 어느 장소에서 나오는 물건인지(수집함 탭 분류). desc = 해금했을 때 읽는 한 줄.
 // need(해금에 필요한 조각 수, 1~5)는 stages/items.json 이 원본이라 boot 에서 채운다.
 const ITEMS = [
-  { name: '구겨진 잠옷', img: 'pajama', area: 1, need: 1, desc: '며칠을 입고 잔 잠옷이다냥. 드디어 벗어 던졌다냥!' },
-  { name: '머그컵', img: 'mug', area: 1, need: 1, desc: '씻어 두니 커피가 당긴다냥.' },
-  { name: '티슈 상자', img: 'tissue', area: 1, need: 1, desc: '손 닿는 곳에 두니 편하다냥.' },
-  { name: '노란 고무장갑', img: 'gloves', area: 1, need: 1, desc: '찌든 얼룩과 맞설 첫 장비다냥.' },
-  { name: '분무기', img: 'spray', area: 1, need: 1, desc: '한 번 뿌리면 얼룩이 쓱 진다냥.' },
-  { name: '쿠션', img: 'cushion', area: 1, need: 1, desc: '앉을 자리가 생겼다는 뜻이다냥.' },
-  { name: '탁상 램프', img: 'lamp', area: 1, need: 1, desc: '밤에도 방이 아늑해졌다냥.' },
-  { name: '작은 화분', img: 'plant', area: 1, need: 1, desc: '창가에 두니 방이 좀 살아났다냥.' },
-  { name: '물뿌리개', img: 'can', area: 1, need: 1, desc: '물 주는 게 하루 일과가 됐다냥.' },
-  { name: '장바구니', img: 'basket', area: 1, need: 1, desc: '장 보러 나갈 결심이다냥!' },
-  { name: '새 운동화', img: 'sneakers', area: 1, need: 1, desc: '이제 밖으로 나갈 준비 완료다냥!' },
+  { name: '구겨진 잠옷', img: 'pajama', area: 1, need: 1, desc: '며칠째 입고 자던 잠옷이다냥. 드디어 벗어 던졌다냥!' },
+  { name: '머그컵', img: 'mug', area: 1, need: 1, desc: '싱크대에 쌓여 있던 컵이다냥. 씻어 두니 커피가 당긴다냥.' },
+  { name: '티슈 상자', img: 'tissue', area: 1, need: 1, desc: '손 닿는 자리에 두었다냥. 이제 바로 닦을 수 있다냥.' },
+  { name: '노란 고무장갑', img: 'gloves', area: 1, need: 1, desc: '찌든 얼룩과 맞설 첫 장비다냥. 뭐든 덤벼 보라냥!' },
+  { name: '분무기', img: 'spray', area: 1, need: 1, desc: '칙 한 번이면 굳은 얼룩도 말랑해진다냥.' },
+  { name: '쿠션', img: 'cushion', area: 1, need: 1, desc: '앉을 자리가 생겼다냥. 여기는 내 자리다냥.' },
+  { name: '탁상 램프', img: 'lamp', area: 1, need: 1, desc: '불을 켜니 밤이 덜 길어졌다냥. 방이 아늑하다냥.' },
+  { name: '작은 화분', img: 'plant', area: 1, need: 1, desc: '창가에 두었다냥. 나 말고 살아 있는 게 하나 더 생겼다냥.' },
+  { name: '물뿌리개', img: 'can', area: 1, need: 1, desc: '아침마다 물을 준다냥. 일어날 이유가 하나 생겼다냥.' },
+  { name: '장바구니', img: 'basket', area: 1, need: 1, desc: '현관에 걸어 두었다냥. 장 보러 나갈 일만 남았다냥.' },
+  { name: '새 운동화', img: 'sneakers', area: 1, need: 1, desc: '드디어 신발을 꺼냈다냥. 문 밖까지 딱 한 걸음이다냥!' },
 ];
 
 // 도전과제 — progress(cleared, stars)로 진행도를 계산한다
@@ -165,14 +165,15 @@ function flyToHud(item, from, targetEl, done) {
   // 시작 위치(바닥) — transition 없이 먼저 배치
   el.style.transition = 'none';
   el.style.opacity = '1';
-  const s = 120 * parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--k') || 1);
+  const k = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--k') || 1);
+  const s = 120 * k * itemScale(item.name);
   el.style.width = el.style.height = `${s}px`;
   el.style.left = `${from.x - s / 2}px`;
   el.style.top = `${from.y - s / 2}px`;
   // 다음 프레임에 목적지로
   requestAnimationFrame(() => requestAnimationFrame(() => {
     el.style.transition = '';
-    const ts = target.width * 0.62;
+    const ts = target.width * 0.62 * itemScale(item.name);
     el.style.width = el.style.height = `${ts}px`;
     el.style.left = `${target.left + target.width / 2 - ts / 2}px`;
     el.style.top = `${target.top + target.height / 2 - ts / 2}px`;
@@ -191,7 +192,8 @@ function makeGame() {
       box.classList.toggle('hidden', !list.length);
       if (!list.length) { box.innerHTML = ''; return; }
       if (box.children.length !== list.length) {
-        box.innerHTML = list.map(() => '<span class="hud-slot"><img src="" alt=""></span>').join('');
+        box.innerHTML = list.map(x => `<span class="hud-slot">`
+          + `<img style="--s:${itemScale(x.name)}" src="" alt=""></span>`).join('');
       }
       list.forEach((s, i) => {
         const slot = box.children[i];
@@ -413,7 +415,8 @@ function buildCollection() {
   list.forEach(it => {
     // 조각을 다 모아야 컬러로 해금된다. 그 전에는 회색 + 진행바(n/필요)
     const cell = el('button', 'slot ' + (it.done ? 'got' : 'lock'));
-    cell.innerHTML = `<img class="thing" src="${KIT}${it.done ? 'it' : 'sil'}_${it.img}.png" alt="${it.name}">`
+    cell.innerHTML = `<img class="thing" style="--s:${itemScale(it.name)}" `
+      + `src="${KIT}${it.done ? 'it' : 'sil'}_${it.img}.png" alt="${it.name}">`
       + (it.done ? ''
                  : `<span class="pcs"><i style="width:${Math.round(it.count / it.need * 100)}%"></i>`
                    + `<b>${it.count}/${it.need}</b></span>`);

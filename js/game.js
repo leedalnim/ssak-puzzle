@@ -1,5 +1,5 @@
 // 게임 코어 — 한붓 청소 퍼즐 로직 + 코지룸(3D 클레이) 렌더링.
-import { IMG } from './assets.js';
+import { IMG, itemScale } from './assets.js';
 import { Particles } from './particles.js';
 import { initInput, DIRS } from './input.js';
 import * as Audio from './audio.js';
@@ -302,7 +302,8 @@ export class Game {
     const img = IMG['item_' + it.name];
     if (!img) return;
     const { x, y, cellH } = cellCenter(it.x, it.y, this.cols, this.rows);
-    const h = cellH * 0.62, w = img.width * h / img.height;
+    // 물건마다 기준 배율이 달라 머그컵이 쿠션만큼 커 보이지 않는다
+    const h = cellH * 0.62 * itemScale(it.name), w = img.width * h / img.height;
     const bob = it.got ? 0 : Math.sin(this.tAll * 3) * cellH * 0.04;
     const rise = it.got ? (1 - it.pop) * cellH * 0.9 : 0;   // pop 1→0 동안 위로
     // 밑면 기준선을 셀 중앙보다 아래로 내려, 물건이 칸 한가운데 놓인 것처럼 보이게 한다
